@@ -1078,9 +1078,11 @@ const App = () => {
                                           </label>
                                           <input
                                               type="number"
+                                              inputMode="decimal" // CAMBIO UX: Teclado numérico con decimales
                                               name="factor"
                                               value={p.factor}
                                               onChange={(e) => handleCondicionChange(p.id, 'factor', e.target.value)}
+                                              onFocus={(e) => e.target.select()} // CAMBIO UX: Seleccionar todo al foco
                                               placeholder="0.80"
                                               className="w-full p-2 border border-gray-300 rounded-lg text-sm"
                                               step="0.01"
@@ -1098,9 +1100,11 @@ const App = () => {
                                           </label>
                                           <input
                                               type="number"
+                                              inputMode="decimal" // CAMBIO UX: Teclado numérico con decimales
                                               name="costoFijo"
                                               value={p.costoFijo}
                                               onChange={(e) => handleCondicionChange(p.id, 'costoFijo', e.target.value)}
+                                              onFocus={(e) => e.target.select()} // CAMBIO UX: Seleccionar todo al foco
                                               placeholder={formatMXN(0).replace('$', '')}
                                               className="w-full p-2 border border-gray-300 rounded-lg text-sm"
                                               min="1"
@@ -1387,9 +1391,10 @@ const App = () => {
             <div className="space-y-4">
               {historialCotizaciones.map(cotz => (
                 <div key={cotz.id} className="bg-white rounded-lg shadow-lg p-6">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      {/* Título y Cliente (CORRECCIÓN: MOSTRAR NOMBRE DEL CLIENTE) */}
+                  <div className="flex flex-col md:flex-row justify-between items-start"> {/* En móvil, usamos columna */}
+                    
+                    <div className="flex-1 w-full md:w-auto">
+                      {/* Título y Cliente */}
                       <div className="mb-4">
                         <h3 className="text-xl font-bold text-gray-800">{cotz.cliente.nombre}</h3>
                         <span className="text-sm text-gray-500">
@@ -1421,8 +1426,9 @@ const App = () => {
                         </div>
                       </div>
                     </div>
-                    {/* Botones (UX MÓVIL: APILADOS EN COLUMNA COMPLETA) */}
-                    <div className="w-full pt-4 border-t mt-4 md:w-auto md:border-t-0 md:pt-0">
+
+                    {/* Botones (UX MÓVIL: APILADOS EN COLUMNA COMPLETA AL FINAL) */}
+                    <div className="w-full pt-4 border-t mt-4 md:w-auto md:border-t-0 md:pt-0 md:pl-4 md:mt-0 md:flex md:flex-col md:justify-end">
                       <div className="flex flex-col space-y-2">
                         <button
                           onClick={() => { setCotizacion(cotz); setVistaActual('cotizador'); }}
@@ -1513,7 +1519,7 @@ const App = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Panel de configuración (Panel Izquierdo) */}
+          {/* Panel de configuración */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -1572,8 +1578,10 @@ const App = () => {
                   </label>
                   <input
                     type="number"
+                    inputMode="decimal" // CAMBIO UX: Teclado numérico con decimales
                     value={presupuesto}
                     onChange={(e) => setPresupuesto(e.target.value)}
+                    onFocus={(e) => e.target.select()} // CAMBIO UX: Seleccionar todo al foco
                     placeholder="Ej: 50000"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
                   />
@@ -1584,8 +1592,10 @@ const App = () => {
                   </label>
                   <input
                     type="number"
+                    inputMode="numeric" // CAMBIO UX: Teclado numérico
                     value={duracionDias}
                     onChange={(e) => setDuracionDias(e.target.value)}
+                    onFocus={(e) => e.target.select()} // CAMBIO UX: Seleccionar todo al foco
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
                   />
                 </div>
@@ -1757,12 +1767,10 @@ const App = () => {
                               {/* Input de Cantidad con onFocus select */}
                               <input
                                   type="number"
-                                  // Usamos 'tel' para obtener el teclado numérico en móvil sin spin buttons grandes
-                                  inputMode="numeric" 
-                                  pattern="[0-9]*"
+                                  inputMode="numeric" // CAMBIO UX: Teclado numérico
                                   value={ps.cantidad}
                                   onChange={(e) => actualizarCantidad(ps.id, e.target.value)}
-                                  onFocus={(e) => e.target.select()} // Selecciona todo el texto al recibir foco
+                                  onFocus={(e) => e.target.select()} // CAMBIO UX: Selecciona todo al foco
                                   className="w-16 text-center p-2 border border-gray-300 text-sm"
                                   min="1"
                               />
@@ -1841,7 +1849,7 @@ const App = () => {
                     </button>
                     <button
                       onClick={() => agregarAComparador(cotizacion)}
-                      className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center justify-center"
+                      className="bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-700 flex items-center justify-center"
                     >
                       <Eye className="mr-2" size={16} />
                       Comparar
