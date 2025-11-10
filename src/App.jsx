@@ -299,6 +299,12 @@ const App = () => {
   const actualizarCantidad = (productoId, cantidad) => {
     const newCantidad = parseInt(cantidad) || 0;
 
+    // Si la cantidad es 0 o menos, eliminamos el producto (UX mejorada)
+    if (newCantidad <= 0) {
+      eliminarProducto(productoId);
+      return;
+    }
+
     const newProductos = productosSeleccionados.map(p =>
       p.id === productoId ? { ...p, cantidad: newCantidad } : p
     );
@@ -618,7 +624,7 @@ const App = () => {
           
           <!-- PUNTO 1: Footer del reporte modificado -->
           <p class="text-xs text-gray-500 mt-6 text-center">
-            Este presupuesto es una proyección de pauta promedio. Creado por Roger Montejo Plaza Merida
+            Este presupuesto es una proyección de pauta promedio. Diseñado por Roger Montejo
           </p>
         </div>
         <script>
@@ -1384,16 +1390,19 @@ const App = () => {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       {/* Título y Cliente (CORRECCIÓN: MOSTRAR NOMBRE DEL CLIENTE) */}
-                      <div className="flex items-center gap-4 mb-2">
-                        <h3 className="text-xl font-bold text-gray-800">Cliente: {cotz.cliente.nombre}</h3>
+                      <div className="mb-4">
+                        <h3 className="text-xl font-bold text-gray-800">{cotz.cliente.nombre}</h3>
                         <span className="text-sm text-gray-500">
                           {cotz.fecha.toLocaleDateString()} - {cotz.fecha.toLocaleTimeString()}
                         </span>
                       </div>
                       
-                      {/* Desglose resumido de productos y totales */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4"> 
-                        <div><p className="text-sm text-gray-600">Productos</p><p className="font-semibold text-gray-800">{cotz.items.length}</p></div>
+                      {/* Desglose resumido de productos y totales (UX MÓVIL: APILADO EN DOS COLUMNAS) */}
+                      <div className="grid grid-cols-2 gap-4"> 
+                        <div>
+                            <p className="text-sm text-gray-600">Productos</p>
+                            <p className="font-semibold text-gray-800">{cotz.items.length}</p>
+                        </div>
                         {/* ***** VIX EN HISTORIAL ***** */}
                         <div>
                             <p className="text-sm text-gray-600">Paquete VIX</p>
@@ -1401,30 +1410,39 @@ const App = () => {
                                 {cotz.paqueteVIX ? cotz.paqueteVIX.nombre : 'Ninguno'}
                             </p>
                         </div>
-                        {/* ***** FIN VIX EN HISTORIAL ***** */}
-                        <div><p className="text-sm text-gray-600">Subtotal (SIN IVA)</p><p className="font-semibold text-gray-800">{formatMXN(cotz.subtotalGeneral)}</p></div>
-                        <div><p className="text-sm text-gray-600">Total (CON IVA)</p><p className="text-xl font-bold text-red-600">{formatMXN(cotz.total)}</p></div>
+                         {/* Fila 2: Subtotal y Total (PRIORIZACIÓN) */}
+                        <div className="mt-2">
+                            <p className="text-sm text-gray-600">Subtotal (SIN IVA)</p>
+                            <p className="font-bold text-gray-800">{formatMXN(cotz.subtotalGeneral)}</p>
+                        </div>
+                        <div className="mt-2">
+                            <p className="text-sm text-gray-600">Total (CON IVA)</p>
+                            <p className="text-xl font-bold text-red-600">{formatMXN(cotz.total)}</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex flex-col md:flex-row gap-2"> 
-                      <button
-                        onClick={() => { setCotizacion(cotz); setVistaActual('cotizador'); }}
-                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-                      >
-                        Ver
-                      </button>
-                      <button
-                        onClick={() => verReporteCotizacion(cotz)} // LLAMADA AL REPORTE
-                        className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-                      >
-                        Reporte
-                      </button>
-                      <button
-                        onClick={() => agregarAComparador(cotz)}
-                        className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-                      >
-                        Comparar
-                      </button>
+                    {/* Botones (UX MÓVIL: APILADOS EN COLUMNA COMPLETA) */}
+                    <div className="w-full pt-4 border-t mt-4 md:w-auto md:border-t-0 md:pt-0">
+                      <div className="flex flex-col space-y-2">
+                        <button
+                          onClick={() => { setCotizacion(cotz); setVistaActual('cotizador'); }}
+                          className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                        >
+                          Ver
+                        </button>
+                        <button
+                          onClick={() => verReporteCotizacion(cotz)}
+                          className="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+                        >
+                          Reporte
+                        </button>
+                        <button
+                          onClick={() => agregarAComparador(cotz)}
+                          className="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+                        >
+                          Comparar
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1440,12 +1458,12 @@ const App = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header (PUNTO 3: TÍTULO ACTUALIZADO) */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-4 gap-4"> 
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">Sistema de Cotizaciones</h1>
-              <p className="text-gray-600 mt-1">TVSA Sureste 2025</p>
+              <h1 className="text-3xl font-bold text-gray-800">Sistema de Cotizaciones Televisa MID</h1>
+              <p className="text-gray-600 mt-1">Diseñado por Roger Montejo</p>
             </div>
             {/* GRUPO DE BOTONES DE ACCIÓN PRINCIPAL */}
             <div className="flex flex-col sm:flex-row flex-wrap gap-2"> 
@@ -1495,7 +1513,7 @@ const App = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Panel de configuración */}
+          {/* Panel de configuración (Panel Izquierdo) */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -1620,6 +1638,26 @@ const App = () => {
 
           {/* Panel de productos y cotización (Ajustado para 2/3 del ancho) */}
           <div className="lg:col-span-2 space-y-6">
+            
+            {/* ***** PUNTO 1: TARJETA DE PRESUPUESTO FLOTANTE EN MÓVIL ***** */}
+            {presupuestoNum > 0 && (
+                <div 
+                    className="lg:hidden sticky top-0 z-10 p-4 mb-4 rounded-lg shadow-xl"
+                    style={{ backgroundColor: '#ffffff', borderTop: '4px solid #ef4444' }}
+                >
+                    <h3 className="text-xl font-semibold text-gray-800 flex items-center mb-1">
+                         <DollarSign className="mr-2 text-red-500" size={20} />
+                         Saldo Disponible
+                    </h3>
+                    <div className="flex justify-between text-lg font-bold">
+                        <span className={saldoColor}>{formatMXN(saldoDisponible)}</span>
+                        <span className="text-sm text-gray-600">Total: {formatMXN(presupuestoNum)} (SIN IVA)</span>
+                    </div>
+                </div>
+            )}
+            {/* ***** FIN TARJETA FLOTANTE ***** */}
+
+
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Productos Disponibles</h2>
               <input
@@ -1664,7 +1702,7 @@ const App = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* --- MUEVE EL PRESUPUESTO CERCA DE LOS PRODUCTOS (Punto 2) --- */}
-                <div className="md:col-span-1">
+                <div className="md:col-span-1 hidden lg:block"> {/* OCULTAR EN MÓVIL (YA ESTÁ FLOTANTE) */}
                   {presupuestoNum > 0 && (
                     <div className="bg-white rounded-lg shadow-lg p-6 border-t-4 border-red-500 h-full">
                       <h3 className="text-xl font-semibold text-gray-800 mb-3 flex items-center">
@@ -1690,7 +1728,7 @@ const App = () => {
                 </div>
 
                 {/* --- PANEL DE PRODUCTOS SELECCIONADOS --- */}
-                <div className="bg-white rounded-lg shadow-lg p-6 md:col-span-2">
+                <div className="bg-white rounded-lg shadow-lg p-6 md:col-span-2 lg:col-span-2"> {/* Ajuste de Colspan */}
                   <h2 className="text-xl font-semibold text-gray-800 mb-4">Productos en Cotización</h2>
                   <div className="max-h-64 overflow-y-auto space-y-3">
                     {/* Lista de Productos de TV */}
@@ -1796,7 +1834,7 @@ const App = () => {
                     </button>
                     <button
                       onClick={guardarCotizacion}
-                      className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 flex items-center justify-center"
+                      className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 flex items-center justify-center"
                     >
                       <Save className="mr-2" size={16} />
                       Guardar
