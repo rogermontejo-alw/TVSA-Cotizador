@@ -1,0 +1,13 @@
+{
+  "name": "cotizador-final",
+  // ...
+  "homepage": "https://rogermontejo-alw.github.io/TVSA-Cotizador",  
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    // ... otros scripts
+    "predeploy": "npm run build",     
+    "deploy": "gh-pages -d dist"      
+  },
+  // ...
+}

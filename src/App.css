@@ -1,0 +1,36 @@
+/* 1. Importación de Fuentes de Google Fonts */
+/* Manrope para títulos (Headers) y Poppins para cuerpo (Body) */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700&family=Poppins:wght@400;600&display=swap');
+
+/* 2. Directivas de Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 3. Definición de Variables CSS Personalizadas para las Fuentes */
+/* Usamos :root para establecer las variables globales */
+:root {
+    --font-heading: 'Manrope', sans-serif;
+    --font-body: 'Poppins', sans-serif;
+}
+
+/* Aplicar la fuente Poppins al cuerpo de la aplicación */
+body {
+    font-family: var(--font-body);
+}
+
+/* Aplicar Manrope a todos los encabezados principales */
+h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+}
+
+/* Estilo para los botones de acción para asegurar el responsive y color */
+@media (max-width: 767px) {
+    .button-actions-container {
+        flex-direction: column !important; 
+    }
+    
+    .button-actions-container button {
+        width: 100% !important; 
+    }
+}

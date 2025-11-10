@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema de Cotizaciones TVSA</title>
+    
+    <!-- TAILWIND CSS VIA CDN (PARA DESARROLLO) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- ESTILOS DE EMERGENCIA: Asegura que el cuerpo ocupe toda la pantalla para centrar -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        width: 100%;
+        background-color: #f3f4f6; /* Fondo gris claro visible */
+      }
+      #root {
+        /* Asegura que el contenedor de React ocupe el 100% de la altura y ancho */
+        min-height: 100vh;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
+
+  </head>
+  <body>
+    <!-- Este es el contenedor donde React renderiza tu componente -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
