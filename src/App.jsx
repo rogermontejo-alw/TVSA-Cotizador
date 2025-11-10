@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 // Importamos los íconos necesarios
-import { Search, DollarSign, Calendar, TrendingUp, FileText, Plus, X, RefreshCw, AlertCircle, Download, Eye, Save, List, Printer, Settings, Trash2 } from 'lucide-react'; // Añadimos Trash2
+import { Search, DollarSign, Calendar, TrendingUp, FileText, Plus, X, RefreshCw, AlertCircle, Download, Eye, Save, List, Printer, Settings, Trash2, Minus } from 'lucide-react'; // Añadimos Minus
 
 // Renombramos el componente principal a 'App'
 const App = () => {
@@ -297,14 +297,25 @@ const App = () => {
   };
 
   const actualizarCantidad = (productoId, cantidad) => {
+    const newCantidad = parseInt(cantidad) || 0;
+
     const newProductos = productosSeleccionados.map(p =>
-      p.id === productoId ? { ...p, cantidad: parseInt(cantidad) || 0 } : p
+      p.id === productoId ? { ...p, cantidad: newCantidad } : p
     );
     setProductosSeleccionados(newProductos);
+    // Forzamos la generación de la cotización para reflejar el cambio de saldo de inmediato
+    if (cotizacion) {
+        // Ejecutar generateCotización para actualizar el estado del resumen
+        setTimeout(generarCotizacion, 50);
+    }
   };
 
   const eliminarProducto = (productoId) => {
     setProductosSeleccionados(productosSeleccionados.filter(p => p.id !== productoId));
+    // Forzamos la generación de la cotización para reflejar el cambio de saldo de inmediato
+    if (cotizacion) {
+        setTimeout(generarCotizacion, 50);
+    }
   };
 
   const generarCotizacion = () => {
@@ -1304,7 +1315,7 @@ const App = () => {
                         <div className="max-h-24 overflow-y-auto space-y-0.5">
                             {cotz.items.map((item, i) => (
                                 <p key={i} className="text-xs text-gray-600">
-                                    {item.cantidad}x {item.producto.tipo} ({item.producto.plaza}) 
+                                    {item.cantidad}x {item.producto.tipo} ({item.producto.duracion}, {item.producto.horario}, {item.producto.plaza}) 
                                 </p>
                             ))}
                             {/* ***** VIX EN COMPARADOR ***** */}
@@ -1693,13 +1704,41 @@ const App = () => {
                             </p>
                             <p className="text-sm text-gray-600">Plaza: {producto.plaza} | {producto.horario}</p>
                           </div>
-                          <input
-                            type="number"
-                            value={ps.cantidad}
-                            onChange={(e) => actualizarCantidad(ps.id, e.target.value)}
-                            className="w-20 p-2 border border-gray-300 rounded text-center"
-                            min="1"
-                          />
+                          {/* ***** CONTROLES DE CANTIDAD (UX MÓVIL) ***** */}
+                          <div className="flex items-center space-x-1">
+                              {/* Botón Restar */}
+                              <button 
+                                  onClick={() => actualizarCantidad(ps.id, ps.cantidad - 1)}
+                                  className="bg-gray-200 text-gray-800 p-2 rounded-l-lg hover:bg-gray-300 transition-colors h-full"
+                                  disabled={ps.cantidad <= 1}
+                                  title="Disminuir Cantidad"
+                              >
+                                  <Minus size={16} />
+                              </button>
+
+                              {/* Input de Cantidad con onFocus select */}
+                              <input
+                                  type="number"
+                                  // Usamos 'tel' para obtener el teclado numérico en móvil sin spin buttons grandes
+                                  inputMode="numeric" 
+                                  pattern="[0-9]*"
+                                  value={ps.cantidad}
+                                  onChange={(e) => actualizarCantidad(ps.id, e.target.value)}
+                                  onFocus={(e) => e.target.select()} // Selecciona todo el texto al recibir foco
+                                  className="w-16 text-center p-2 border border-gray-300 text-sm"
+                                  min="1"
+                              />
+
+                              {/* Botón Sumar */}
+                              <button 
+                                  onClick={() => actualizarCantidad(ps.id, ps.cantidad + 1)}
+                                  className="bg-gray-200 text-gray-800 p-2 rounded-r-lg hover:bg-gray-300 transition-colors h-full"
+                                  title="Aumentar Cantidad"
+                              >
+                                  <Plus size={16} />
+                              </button>
+                          </div>
+                          {/* ***** FIN CONTROLES DE CANTIDAD ***** */}
                           <button
                             onClick={() => eliminarProducto(ps.id)}
                             className="text-red-600 hover:text-red-800"
@@ -1757,14 +1796,14 @@ const App = () => {
                     </button>
                     <button
                       onClick={guardarCotizacion}
-                      className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 flex items-center justify-center"
+                      className="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 flex items-center justify-center"
                     >
                       <Save className="mr-2" size={16} />
                       Guardar
                     </button>
                     <button
                       onClick={() => agregarAComparador(cotizacion)}
-                      className="bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-700 flex items-center justify-center"
+                      className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center justify-center"
                     >
                       <Eye className="mr-2" size={16} />
                       Comparar
