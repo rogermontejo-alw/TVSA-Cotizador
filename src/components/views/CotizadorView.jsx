@@ -82,34 +82,34 @@ const CotizadorView = ({
                 />
 
                 {!cotizacionResult ? (
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                        {/* Sidebar Izquierda - 12 columns on mobile, 5 on tablets, 4 on desktop */}
-                        <div className="md:col-span-5 lg:col-span-4 space-y-6">
-                            <ClientSelector
-                                clientes={clientes}
-                                clienteSeleccionado={clienteSeleccionado}
-                                setClienteSeleccionado={setClienteSeleccionado}
-                            />
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                            {/* Sidebar Izquierda - 12 columns on mobile, 5 on tablets, 4 on desktop */}
+                            <div className="md:col-span-5 lg:col-span-4 space-y-6">
+                                <ClientSelector
+                                    clientes={clientes}
+                                    clienteSeleccionado={clienteSeleccionado}
+                                    setClienteSeleccionado={setClienteSeleccionado}
+                                />
 
-                            <ParametersPanel
-                                productos={productos}
-                                plazaSeleccionada={plazaSeleccionada}
-                                setPlazaSeleccionada={setPlazaSeleccionada}
-                                presupuesto={presupuesto}
-                                setPresupuesto={setPresupuesto}
-                                duracionDias={duracionDias}
-                                setDuracionDias={setDuracionDias}
-                                paqueteVIX={paqueteVIX}
-                                setPaqueteVIX={setPaqueteVIX}
-                                paquetesVIX={paquetesVIX}
-                                sugerirDistribucion={sugerirDistribucion}
-                                clienteSeleccionado={clienteSeleccionado}
-                            />
-                        </div>
+                                <ParametersPanel
+                                    productos={productos}
+                                    plazaSeleccionada={plazaSeleccionada}
+                                    setPlazaSeleccionada={setPlazaSeleccionada}
+                                    presupuesto={presupuesto}
+                                    setPresupuesto={setPresupuesto}
+                                    duracionDias={duracionDias}
+                                    setDuracionDias={setDuracionDias}
+                                    paqueteVIX={paqueteVIX}
+                                    setPaqueteVIX={setPaqueteVIX}
+                                    paquetesVIX={paquetesVIX}
+                                    sugerirDistribucion={sugerirDistribucion}
+                                    clienteSeleccionado={clienteSeleccionado}
+                                />
+                            </div>
 
-                        {/* Panel Central/Derecha - 12 columns on mobile, 7 on tablets, 8 on desktop */}
-                        <div className="md:col-span-7 lg:col-span-8 space-y-6">
-                            <div className="grid grid-cols-1 gap-6">
+                            {/* Panel Central/Derecha - 12 columns on mobile, 7 on tablets, 8 on desktop */}
+                            <div className="md:col-span-7 lg:col-span-8 space-y-6">
                                 <ProductGrid
                                     productos={productos}
                                     productosSeleccionados={productosSeleccionados}
@@ -118,26 +118,29 @@ const CotizadorView = ({
                                     calcularPrecioUnitario={calcularPrecioUnitario}
                                     agregarProducto={agregarProducto}
                                 />
-
-                                <SelectedProducts
-                                    productos={productos}
-                                    productosSeleccionados={productosSeleccionados}
-                                    paqueteVIX={paqueteVIX}
-                                    setPaqueteVIX={setPaqueteVIX}
-                                    paquetesVIX={paquetesVIX}
-                                    actualizarCantidad={actualizarCantidad}
-                                    eliminarProducto={eliminarProducto}
-                                    generarCotizacion={generarCotizacion}
-                                    presupuesto={presupuesto}
-                                    subtotalActual={subtotalActual}
-                                    subtotalTVActual={subtotalTVActual}
-                                    subtotalVIXActual={subtotalVIXActual}
-                                    clienteSeleccionado={clienteSeleccionado}
-                                    calcularPrecioUnitario={calcularPrecioUnitario}
-                                />
                             </div>
                         </div>
-                    </div>
+
+                        {/* Nueva sección de resumen y productos seleccionados a ancho completo para romper la estructura encajada */}
+                        <div className="mt-8 animate-in slide-in-from-bottom-5 duration-500">
+                            <SelectedProducts
+                                productos={productos}
+                                productosSeleccionados={productosSeleccionados}
+                                paqueteVIX={paqueteVIX}
+                                setPaqueteVIX={setPaqueteVIX}
+                                paquetesVIX={paquetesVIX}
+                                actualizarCantidad={actualizarCantidad}
+                                eliminarProducto={eliminarProducto}
+                                generarCotizacion={generarCotizacion}
+                                presupuesto={presupuesto}
+                                subtotalActual={subtotalActual}
+                                subtotalTVActual={subtotalTVActual}
+                                subtotalVIXActual={subtotalVIXActual}
+                                clienteSeleccionado={clienteSeleccionado}
+                                calcularPrecioUnitario={calcularPrecioUnitario}
+                            />
+                        </div>
+                    </>
                 ) : (
                     <CotizacionResult
                         cotizacion={cotizacionResult}
