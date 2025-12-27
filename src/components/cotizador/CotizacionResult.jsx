@@ -39,10 +39,10 @@ const CotizacionResult = ({
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
 
                 {/* LADO IZQUIERDO: DETALLES (Tablet/Desktop) */}
-                <div className="lg:col-span-8 order-2 lg:order-1 space-y-6">
+                <div className="md:col-span-7 lg:col-span-8 order-2 md:order-1 space-y-6">
 
                     {/* Inversión Digital */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -86,8 +86,8 @@ const CotizacionResult = ({
                 </div>
 
                 {/* LADO DERECHO: RESUMEN FINANCIERO (Delgado e Invariante) */}
-                <div className="lg:col-span-4 order-1 lg:order-2">
-                    <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl lg:sticky lg:top-6 w-full max-w-sm mx-auto">
+                <div className="md:col-span-5 lg:col-span-4 order-1 md:order-2">
+                    <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl md:sticky md:top-6 w-full max-w-sm mx-auto">
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 mb-6 border-b border-white/10 pb-2">
                             Resumen Financiero
                         </h3>
