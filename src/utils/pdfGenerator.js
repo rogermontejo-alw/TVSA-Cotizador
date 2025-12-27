@@ -3,6 +3,15 @@ import { formatMXN } from './formatters';
 export const generatePDF = (cotz, configuracion) => {
   const totalUnidadesGeneral = cotz.distribucion.reduce((acc, dist) => acc + dist.totalUnidades, 0);
   const totalSemanas = cotz.distribucion[0]?.distribucionSemanal.length || 0;
+  const now = new Date();
+  const fechaImpresion = now.toLocaleDateString('es-MX', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
 
   const weeklyHeaders = Array.from({ length: totalSemanas }, (_, i) =>
     `<th class="header-cell">S${i + 1}</th>`
@@ -10,7 +19,7 @@ export const generatePDF = (cotz, configuracion) => {
 
   const distribucionRows = cotz.distribucion.map(dist => {
     const weeklyCells = dist.distribucionSemanal.map(units =>
-      `<td class="data-cell text-center font-bold text-[9px]">${units || 0}</td>`
+      `<td class="data-cell text-center" style="font-size: 8px; padding: 4px 2px;">${units || 0}</td>`
     ).join('');
 
     const item = cotz.items.find(i => i.producto.id === dist.producto.id);
@@ -19,16 +28,16 @@ export const generatePDF = (cotz, configuracion) => {
 
     return `
       <tr>
-        <td class="data-cell">
+        <td class="data-cell" style="padding: 4px 6px;">
           <div class="product-info">
-            <span class="product-title text-[10px]">${dist.producto.tipo}</span>
-            <span class="product-subtitle text-[8px]">${dist.producto.canal} | ${dist.producto.plaza} | ${dist.producto.horario}</span>
+            <span class="product-title" style="font-size: 8.5px; font-weight: 800;">${dist.producto.tipo}</span>
+            <span class="product-subtitle" style="font-size: 6.5px; display: block;">${dist.producto.canal} | ${dist.producto.plaza} | ${dist.producto.horario}</span>
           </div>
         </td>
-        <td class="data-cell text-center font-bold text-[10px]">${dist.totalUnidades}</td>
-        <td class="data-cell text-right text-[9px] font-semibold">${formatMXN(precioUnitario)}</td>
+        <td class="data-cell text-center font-bold" style="font-size: 8.5px; padding: 4px 2px;">${dist.totalUnidades}</td>
+        <td class="data-cell text-right" style="font-size: 7.5px; padding: 4px 6px;">${formatMXN(precioUnitario)}</td>
         ${weeklyCells}
-        <td class="data-cell text-right font-bold text-red-700 text-[10px]">${formatMXN(totalInversionProducto)}</td>
+        <td class="data-cell text-right font-bold text-red-700" style="font-size: 8.5px; padding: 4px 6px;">${formatMXN(totalInversionProducto)}</td>
       </tr>
     `;
   }).join('');
@@ -36,20 +45,19 @@ export const generatePDF = (cotz, configuracion) => {
   const totalPorSemana = Array.from({ length: totalSemanas }).map((_, weekIndex) =>
     cotz.distribucion.reduce((sum, dist) => sum + (dist.distribucionSemanal[weekIndex] || 0), 0)
   );
-  const totalSemanalCells = totalPorSemana.map(total => `<td class="footer-cell text-center text-[9px]">${total}</td>`).join('');
 
   const html = `
     <!DOCTYPE html>
     <html lang="es">
     <head>
       <meta charset="UTF-8">
-      <title>Propuesta Comercial - ${cotz.cliente.nombre}</title>
+      <title>Orden de Pauta - ${cotz.cliente.nombre}</title>
       <script src="https://cdn.tailwindcss.com"></script>
       <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
       <style>
         @page {
           size: letter;
-          margin: 15mm;
+          margin: 0;
         }
         :root {
           --tvsa-red: #cc0000;
@@ -57,25 +65,25 @@ export const generatePDF = (cotz, configuracion) => {
         }
         body { 
           font-family: 'Inter', sans-serif; 
-          background-color: #f4f4f4;
+          background-color: #eee;
           color: #333;
           margin: 0;
           padding: 0;
+          -webkit-print-color-adjust: exact;
         }
         .order-container {
           width: 215.9mm;
-          min-height: 279.4mm;
           margin: 0 auto;
           background: white;
-          padding: 10mm;
-          box-shadow: 0 0 40px rgba(0,0,0,0.1);
+          padding: 5mm 15mm;
           box-sizing: border-box;
           position: relative;
+          overflow: hidden;
         }
         .header {
-          border-bottom: 3px solid var(--tvsa-red);
-          padding-bottom: 15px;
-          margin-bottom: 20px;
+          border-bottom: 2px solid var(--tvsa-red);
+          padding-bottom: 6px;
+          margin-bottom: 15px;
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -83,129 +91,169 @@ export const generatePDF = (cotz, configuracion) => {
         .logo-text {
           font-family: 'Montserrat', sans-serif;
           font-weight: 900;
-          font-size: 24px;
+          font-size: 20px;
           color: var(--tvsa-red);
           letter-spacing: -1px;
-        }
-        .logo-univision {
-          color: #333;
         }
         .doc-title {
           font-family: 'Montserrat', sans-serif;
           font-weight: 900;
           text-transform: uppercase;
-          font-size: 11px;
+          font-size: 9px;
           background: var(--tvsa-dark);
           color: white;
-          padding: 3px 10px;
-          border-radius: 3px;
+          padding: 2px 8px;
+          border-radius: 2px;
         }
         .client-info-box {
           background: #f9f9f9;
-          border-radius: 10px;
-          padding: 15px;
-          margin-bottom: 20px;
+          border-radius: 6px;
+          padding: 10px 12px;
+          margin-bottom: 25px; /* Más aire para bajar el detalle */
           display: grid;
           grid-template-cols: 2fr 1fr;
-          gap: 15px;
+          gap: 10px;
         }
         .label {
-          font-size: 9px;
+          font-size: 7px;
           font-weight: 800;
           color: #999;
           text-transform: uppercase;
-          margin-bottom: 1px;
         }
         .value {
           font-weight: 700;
           color: var(--tvsa-dark);
-          font-size: 14px;
+          font-size: 11px;
         }
         .pauta-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 20px;
+          margin-bottom: 15px;
         }
         .header-cell {
           background: #f0f0f0;
           color: #666;
-          font-size: 9px;
+          font-size: 7.5px;
           font-weight: 800;
           text-transform: uppercase;
-          padding: 8px 4px;
+          padding: 6px 3px;
           border: 1px solid #ddd;
         }
         .data-cell {
-          padding: 8px 6px;
+          padding: 6px 4px;
           border: 1px solid #eee;
-          font-size: 10px;
+          font-size: 8.5px;
         }
         .footer-cell {
           background: #eee;
           font-weight: 800;
-          font-size: 10px;
-          padding: 8px 4px;
+          font-size: 8.5px;
+          padding: 6px 4px;
         }
-        .product-title {
-          font-weight: 800;
-          color: var(--tvsa-dark);
-          display: block;
+        .summary-section {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          margin-top: 15px; /* Más aire antes de los totales */
+          gap: 8px;
+          width: 100%;
         }
-        .product-subtitle {
-          font-size: 8px;
-          color: #777;
-          display: block;
+        .vix-box {
+          border: 1px solid #eee;
+          border-radius: 6px;
+          padding: 12px 15px; /* Más aire al VIX */
+          width: 220px;
+          text-align: right;
+          background: #fdfdfd;
         }
-        .summary-grid {
-          display: grid;
-          grid-template-cols: 1.2fr 0.8fr;
-          gap: 30px;
-          margin-top: 10px;
+        .totals-column {
+          width: 220px;
+          text-align: right;
         }
         .total-box {
           background: var(--tvsa-red);
           color: white;
-          border-radius: 10px;
-          padding: 15px;
+          border-radius: 4px;
+          padding: 10px 15px;
+          display: inline-block;
           text-align: right;
+          width: 100%;
+          box-sizing: border-box;
+          box-shadow: 0 2px 4px rgba(204,0,0,0.1);
         }
         .total-label {
           font-weight: 800;
-          font-size: 11px;
+          font-size: 9px;
           text-transform: uppercase;
-          opacity: 0.8;
         }
         .total-value {
-          font-size: 24px;
+          font-size: 19px;
           font-weight: 900;
           font-family: 'Montserrat', sans-serif;
         }
+        .iva-disclaimer {
+          font-size: 9px;
+          font-weight: 900;
+          color: #333;
+          margin-top: 2px;
+          text-transform: uppercase;
+          padding-right: 5px;
+        }
+        .disclaimer-text {
+          font-size: 7px; 
+          color: #888; 
+          line-height: 1.3; 
+          margin-top: 10px; 
+          max-width: 60%;
+        }
         .signature-area {
-          margin-top: 50px;
-          display: grid;
-          grid-template-cols: 1fr 1fr;
-          gap: 80px;
+          margin-top: 110px; /* Aumentado para bajar las firmas y pie de página */
+          margin-bottom: 25px;
+          display: flex;
+          justify-content: center;
+          width: 100%;
+          gap: 60px;
+        }
+        .signature-block {
+          flex: 1;
+          max-width: 250px;
+          padding: 15px;
+          border: 1px solid #eee;
+          border-radius: 6px;
           text-align: center;
+          background: #fcfcfc;
         }
         .signature-line {
-          border-top: 1px solid #333;
+          border-top: 1.5px solid #333;
+          margin-top: 45px;
           padding-top: 8px;
           font-size: 9px;
+          font-weight: 800;
+          text-transform: uppercase;
+          color: var(--tvsa-dark);
+        }
+        .page-footer {
+          text-align: center;
+          font-size: 7.5px;
+          color: #999;
           font-weight: 700;
           text-transform: uppercase;
+          width: 100%;
+          border-top: 1px solid #eee;
+          padding-top: 10px;
+          margin-bottom: 5mm;
         }
         
         @media print {
-          body { background: white; padding: 0; }
-          .order-container { box-shadow: none; padding: 10mm; margin: 0; width: 100%; height: auto; }
-          .no-print { display: none; }
+          body { background: white; }
+          .order-container { box-shadow: none; margin: 0; border: none; min-height: auto; }
+          .no-print { display: none !important; }
         }
       </style>
     </head>
     <body>
       <div class="no-print p-4 flex justify-center gap-4 bg-gray-800">
-        <button onclick="window.print()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-all flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        <button onclick="window.print()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-all">
           Imprimir / Descargar PDF
         </button>
         <button onclick="window.close()" class="bg-white hover:bg-gray-100 text-gray-800 font-bold py-2 px-6 rounded-full shadow-lg transition-all">
@@ -215,26 +263,26 @@ export const generatePDF = (cotz, configuracion) => {
 
       <div class="order-container">
         <div class="header">
-          <div class="logo-text">televisa<span class="logo-univision">univision</span></div>
+          <div class="logo-text">televisa<span style="color:#333">univision</span></div>
           <div class="doc-title">Propuesta Comercial de Pauta</div>
         </div>
 
         <div class="client-info-box">
           <div>
             <div class="label">Razon Social / Cliente</div>
-            <div class="value">${cotz.cliente.nombre}</div>
-            <div class="label" style="margin-top:10px">ID de Propuesta</div>
-            <div class="value" style="font-size: 11px uppercase">${cotz.id}</div>
+            <div class="value" style="font-size: 13px;">${cotz.cliente.nombre}</div>
+            <div class="label" style="margin-top:8px">ID de Propuesta</div>
+            <div class="value" style="font-size: 9px">${cotz.id}</div>
           </div>
           <div style="text-align: right">
             <div class="label">Fecha de Emisión</div>
-            <div class="value">${new Date().toLocaleDateString('es-MX')}</div>
-            <div class="label" style="margin-top:10px">Vigencia</div>
-            <div class="value" style="font-size: 11px uppercase">${cotz.diasCampana} Días de Campaña</div>
+            <div class="value" style="font-size: 9px">${now.toLocaleDateString('es-MX')}</div>
+            <div class="label" style="margin-top:8px">Vigencia</div>
+            <div class="value" style="font-size: 9px">${cotz.diasCampana} Días de Campaña</div>
           </div>
         </div>
 
-        <h3 class="font-black uppercase text-[10px] mb-3 tracking-widest text-gray-400">Distribución Semanal y Frecuencias</h3>
+        <h3 style="font-size: 8px; font-weight: 900; text-transform: uppercase; color: #777; margin-bottom: 8px; letter-spacing: 1px;">Distribución Semanal y Frecuencias</h3>
         
         <table class="pauta-table">
           <thead>
@@ -251,67 +299,50 @@ export const generatePDF = (cotz, configuracion) => {
           </tbody>
           <tfoot>
             <tr>
-              <td class="footer-cell text-right" style="padding-right: 15px">Resumen de Unidades</td>
-              <td class="footer-cell text-center">${totalUnidadesGeneral}</td>
+              <td class="footer-cell text-right" style="padding-right: 15px; font-size: 8px;">Unidades Totales</td>
+              <td class="footer-cell text-center" style="font-size: 9px;">${totalUnidadesGeneral}</td>
               <td class="footer-cell"></td>
-              ${totalPorSemana.map(total => `<td class="footer-cell text-center text-[9px]">${total}</td>`).join('')}
-              <td class="footer-cell text-right font-black">${formatMXN(cotz.subtotalTV)}</td>
+              ${totalPorSemana.map(total => `<td class="footer-cell text-center" style="font-size: 9px;">${total}</td>`).join('')}
+              <td class="footer-cell text-right" style="font-weight: 900; color: var(--tvsa-red); font-size: 9px;">${formatMXN(cotz.subtotalTV)}</td>
             </tr>
           </tfoot>
         </table>
 
-        <div class="summary-grid">
-          <div>
-            ${cotz.paqueteVIX ? `
-              <div style="border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 15px; position: relative;">
-                <div class="label" style="color: var(--tvsa-red)">Servicios Digitales Adicionales</div>
-                <div class="flex justify-between items-start">
-                  <div>
-                    <div class="value" style="font-size: 12px">${cotz.paqueteVIX.nombre}</div>
-                    <div style="font-size: 8px; color: #666; margin-top: 3px">
-                      ${cotz.paqueteVIX.impresiones.toLocaleString()} Impresiones | ${cotz.paqueteVIX.dias} Días de Campaña
-                    </div>
-                  </div>
-                  <div class="font-black text-[13px] text-gray-800">${formatMXN(cotz.costoVIX)}</div>
-                </div>
+        <div class="summary-section">
+          ${cotz.paqueteVIX ? `
+            <div class="vix-box">
+              <div class="label" style="color: var(--tvsa-red)">Inversión Digital</div>
+              <div style="font-weight: 900; font-size: 13px; color: #111;">${formatMXN(cotz.costoVIX)}</div>
+              <div style="font-size: 8px; color: #555; margin-top: 3px">
+                ${cotz.paqueteVIX.nombre} | ${cotz.paqueteVIX.impresiones.toLocaleString()} Impresiones
               </div>
-            ` : ''}
-            <div style="font-size: 9px; color: #888; line-height: 1.4; background: #fafafa; padding: 10px; border-radius: 6px;">
-              <strong>Términos y Condiciones:</strong><br>
-              Esta propuesta comercial está sujeta a disponibilidad de espacios. Los importes expresados no incluyen el Impuesto al Valor Agregado (IVA). Las tarifas presentadas son netas y aplican según la vigencia especificada. Propuesta de carácter informativo no constituye una factura definitiva.
             </div>
-          </div>
+          ` : ''}
 
-          <div class="space-y-2">
-            <div class="flex justify-between items-center text-xs font-bold border-b pb-1">
-              <span class="text-gray-400 uppercase text-[9px]">Subtotal Neto</span>
-              <span>${formatMXN(cotz.subtotalGeneral)}</span>
+          <div class="totals-column">
+            <div class="total-box">
+              <div class="total-label" style="font-size: 9px;">Inversión Final</div>
+              <div class="total-value">${formatMXN(cotz.subtotalGeneral)}</div>
             </div>
-            <div class="flex justify-between items-center text-xs font-bold border-b pb-1">
-              <span class="text-gray-400 uppercase text-[9px]">IVA (${((configuracion.iva_porcentaje || 0.16) * 100).toFixed(0)}%)</span>
-              <span>${formatMXN(cotz.iva)}</span>
-            </div>
-            
-            <div class="total-box mt-4">
-              <div class="total-label">Inversión Final + IVA</div>
-              <div class="total-value">${formatMXN(cotz.total)}</div>
-            </div>
+            <div class="iva-disclaimer">MÁS IVA</div>
           </div>
+        </div>
+
+        <div class="disclaimer-text">
+           Propuesta sujeta a disponibilidad de espacios. Precios de lista vigentes según contrato. Esta proyección no incluye cargos por producción u otros servicios no especificados.
         </div>
 
         <div class="signature-area">
-          <div style="flex: 1;">
-            <div style="height: 60px;"></div>
-            <div class="signature-line">Por Televisa Univisión (MID)</div>
+          <div class="signature-block">
+            <div class="signature-line">Por Televisa Univisión</div>
           </div>
-          <div style="flex: 1;">
-            <div style="height: 60px;"></div>
-            <div class="signature-line">Conformidad del Cliente</div>
+          <div class="signature-block">
+            <div class="signature-line">Nombre y Firma Aceptación Cliente</div>
           </div>
         </div>
 
-        <div style="position: absolute; bottom: 8mm; left: 0; right: 0; text-align: center; font-size: 8px; color: #bbb; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">
-          Televisa Mid - Proyección de Pauta Publicitaria 2025
+        <div class="page-footer">
+          Generado el: ${fechaImpresion} | TELEVISA UNIVISIÓN MID - PROPUESTA PUBLICITARIA 2025
         </div>
       </div>
     </body>
