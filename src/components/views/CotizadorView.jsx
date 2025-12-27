@@ -82,9 +82,9 @@ const CotizadorView = ({
                 />
 
                 {!cotizacionResult ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                        {/* Sidebar Izquierda */}
-                        <div className="lg:col-span-4 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                        {/* Sidebar Izquierda - 12 columns on mobile, 5 on tablets, 4 on desktop */}
+                        <div className="md:col-span-5 lg:col-span-4 space-y-6">
                             <ClientSelector
                                 clientes={clientes}
                                 clienteSeleccionado={clienteSeleccionado}
@@ -107,8 +107,8 @@ const CotizadorView = ({
                             />
                         </div>
 
-                        {/* Panel Central/Derecha */}
-                        <div className="lg:col-span-8 space-y-6">
+                        {/* Panel Central/Derecha - 12 columns on mobile, 7 on tablets, 8 on desktop */}
+                        <div className="md:col-span-7 lg:col-span-8 space-y-6">
                             <div className="grid grid-cols-1 gap-6">
                                 <ProductGrid
                                     productos={productos}

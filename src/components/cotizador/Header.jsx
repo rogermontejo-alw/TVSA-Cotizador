@@ -14,7 +14,7 @@ const Header = ({
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6 border-l-8 border-red-700">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-4 gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Sistema de Cotizaciones Televisa MID</h1>
+                    <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-gray-800 tracking-tight">Sistema de Cotizaciones Televisa MID</h1>
                     <p className="text-gray-500 mt-1 font-medium">Diseñado por Roger Montejo</p>
                 </div>
 

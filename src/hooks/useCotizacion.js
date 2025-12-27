@@ -148,6 +148,7 @@ export const useCotizacion = (data) => {
             paqueteVIX: paqueteVIXSeleccionado,
             costoVIX,
             subtotalGeneral,
+            presupuestoBase: parseFloat(presupuesto) || 0,
             iva,
             total,
             diasCampana,
