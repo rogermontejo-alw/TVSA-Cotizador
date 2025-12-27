@@ -314,7 +314,7 @@ export const generatePDF = (cotz, configuracion) => {
               <div class="label" style="color: var(--tvsa-red)">Inversión Digital</div>
               <div style="font-weight: 900; font-size: 13px; color: #111;">${formatMXN(cotz.costoVIX)}</div>
               <div style="font-size: 8px; color: #555; margin-top: 3px">
-                ${cotz.paqueteVIX.nombre} | ${cotz.paqueteVIX.impresiones.toLocaleString()} Impresiones
+                ${cotz.paqueteVIX.nombre} | ${(cotz.paqueteVIX.impresiones || 0).toLocaleString()} Impresiones
               </div>
             </div>
           ` : ''}

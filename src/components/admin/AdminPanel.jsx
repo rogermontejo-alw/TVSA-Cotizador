@@ -1,6 +1,7 @@
 import React from 'react';
 import { Settings } from 'lucide-react';
 import ClientForm from './ClientForm';
+import ClientManager from './ClientManager';
 import ConditionsForm from './ConditionsForm';
 import StatusMessage from './StatusMessage';
 
@@ -9,6 +10,7 @@ const AdminPanel = ({
     mensajeAdmin,
     setMensajeAdmin,
     guardarEnSheets,
+    eliminarRegistro,
     clientes,
     productos,
     condicionesCliente
@@ -54,6 +56,13 @@ const AdminPanel = ({
                         productos={productos}
                         condicionesCliente={condicionesCliente}
                         onSave={guardarEnSheets}
+                        setMensaje={setMensajeAdmin}
+                    />
+
+                    {/* Gestor de Clientes Existentes */}
+                    <ClientManager
+                        clientes={clientes}
+                        onEliminar={(id) => eliminarRegistro('clientes', 'cliente_id', id)}
                         setMensaje={setMensajeAdmin}
                     />
                 </div>

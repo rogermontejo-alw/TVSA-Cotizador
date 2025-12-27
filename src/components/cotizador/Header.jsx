@@ -58,12 +58,22 @@ const Header = ({
             </div>
 
             {ultimaActualizacion && (
-                <div className="flex items-center gap-4 text-xs text-gray-500 bg-gray-50 p-2 rounded-md border border-gray-100 overflow-x-auto whitespace-nowrap">
-                    <span><strong>Última actualización:</strong> {ultimaActualizacion.toLocaleTimeString()}</span>
-                    <span className="hidden sm:inline">|</span>
-                    <span><strong>Productos hincados:</strong> {productosCount}</span>
-                    <span className="hidden sm:inline">|</span>
-                    <span><strong>Clientes activos:</strong> {clientesCount}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-[10px] md:text-xs text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-inner">
+                    <div className="flex items-center gap-2 min-w-fit">
+                        <RefreshCw size={12} className="text-gray-400" />
+                        <span><strong>Última actualización:</strong> {ultimaActualizacion.toLocaleTimeString()}</span>
+                    </div>
+                    <div className="hidden sm:block w-px h-3 bg-gray-200"></div>
+                    <div className="flex flex-wrap gap-4">
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                            <span className="font-bold uppercase tracking-tighter"><strong>Productos:</strong> {productosCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                            <span className="font-bold uppercase tracking-tighter"><strong>Clientes:</strong> {clientesCount}</span>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

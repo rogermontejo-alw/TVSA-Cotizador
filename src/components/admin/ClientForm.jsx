@@ -59,9 +59,10 @@ const ClientForm = ({ onSave, setMensaje }) => {
             <div className="p-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nombre Comercial</label>
+                        <label htmlFor="nombre" className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nombre Comercial</label>
                         <input
                             type="text"
+                            id="nombre"
                             name="nombre"
                             value={clienteData.nombre}
                             onChange={handleClienteChange}
@@ -71,8 +72,9 @@ const ClientForm = ({ onSave, setMensaje }) => {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Segmento de Mercado</label>
+                        <label htmlFor="segmento" className="text-xs font-bold text-gray-400 uppercase tracking-widest">Segmento de Mercado</label>
                         <select
+                            id="segmento"
                             name="segmento"
                             value={clienteData.segmento}
                             onChange={handleClienteChange}
@@ -83,8 +85,9 @@ const ClientForm = ({ onSave, setMensaje }) => {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Tipo de Acuerdo</label>
+                        <label htmlFor="tipoAcuerdo" className="text-xs font-bold text-gray-400 uppercase tracking-widest">Tipo de Acuerdo</label>
                         <select
+                            id="tipoAcuerdo"
                             name="tipoAcuerdo"
                             value={clienteData.tipoAcuerdo}
                             onChange={handleClienteChange}
