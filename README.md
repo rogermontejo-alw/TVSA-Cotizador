@@ -5,4 +5,13 @@ cd cotizador-mid
 
 # 2. Instalar todas las dependencias
 npm install
-[ VI ] COMANDOS DE EJECUCIÓN Y DESPLIEGUEComandoAcciónNotasnpm run devInicia el servidor local de desarrollo.Ver en http://localhost:5173npm run buildGenera la carpeta dist/ para producción.Código optimizado y minificado.npm run deployCompila y despliega a GitHub Pages.Requiere el paquete gh-pages instalado.=========================================================
+[ VI ] COMANDOS DE EJECUCIÓN Y DESPLIEGUE
+Comando Acción Notas
+npm run dev Inicia el servidor local de desarrollo. Ver en http://localhost:5173
+npm run build Genera la carpeta dist/ para producción. Código optimizado y minificado.
+npm run deploy Compila y despliega a GitHub Pages. Requiere el paquete gh-pages instalado.
+
+[ VII ] REGLAS DE TRABAJO CON IA
+1. Regla estricta: ante cada instrucción del usuario, el asistente no debe codificar ni subir nada a GitHub sin antes explicar el plan y recibir aprobación.
+
+=========================================================
