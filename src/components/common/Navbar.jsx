@@ -36,8 +36,8 @@ const Navbar = ({ vistaActual, setVistaActual, session, onLogout }) => {
                         className="flex items-center gap-3 cursor-pointer group"
                         onClick={() => setVistaActual('dashboard')}
                     >
-                        <div className="w-8 h-8 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-900/50 group-hover:scale-105 transition-transform">
-                            <span className="font-black text-xs tracking-tighter">TV</span>
+                        <div className="w-8 h-8 p-1.5 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-black/20 group-hover:scale-105 transition-transform">
+                            <img src="/logo-tvsa.png" alt="TVSA Logo" className="w-full h-full object-contain" />
                         </div>
                         <div className="flex flex-col">
                             <span className="font-black text-sm leading-none tracking-tighter">
