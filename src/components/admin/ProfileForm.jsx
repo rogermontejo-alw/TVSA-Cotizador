@@ -1,239 +1,372 @@
-import React, { useState, useEffect } from 'react';
-import { User, Phone, Briefcase, Save, Mail, Lock, ShieldCheck, AlertCircle, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+import { User, Phone, Briefcase, Save, Mail, Lock, ShieldCheck, AlertCircle, RefreshCw, Trash2, Edit, UserPlus, X, ChevronRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
-const ProfileForm = ({ perfil, onSave, setMensaje }) => {
-    const [formData, setFormData] = useState({
+const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje }) => {
+    // Estado para gestión de usuarios (Lista y Edición)
+    const [editMode, setEditMode] = useState(false); // false = list, true = form
+    const [selectedUser, setSelectedUser] = useState(null); // null = nuevo usuario
+    const [userFormData, setUserFormData] = useState({
         nombre_completo: '',
         telefono: '',
-        puesto: 'Asesor Comercial'
-    });
-
-    const [securityData, setSecurityData] = useState({
-        newEmail: perfil?.email || '',
+        puesto: 'Asesor Comercial',
+        email: '',
         newPassword: '',
         confirmPassword: ''
     });
 
-    const [isUpdatingAuth, setIsUpdatingAuth] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
 
-    useEffect(() => {
-        if (perfil) {
-            setFormData({
-                nombre_completo: perfil.nombre_completo || '',
-                telefono: perfil.telefono || '',
-                puesto: perfil.puesto || 'Asesor Comercial'
+    const handleEditUser = (user) => {
+        setSelectedUser(user);
+        setUserFormData({
+            nombre_completo: user.nombre_completo || '',
+            telefono: user.telefono || '',
+            puesto: user.puesto || 'Asesor Comercial',
+            email: user.email || '',
+            newPassword: '',
+            confirmPassword: ''
+        });
+        setEditMode(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleNewUser = () => {
+        setSelectedUser(null);
+        setUserFormData({
+            nombre_completo: '',
+            telefono: '',
+            puesto: 'Asesor Comercial',
+            email: '',
+            newPassword: '',
+            confirmPassword: ''
+        });
+        setEditMode(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleSubmitUser = async (e) => {
+        e.preventDefault();
+        setIsUpdating(true);
+        try {
+            // 1. Validaciones de Contraseña
+            if (userFormData.newPassword) {
+                if (userFormData.newPassword.length < 6) {
+                    throw new Error('La contraseña debe tener al menos 6 caracteres');
+                }
+                if (userFormData.newPassword !== userFormData.confirmPassword) {
+                    throw new Error('Las contraseñas no coinciden');
+                }
+            }
+
+            // 2. Sincronización con Supabase Auth (Solo si es mi propio usuario)
+            if (selectedUser?.id === perfil?.id) {
+                const authUpdate = {};
+                if (userFormData.email !== perfil.email) authUpdate.email = userFormData.email;
+                if (userFormData.newPassword) authUpdate.password = userFormData.newPassword;
+
+                if (Object.keys(authUpdate).length > 0) {
+                    const { error: authError } = await supabase.auth.updateUser(authUpdate);
+                    if (authError) throw authError;
+                }
+            }
+
+            // 3. Sincronización con Tabla 'perfiles' (Database)
+            const payload = {
+                nombre_completo: userFormData.nombre_completo,
+                telefono: userFormData.telefono,
+                puesto: userFormData.puesto,
+                email: userFormData.email, // Guardamos el email en la DB para el directorio
+                id: selectedUser?.id // Si es nuevo, esto es undefined
+            };
+
+            await onSave('perfiles', payload);
+
+            setEditMode(false);
+            setMensaje({
+                tipo: 'exito',
+                texto: selectedUser ? 'Datos guardados y vinculados correctamente' : 'Perfil creado en base de datos'
             });
-            setSecurityData(prev => ({ ...prev, newEmail: perfil.email }));
+        } catch (err) {
+            setMensaje({ tipo: 'error', texto: err.message });
+        } finally {
+            setIsUpdating(false);
         }
-    }, [perfil]);
+    };
+
+    const handleDeleteUser = async (user) => {
+        if (perfiles.length <= 1) {
+            setMensaje({ tipo: 'error', texto: 'No puedes eliminar al único usuario del sistema' });
+            return;
+        }
+
+        if (user.id === perfil?.id) {
+            setMensaje({ tipo: 'error', texto: 'No puedes eliminarte a ti mismo.' });
+            return;
+        }
+
+        if (window.confirm(`¿Seguro que deseas revocar el acceso a ${user.nombre_completo}?`)) {
+            await onEliminar(user.id);
+        }
+    };
 
     if (!perfil) {
         return (
             <div className="bg-white rounded-[2rem] shadow-xl p-20 text-center border border-gray-100 max-w-2xl mx-auto flex flex-col items-center">
                 <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest">Sincronizando perfil...</p>
+                <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest">Sincronizando perfiles...</p>
             </div>
         );
     }
 
-    const handleSubmitProfile = async (e) => {
-        e.preventDefault();
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('No hay sesión activa');
-
-            const payload = {
-                id: user.id,
-                ...formData
-            };
-
-            await onSave('perfiles', payload);
-        } catch (err) {
-            setMensaje({ tipo: 'error', texto: err.message });
-        }
-    };
-
-    const handleUpdateSecurity = async (e) => {
-        e.preventDefault();
-        setIsUpdatingAuth(true);
-
-        try {
-            // Validaciones básicas
-            if (securityData.newPassword && securityData.newPassword !== securityData.confirmPassword) {
-                throw new Error('Las contraseñas no coinciden');
-            }
-
-            const updatePayload = {};
-            if (securityData.newEmail !== perfil.email) {
-                updatePayload.email = securityData.newEmail;
-            }
-            if (securityData.newPassword) {
-                updatePayload.password = securityData.newPassword;
-            }
-
-            if (Object.keys(updatePayload).length === 0) {
-                throw new Error('No hay cambios de seguridad para aplicar');
-            }
-
-            const { error } = await supabase.auth.updateUser(updatePayload);
-            if (error) throw error;
-
-            setMensaje({
-                tipo: 'exito',
-                texto: securityData.newEmail !== perfil.email
-                    ? 'Se ha enviado un correo de confirmación a tu nueva dirección.'
-                    : 'Contraseña actualizada correctamente.'
-            });
-
-            setSecurityData(prev => ({ ...prev, newPassword: '', confirmPassword: '' }));
-        } catch (err) {
-            setMensaje({ tipo: 'error', texto: err.message });
-        } finally {
-            setIsUpdatingAuth(false);
-        }
-    };
-
     return (
-        <div className="space-y-8 max-w-4xl mx-auto animate-in fade-in duration-500">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-8 max-w-5xl mx-auto animate-in fade-in duration-500 pb-20">
 
-                {/* 1. Datos de Firma / Perfil */}
-                <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100 flex flex-col h-full">
-                    <div className="p-8 border-b border-gray-50 flex items-center gap-4 bg-slate-900 text-white">
-                        <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <User size={20} />
+            <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100">
+                {/* Header Responsivo */}
+                <div className="px-6 md:px-8 py-5 md:py-6 bg-slate-900 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 md:w-10 md:h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                            <ShieldCheck size={18} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-black tracking-tight uppercase">Datos de Firma</h3>
-                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">Publicidad en PDF</p>
+                            <h3 className="text-base md:text-lg font-black text-white uppercase tracking-tight">Directorio y Acceso</h3>
+                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Gestión de Usuarios</p>
                         </div>
                     </div>
-
-                    <form onSubmit={handleSubmitProfile} className="p-8 space-y-6 flex-1">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nombre Completo</label>
-                            <div className="relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
-                                <input
-                                    type="text"
-                                    value={formData.nombre_completo}
-                                    onChange={(e) => setFormData({ ...formData, nombre_completo: e.target.value })}
-                                    className="w-full p-4 pl-12 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none text-sm"
-                                    placeholder="Tu nombre en cotizaciones"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Puesto / Cargo</label>
-                            <div className="relative">
-                                <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
-                                <input
-                                    type="text"
-                                    value={formData.puesto}
-                                    onChange={(e) => setFormData({ ...formData, puesto: e.target.value })}
-                                    className="w-full p-4 pl-12 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none text-sm"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Teléfono</label>
-                            <div className="relative">
-                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
-                                <input
-                                    type="tel"
-                                    value={formData.telefono}
-                                    onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                                    className="w-full p-4 pl-12 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none text-sm"
-                                />
-                            </div>
-                        </div>
-
+                    {!editMode && (
                         <button
-                            type="submit"
-                            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-600 transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2 mt-4"
+                            onClick={handleNewUser}
+                            className="px-3 md:px-4 py-2 bg-white text-slate-900 rounded-lg font-black uppercase tracking-widest text-[8px] md:text-[9px] hover:bg-red-600 hover:text-white transition-all shadow-md flex items-center gap-2 active:scale-95"
                         >
-                            <Save size={16} /> Guardar Firma
+                            <UserPlus size={14} /> <span className="hidden xs:inline">Nuevo</span>
                         </button>
-                    </form>
+                    )}
                 </div>
 
-                {/* 2. Seguridad / Acceso */}
-                <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100 flex flex-col h-full">
-                    <div className="p-8 border-b border-gray-50 flex items-center gap-4 bg-red-600 text-white">
-                        <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg">
-                            <ShieldCheck size={20} />
+                {editMode ? (
+                    <div className="p-6 md:p-8 animate-in slide-in-from-top-4 duration-300">
+                        <div className="flex justify-between items-center mb-6 md:mb-8 pb-4 border-b border-gray-100">
+                            <h4 className="text-[10px] md:text-[11px] font-black text-slate-900 uppercase tracking-[0.2em] md:tracking-[0.3em]">
+                                {selectedUser ? `Edición: ${selectedUser.nombre_completo}` : 'Nuevo Registro de Colaborador'}
+                            </h4>
+                            <button onClick={() => setEditMode(false)} className="p-2 text-gray-400 hover:text-red-600 transition-all">
+                                <X size={20} />
+                            </button>
                         </div>
-                        <div>
-                            <h3 className="text-lg font-black tracking-tight uppercase">Seguridad y Acceso</h3>
-                            <p className="text-[8px] font-bold text-red-200 uppercase tracking-[0.2em]">Credenciales Supabase</p>
+
+                        <form onSubmit={handleSubmitUser} className="space-y-6 md:space-y-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+                                {/* Columna 1: Perfil Público */}
+                                <div className="space-y-4 md:space-y-5">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Nombre Completo</label>
+                                        <div className="relative">
+                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                                            <input
+                                                type="text"
+                                                value={userFormData.nombre_completo}
+                                                onChange={(e) => setUserFormData({ ...userFormData, nombre_completo: e.target.value })}
+                                                className="w-full p-3.5 pl-12 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-xl transition-all font-bold outline-none text-sm"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Puesto Corporativo</label>
+                                        <div className="relative">
+                                            <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                                            <input
+                                                type="text"
+                                                value={userFormData.puesto}
+                                                onChange={(e) => setUserFormData({ ...userFormData, puesto: e.target.value })}
+                                                className="w-full p-3.5 pl-12 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-xl transition-all font-bold outline-none text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Teléfono Directo</label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                                            <input
+                                                type="tel"
+                                                value={userFormData.telefono}
+                                                onChange={(e) => setUserFormData({ ...userFormData, telefono: e.target.value })}
+                                                className="w-full p-3.5 pl-12 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-xl transition-all font-bold outline-none text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Columna 2: Seguridad y Auth */}
+                                <div className="bg-slate-50 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] space-y-4 md:space-y-5 border border-slate-100">
+                                    <h5 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-1">
+                                        <Lock size={12} className="text-red-500" /> Credenciales de Sistema
+                                    </h5>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Email de Acceso</label>
+                                        <div className="relative">
+                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                                            <input
+                                                type="email"
+                                                value={userFormData.email}
+                                                onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
+                                                disabled={selectedUser && selectedUser.id !== perfil.id}
+                                                className="w-full p-3.5 pl-12 bg-white border border-gray-100 focus:border-red-500 rounded-xl transition-all font-bold outline-none text-sm disabled:opacity-60"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{selectedUser?.id === perfil?.id ? 'Cambiar Contraseña' : 'Password'}</label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                                            <input
+                                                type="password"
+                                                value={userFormData.newPassword}
+                                                onChange={(e) => setUserFormData({ ...userFormData, newPassword: e.target.value })}
+                                                disabled={selectedUser && selectedUser.id !== perfil.id}
+                                                placeholder={selectedUser?.id === perfil?.id ? "Mínimo 6 caracteres" : "Restringido"}
+                                                className="w-full p-3.5 pl-12 bg-white border border-gray-100 focus:border-red-500 rounded-xl transition-all font-bold outline-none text-sm disabled:opacity-60"
+                                            />
+                                        </div>
+                                    </div>
+                                    {selectedUser?.id === perfil?.id && userFormData.newPassword && (
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar Password</label>
+                                            <input
+                                                type="password"
+                                                value={userFormData.confirmPassword}
+                                                onChange={(e) => setUserFormData({ ...userFormData, confirmPassword: e.target.value })}
+                                                className="w-full p-3.5 bg-white border border-gray-100 focus:border-red-500 rounded-xl transition-all font-bold outline-none text-sm"
+                                            />
+                                        </div>
+                                    )}
+                                    {selectedUser && selectedUser.id !== perfil.id && (
+                                        <div className="p-3 bg-slate-100/50 rounded-lg flex items-start gap-2">
+                                            <AlertCircle size={14} className="text-slate-400 mt-0.5" />
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase leading-relaxed italic">
+                                                Las claves de acceso son privadas. Solo el titular puede modificarlas desde su propio panel.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 border-t border-gray-100">
+                                <button
+                                    type="submit"
+                                    disabled={isUpdating}
+                                    className="flex-1 py-4 bg-slate-900 text-white rounded-xl font-black uppercase tracking-widest text-[9px] md:text-[10px] hover:bg-emerald-600 transition-all shadow-xl flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                                >
+                                    {isUpdating ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
+                                    {selectedUser ? 'Aplicar y Sincronizar' : 'Vincular a Sistema'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setEditMode(false)}
+                                    className="px-6 md:px-8 py-4 bg-gray-50 text-slate-400 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-[10px] hover:bg-gray-100 transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                ) : (
+                    <div className="w-full">
+                        {/* Versión Mobile: Lista de Cartas */}
+                        <div className="grid grid-cols-1 md:hidden divide-y divide-gray-100">
+                            {perfiles.map(u => (
+                                <div key={u.id} className={`p-5 flex items-center justify-between gap-4 ${u.id === perfil.id ? 'bg-red-50/20' : ''}`}>
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black shadow-sm
+                                            ${u.id === perfil.id ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                            {u.nombre_completo?.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-1.5">
+                                                <p className="font-black text-slate-900 text-xs truncate uppercase tracking-tight">{u.nombre_completo}</p>
+                                                {u.id === perfil.id && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>}
+                                            </div>
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest truncate">{u.puesto || 'Colaborador'}</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => handleEditUser(u)}
+                                        className="p-3 bg-slate-50 text-slate-400 rounded-xl active:bg-slate-900 active:text-white transition-all"
+                                    >
+                                        <ChevronRight size={18} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Versión Desktop: Tabla Tradicional */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-slate-50/50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="px-8 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Identidad</th>
+                                        <th className="px-8 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Contacto / Email</th>
+                                        <th className="px-8 py-4 text-right text-[9px] font-black text-gray-400 uppercase tracking-widest">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {perfiles.map(u => (
+                                        <tr key={u.id} className={`hover:bg-slate-50/30 transition-colors group ${u.id === perfil.id ? 'bg-red-50/10' : ''}`}>
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black transition-all shadow-sm
+                                                        ${u.id === perfil.id ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-900 group-hover:text-white'}`}>
+                                                        {u.nombre_completo?.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="font-black text-slate-900 text-sm truncate uppercase tracking-tight leading-none">{u.nombre_completo}</p>
+                                                            {u.id === perfil.id && <span className="bg-emerald-50 text-emerald-600 text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">TÚ (ADMIN)</span>}
+                                                        </div>
+                                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">{u.puesto || 'Colaborador'}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <p className="text-xs font-bold text-slate-600 mb-1 leading-none">{u.email}</p>
+                                                <div className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                                                    <Phone size={10} className="text-slate-200" />
+                                                    {u.telefono || 'S/N'}
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleEditUser(u)}
+                                                        className="p-2 bg-gray-50 text-gray-400 hover:bg-slate-900 hover:text-white rounded-lg transition-all shadow-sm"
+                                                        title="Editar"
+                                                    >
+                                                        <Edit size={14} />
+                                                    </button>
+                                                    {u.id !== perfil.id && (
+                                                        <button
+                                                            onClick={() => handleDeleteUser(u)}
+                                                            className="p-2 bg-red-50 text-red-300 hover:bg-red-600 hover:text-white rounded-lg transition-all shadow-sm"
+                                                            title="Eliminar"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-
-                    <form onSubmit={handleUpdateSecurity} className="p-8 space-y-6 flex-1">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nuevo Correo Electrónico</label>
-                            <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/50" size={18} />
-                                <input
-                                    type="email"
-                                    value={securityData.newEmail}
-                                    onChange={(e) => setSecurityData({ ...securityData, newEmail: e.target.value })}
-                                    className="w-full p-4 pl-12 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none text-sm"
-                                    placeholder="nuevo@televisa.com.mx"
-                                    required
-                                />
-                            </div>
-                            <p className="text-[9px] font-bold text-red-500/60 uppercase tracking-tighter px-1 flex items-center gap-1">
-                                <AlertCircle size={10} /> Requiere confirmación por correo
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nueva Contraseña</label>
-                                <div className="relative">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/50" size={18} />
-                                    <input
-                                        type="password"
-                                        value={securityData.newPassword}
-                                        onChange={(e) => setSecurityData({ ...securityData, newPassword: e.target.value })}
-                                        className="w-full p-4 pl-12 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none text-sm"
-                                        placeholder="Mínimo 6 caracteres"
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Confirmar Contraseña</label>
-                                <div className="relative">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400/50" size={18} />
-                                    <input
-                                        type="password"
-                                        value={securityData.confirmPassword}
-                                        onChange={(e) => setSecurityData({ ...securityData, confirmPassword: e.target.value })}
-                                        className="w-full p-4 pl-12 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none text-sm"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={isUpdatingAuth}
-                            className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-900 transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isUpdatingAuth ? <RefreshCw size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                            Actualizar Credenciales
-                        </button>
-                    </form>
-                </div>
+                )}
             </div>
 
-            <p className="text-center text-[9px] font-black text-gray-300 uppercase tracking-[0.5em] mt-8">
-                Portal de Administración Segura • Televisa MID 2025
+            <p className="text-center text-[7px] md:text-[8px] font-black text-gray-300 uppercase tracking-[0.4em] md:tracking-[0.6em] mt-8">
+                Infraestructura de Gestión Segura • Televisa MID 2025
             </p>
         </div>
     );

@@ -186,6 +186,7 @@ const App = () => {
             historial={historial}
             metasComerciales={metasComerciales}
             perfil={dbData.perfil}
+            perfiles={dbData.perfiles}
             limpiarTabla={limpiarTabla}
             masterContracts={masterContracts}
             calcularPrecioUnitario={cotizacionState.calcularPrecioUnitario}
@@ -244,6 +245,7 @@ const App = () => {
           <DashboardView
             historial={historial}
             clientes={clientes}
+            cobranza={dbData.cobranza}
             metasComerciales={metasComerciales}
             setVistaActual={setVistaActual}
             actualizarDashboard={cargarDatos}
@@ -296,6 +298,7 @@ const App = () => {
             masterContracts={masterContracts}
             clientes={clientes}
             cotizaciones={historial}
+            cobranza={dbData.cobranza}
             onSaveMC={guardarRegistro}
             onSaveQuote={guardarRegistro}
             setMensaje={setMensajeAdmin}
@@ -348,7 +351,7 @@ const App = () => {
             </p>
             <div className="h-4 w-px bg-slate-100"></div>
             <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-              V1.3.8 • 28 DEC 2025
+              V1.4.0 • 28 DEC 2025
             </p>
           </div>
         </div>

@@ -15,7 +15,8 @@ import {
     XCircle,
     Layout,
     Globe,
-    Briefcase
+    Briefcase,
+    DollarSign
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
@@ -230,6 +231,24 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
                 return [c.nombre_empresa, c.plaza, valAbiertas, valGanadas, valPerdidas, valGanadas];
             }).filter(Boolean);
+        } else if (id === 'cobranza-periodo') {
+            title = "REPORTE DE COBRANZA Y FACTURACIÓN";
+            headers = ['F. Programada', 'Cliente', 'Factura', 'Monto', 'Estado', 'F. Pago Real', 'Notas'];
+            rows = (cobranza || []).filter(c => {
+                const fecha = new Date(c.fecha_programada_cobro || c.created_at);
+                const start = new Date(fechaInicio);
+                const end = new Date(fechaFin);
+                end.setHours(23, 59, 59, 999);
+                return fecha >= start && fecha <= end;
+            }).sort((a, b) => new Date(a.fecha_programada_cobro) - new Date(b.fecha_programada_cobro)).map(c => [
+                c.fecha_programada_cobro ? new Date(c.fecha_programada_cobro).toLocaleDateString('es-MX') : '-',
+                c.cotizaciones?.clientes?.nombre_empresa || 'S/N',
+                c.numero_factura || 'PENDIENTE',
+                parseFloat(c.monto_facturado) || 0,
+                c.estatus_pago?.toUpperCase() || 'PENDIENTE',
+                c.fecha_cobro_real ? new Date(c.fecha_cobro_real).toLocaleDateString('es-MX') : '-',
+                c.notas || '-'
+            ]);
         }
 
         return { title, headers, rows };
@@ -237,7 +256,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
     const handleExportExcel = (mode = 'current') => {
         const reportIds = mode === 'all'
-            ? ['ventas-mes', 'ventas-canal', 'ventas-ciudad', 'control-cierres', 'resumen-clientes']
+            ? ['ventas-mes', 'ventas-canal', 'ventas-ciudad', 'control-cierres', 'resumen-clientes', 'cobranza-periodo']
             : [seccionReporte];
 
         const template = `
@@ -282,7 +301,8 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             const sheetName = id === 'ventas-mes' ? 'Mensual' :
                 id === 'ventas-canal' ? 'Canal' :
                     id === 'ventas-ciudad' ? 'Ciudad' :
-                        id === 'control-cierres' ? 'Cierres' : 'Pipeline';
+                        id === 'control-cierres' ? 'Cierres' :
+                            id === 'cobranza-periodo' ? 'Cobranza' : 'Pipeline';
 
             let rowXml = "";
 
@@ -387,6 +407,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     { id: 'ventas-ciudad', label: 'Ventas por Ciudad', icon: Globe },
                     { id: 'control-cierres', label: 'Control de Cierres', icon: Briefcase },
                     { id: 'resumen-clientes', label: 'Resumen Pipeline', icon: FileText },
+                    { id: 'cobranza-periodo', label: 'Cobranza / Facturas', icon: DollarSign },
                 ].map(tab => (
                     <button
                         key={tab.id}
@@ -704,6 +725,105 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                             </tbody>
                         </table>
                     </div>
+                )}
+
+                {/* 6. REPORTE DE COBRANZA */}
+                {seccionReporte === 'cobranza-periodo' && (
+                    <>
+                        {(() => {
+                            const filtrados = (cobranza || []).filter(c => {
+                                const fecha = new Date(c.fecha_programada_cobro || c.created_at);
+                                const start = new Date(fechaInicio);
+                                const end = new Date(fechaFin);
+                                end.setHours(23, 59, 59, 999);
+                                return fecha >= start && fecha <= end;
+                            });
+                            const totalFacturado = filtrados.reduce((acc, c) => acc + (parseFloat(c.monto_facturado) || 0), 0);
+                            const totalCobrado = filtrados.filter(c => c.estatus_pago === 'cobrado').reduce((acc, c) => acc + (parseFloat(c.monto_facturado) || 0), 0);
+                            const pendiente = totalFacturado - totalCobrado;
+
+                            return (
+                                <>
+                                    <div className="p-8 border-b border-gray-50 bg-slate-900 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-emerald-500/10 p-4 rounded-3xl border border-emerald-500/20">
+                                                <DollarSign className="text-emerald-500" size={32} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-black uppercase tracking-tighter">Reporte de Facturación y Cobranza</h3>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Corte periódico de ingresos proyectados vs reales</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-8">
+                                            <div className="text-right">
+                                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 italic">Total Facturado</p>
+                                                <p className="text-xl font-black">{formatMXN(totalFacturado)}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1 italic">Total Cobrado</p>
+                                                <p className="text-xl font-black text-emerald-500">{formatMXN(totalCobrado)}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1 italic">Pendiente Pago</p>
+                                                <p className="text-xl font-black text-red-500">{formatMXN(pendiente)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left">
+                                            <thead>
+                                                <tr className="bg-slate-50 text-[10px] font-black text-slate-900 uppercase tracking-widest">
+                                                    <th className="px-8 py-5">F. Programada</th>
+                                                    <th className="px-8 py-5">Cliente</th>
+                                                    <th className="px-8 py-5">Factura</th>
+                                                    <th className="px-8 py-5 text-right">Importe</th>
+                                                    <th className="px-8 py-5 text-center">Estatus</th>
+                                                    <th className="px-8 py-5 text-center">Fecha Cobro</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-50">
+                                                {filtrados.sort((a, b) => new Date(a.fecha_programada_cobro) - new Date(b.fecha_programada_cobro)).map((c, i) => (
+                                                    <tr key={i} className="hover:bg-slate-50 transition-colors group">
+                                                        <td className="px-8 py-5 text-[11px] font-bold text-slate-500">
+                                                            {c.fecha_programada_cobro ? new Date(c.fecha_programada_cobro).toLocaleDateString() : '-'}
+                                                        </td>
+                                                        <td className="px-8 py-5">
+                                                            <p className="text-xs font-black text-slate-900 uppercase">{c.cotizaciones?.clientes?.nombre_empresa || 'S/N'}</p>
+                                                            <p className="text-[9px] font-bold text-red-600 uppercase tracking-tight">Folio Q: {c.cotizaciones?.folio || 'S/N'}</p>
+                                                        </td>
+                                                        <td className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                            {c.numero_factura || 'PENDIENTE'}
+                                                        </td>
+                                                        <td className="px-8 py-5 text-right font-black text-slate-900 text-sm">
+                                                            {formatMXN(c.monto_facturado)}
+                                                        </td>
+                                                        <td className="px-8 py-5 text-center">
+                                                            <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest
+                                                                ${c.estatus_pago === 'cobrado' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                                                    c.estatus_pago === 'vencido' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                                                        'bg-orange-50 text-orange-600 border border-orange-100'}`}>
+                                                                {c.estatus_pago}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-8 py-5 text-center text-[10px] font-black text-slate-400 uppercase italic">
+                                                            {c.fecha_cobro_real ? new Date(c.fecha_cobro_real).toLocaleDateString() : 'Pendiente'}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                {filtrados.length === 0 && (
+                                                    <tr>
+                                                        <td colSpan="6" className="py-24 text-center">
+                                                            <p className="text-xs font-black text-slate-300 uppercase italic tracking-widest">Sin registros de cobranza en este periodo</p>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </>
+                            );
+                        })()}
+                    </>
                 )}
             </div>
 

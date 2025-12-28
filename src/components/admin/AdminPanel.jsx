@@ -25,6 +25,7 @@ const AdminPanel = ({
     cobranza,
     metasComerciales,
     perfil,
+    perfiles,
     limpiarTabla,
     historial,
     masterContracts,
@@ -39,6 +40,7 @@ const AdminPanel = ({
         { id: 'catalogo', label: 'Catálogo', icon: Package },
         { id: 'tarifario', label: 'Tarifario', icon: Eye },
         { id: 'metas', label: 'Metas', icon: Target },
+        { id: 'cobranza', label: 'Cobranza', icon: DollarSign },
         { id: 'config', label: 'Config', icon: Sliders },
         { id: 'mantenimiento', label: 'Limpieza', icon: Wrench },
         { id: 'cuenta', label: 'Mi Cuenta', icon: UserCircle },
@@ -159,6 +161,15 @@ const AdminPanel = ({
                         />
                     )}
 
+                    {seccionActiva === 'cobranza' && (
+                        <CobranzaView
+                            cobranza={cobranza}
+                            clientes={clientes}
+                            onSave={guardarRegistro}
+                            setMensaje={setMensajeAdmin}
+                        />
+                    )}
+
                     {seccionActiva === 'mantenimiento' && (
                         <MaintenanceView
                             limpiarTabla={limpiarTabla}
@@ -174,14 +185,16 @@ const AdminPanel = ({
                     {seccionActiva === 'cuenta' && (
                         <ProfileForm
                             perfil={perfil}
+                            perfiles={perfiles}
                             onSave={guardarRegistro}
+                            onEliminar={(id) => eliminarRegistro('perfiles', 'id', id)}
                             setMensaje={setMensajeAdmin}
                         />
                     )}
                 </div>
 
                 <div className="mt-20 text-center">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.3.8 • CRM Cloud Enabled</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.4.0 • CRM Cloud Enabled</p>
                 </div>
             </div>
         </div>

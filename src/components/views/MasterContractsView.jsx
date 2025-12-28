@@ -10,6 +10,7 @@ const MasterContractsView = ({
     masterContracts = [],
     cotizaciones = [],
     clientes = [],
+    cobranza = [],
     onSaveMC,
     onSaveQuote,
     setMensaje
@@ -47,12 +48,22 @@ const MasterContractsView = ({
                 .filter(q => q.fecha_registro_sistema)
                 .reduce((sum, q) => sum + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
 
+            const mcBills = (cobranza || []).filter(c =>
+                c.cotizaciones?.mc_id && String(c.cotizaciones.mc_id) === String(mc.id)
+            );
+
+            const montoCobrado = mcBills
+                .filter(c => c.estatus_pago === 'cobrado')
+                .reduce((sum, c) => sum + (parseFloat(c.monto_facturado) || 0), 0);
+
             return {
                 ...mc,
                 cliente,
                 cotizaciones: mcCotizaciones,
+                bills: mcBills,
                 montoConsumido,
                 montoRegistrado,
+                montoCobrado,
                 saldoDisponible: parseFloat(mc.monto_aprobado) - montoConsumido,
                 saldoTecnico: parseFloat(mc.monto_aprobado) - montoRegistrado,
                 porcentajeConsumo: (montoConsumido / parseFloat(mc.monto_aprobado)) * 100,
@@ -60,6 +71,24 @@ const MasterContractsView = ({
             };
         });
     }, [masterContracts, cotizaciones, clientes]);
+
+    // Estadísticas Globales de Contratos
+    const globalStats = useMemo(() => {
+        const totalAprobado = enrichedMCs.reduce((sum, mc) => sum + (parseFloat(mc.monto_aprobado) || 0), 0);
+        const totalConsumido = enrichedMCs.reduce((sum, mc) => sum + (mc.montoConsumido || 0), 0);
+        const totalRegistrado = enrichedMCs.reduce((sum, mc) => sum + (mc.montoRegistrado || 0), 0);
+
+        // Integración de Cobranza vinculada a estos contratos
+        const mcIds = enrichedMCs.map(mc => mc.id);
+        const contractBills = cobranza.filter(c =>
+            c.cotizaciones?.mc_id && mcIds.includes(c.cotizaciones.mc_id)
+        );
+        const montoCobrado = contractBills
+            .filter(c => c.estatus_pago === 'cobrado')
+            .reduce((sum, c) => sum + (parseFloat(c.monto_facturado) || 0), 0);
+
+        return { totalAprobado, totalConsumido, totalRegistrado, montoCobrado };
+    }, [enrichedMCs, cobranza]);
 
     const filtrados = enrichedMCs.filter(mc => {
         const matchesBusqueda =
@@ -113,6 +142,26 @@ const MasterContractsView = ({
                                 <Plus size={16} /> Nuevo Contrato Maestro
                             </button>
                         )}
+                    </div>
+                </div>
+
+                {/* Stats Superiores Compactos */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 mb-6">
+                    <div className="bg-white p-3 md:p-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100">
+                        <p className="text-[7px] md:text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Bolsa Global</p>
+                        <h4 className="text-sm md:text-lg font-black text-slate-900">{formatMXN(globalStats.totalAprobado)}</h4>
+                    </div>
+                    <div className="bg-white p-3 md:p-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-red-500">
+                        <p className="text-[7px] md:text-[8px] font-black text-red-600 uppercase tracking-widest mb-1">Consumo Comercial</p>
+                        <h4 className="text-sm md:text-lg font-black text-red-600">{formatMXN(globalStats.totalConsumido)}</h4>
+                    </div>
+                    <div className="bg-white p-3 md:p-4 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
+                        <p className="text-[7px] md:text-[8px] font-black text-blue-600 uppercase tracking-widest mb-1">Formalizado (Sist.)</p>
+                        <h4 className="text-sm md:text-lg font-black text-blue-600">{formatMXN(globalStats.totalRegistrado)}</h4>
+                    </div>
+                    <div className="bg-slate-900 p-3 md:p-4 rounded-xl md:rounded-2xl shadow-xl">
+                        <p className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Recuperado (Cobro)</p>
+                        <h4 className="text-sm md:text-lg font-black text-emerald-400">{formatMXN(globalStats.montoCobrado)}</h4>
                     </div>
                 </div>
 
@@ -490,39 +539,33 @@ const MasterContractsView = ({
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                                <div className="bg-slate-50 p-7 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Bolsa Autorizada</p>
-                                    <p className="text-2xl font-black text-slate-900 tracking-tighter">{formatMXN(selectedMC.monto_aprobado)}</p>
-                                    <p className="text-[8px] font-bold text-slate-300 mt-2 uppercase">Presupuesto inicial del contrato</p>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8 md:mb-12">
+                                <div className="bg-slate-50 p-4 md:p-7 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm">
+                                    <p className="text-[7px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 md:mb-3">Bolsa Autorizada</p>
+                                    <p className="text-sm md:text-2xl font-black text-slate-900 tracking-tighter">{formatMXN(selectedMC.monto_aprobado)}</p>
                                 </div>
-                                <div className="bg-red-50/50 p-7 rounded-[2.5rem] border border-red-100/50 shadow-sm">
-                                    <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-3">Total Devengado (Comercial)</p>
-                                    <p className="text-2xl font-black text-red-600 tracking-tighter">{formatMXN(selectedMC.montoConsumido)}</p>
-                                    <p className="text-[8px] font-bold text-red-300 mt-2 uppercase">Ventas ganadas en cotizador</p>
+                                <div className="bg-red-50/50 p-4 md:p-7 rounded-2xl md:rounded-[2.5rem] border border-red-100/50 shadow-sm">
+                                    <p className="text-[7px] md:text-[10px] font-black text-red-600 uppercase tracking-widest mb-1 md:mb-3">Devengado</p>
+                                    <p className="text-sm md:text-2xl font-black text-red-600 tracking-tighter">{formatMXN(selectedMC.montoConsumido)}</p>
                                 </div>
-                                <div className="bg-blue-50/50 p-7 rounded-[2.5rem] border border-blue-100/50 shadow-sm">
-                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3">Total Registrado (Sistema)</p>
-                                    <p className="text-2xl font-black text-blue-600 tracking-tighter">{formatMXN(selectedMC.montoRegistrado)}</p>
-                                    <p className="text-[8px] font-bold text-blue-300 mt-2 uppercase">Contratos con folio CP</p>
+                                <div className="bg-blue-50/50 p-4 md:p-7 rounded-2xl md:rounded-[2.5rem] border border-blue-100/50 shadow-sm">
+                                    <p className="text-[7px] md:text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 md:mb-3">Formalizado</p>
+                                    <p className="text-sm md:text-2xl font-black text-blue-600 tracking-tighter">{formatMXN(selectedMC.montoRegistrado)}</p>
                                 </div>
-                                <div className="bg-emerald-500 p-7 rounded-[2.5rem] shadow-xl shadow-emerald-100 text-white relative overflow-hidden group">
-                                    <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12 group-hover:scale-110 transition-transform">
-                                        <DollarSign size={100} />
+                                <div className="bg-emerald-600 p-4 md:p-7 rounded-2xl md:rounded-[2.5rem] shadow-xl shadow-emerald-100 text-white relative overflow-hidden group">
+                                    <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12 group-hover:scale-110 transition-transform hidden md:block">
+                                        <CheckCircle2 size={80} />
                                     </div>
-                                    <p className="text-[10px] font-black text-emerald-100 uppercase tracking-widest mb-3 relative z-10">Saldo Disponible (Técnico)</p>
-                                    <p className="text-2xl font-black text-white tracking-tighter relative z-10">{formatMXN(selectedMC.saldoTecnico)}</p>
-                                    <p className="text-[8px] font-bold text-emerald-100 mt-2 uppercase relative z-10">
-                                        {selectedMC.montoRegistrado > 0 ? `${selectedMC.porcentajeRegistro.toFixed(1)}% formalizado` : 'Bolsa técnica al 100%'}
-                                    </p>
+                                    <p className="text-[7px] md:text-[10px] font-black text-emerald-100 uppercase tracking-widest mb-1 md:mb-3 relative z-10">Recuperado (Cobro)</p>
+                                    <p className="text-sm md:text-2xl font-black text-white tracking-tighter relative z-10">{formatMXN(selectedMC.montoCobrado)}</p>
                                 </div>
                             </div>
                             <div className="mt-4 mb-8 bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-red-500 shadow-sm"><AlertCircle size={16} /></div>
                                     <div>
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Diferencia por Registrar</p>
-                                        <p className="text-xs font-black text-slate-900">{formatMXN(selectedMC.montoConsumido - selectedMC.montoRegistrado)}</p>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Saldo Técnico Libre</p>
+                                        <p className="text-xs font-black text-slate-900">{formatMXN(selectedMC.saldoTecnico)}</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
@@ -541,7 +584,7 @@ const MasterContractsView = ({
                                 </span>
                             </div>
 
-                            <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100 p-2">
+                            <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100 p-2 mb-12">
                                 {selectedMC.cotizaciones?.length > 0 ? (
                                     <table className="w-full text-left">
                                         <thead>
@@ -581,7 +624,59 @@ const MasterContractsView = ({
                                                     </td>
                                                     <td className="px-6 py-5 text-right rounded-r-3xl">
                                                         <p className="text-sm font-black text-slate-900">{formatMXN(cotz.subtotalGeneral || cotz.total / 1.16)}</p>
-                                                        <p className="text-[8px] font-bold text-emerald-600 uppercase italic">Impacto directo</p>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <div className="py-20 text-center">
+                                        <Calculator size={24} className="text-slate-200 mx-auto mb-4" />
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Sin cargos registrados</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Nueva Sección: Cobranza Vinculada */}
+                            <div className="flex items-center justify-between mb-8">
+                                <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.4em] flex items-center gap-3">
+                                    <DollarSign size={16} className="text-emerald-600" /> Cobranza y Facturación
+                                </h4>
+                                <div className="h-px flex-1 bg-slate-100 mx-6"></div>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">
+                                    {selectedMC.bills?.length || 0} Facturas
+                                </span>
+                            </div>
+
+                            <div className="bg-slate-50/50 rounded-[2.5rem] border border-slate-100 p-2">
+                                {selectedMC.bills?.length > 0 ? (
+                                    <table className="w-full text-left">
+                                        <thead>
+                                            <tr className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                                <th className="px-6 py-4">F. Programada</th>
+                                                <th className="px-6 py-4">Factura</th>
+                                                <th className="px-6 py-4 text-center">Estatus</th>
+                                                <th className="px-6 py-4 text-right">Importe</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white">
+                                            {selectedMC.bills.map(bill => (
+                                                <tr key={bill.id} className="hover:bg-white transition-colors">
+                                                    <td className="px-6 py-5 rounded-l-3xl">
+                                                        <p className="text-[10px] font-black text-slate-900">{new Date(bill.fecha_programada_cobro).toLocaleDateString()}</p>
+                                                    </td>
+                                                    <td className="px-6 py-5">
+                                                        <p className="text-[10px] font-black text-slate-900 uppercase">{bill.numero_factura || 'PENDIENTE'}</p>
+                                                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Rel: {bill.cotizaciones?.folio}</p>
+                                                    </td>
+                                                    <td className="px-6 py-5 text-center">
+                                                        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border
+                                                            ${bill.estatus_pago === 'cobrado' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
+                                                            {bill.estatus_pago}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-5 text-right rounded-r-3xl">
+                                                        <p className="text-sm font-black text-slate-900">{formatMXN(bill.monto_facturado)}</p>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -590,10 +685,9 @@ const MasterContractsView = ({
                                 ) : (
                                     <div className="py-20 text-center">
                                         <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center mx-auto mb-4 border border-slate-50 shadow-sm">
-                                            <Calculator size={24} className="text-slate-200" />
+                                            <DollarSign size={24} className="text-slate-200" />
                                         </div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Sin cargos registrados en este periodo</p>
-                                        <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-2">El saldo total está disponible para nuevas pautas</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Sin facturas emitidas para este contrato</p>
                                     </div>
                                 )}
                             </div>

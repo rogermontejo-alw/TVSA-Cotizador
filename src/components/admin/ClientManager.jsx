@@ -49,12 +49,12 @@ const ClientManager = ({ clientes, onToggleEstatus, onEliminar, onEdit, setMensa
 
                     <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
                         {/* Filtro de Estatus */}
-                        <div className="flex bg-slate-800 rounded-xl p-1">
+                        <div className="grid grid-cols-3 bg-slate-800 rounded-xl p-1 w-full sm:w-auto">
                             {['activo', 'inactivo', 'todos'].map(status => (
                                 <button
                                     key={status}
                                     onClick={() => setFiltroEstatus(status)}
-                                    className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all
+                                    className={`px-2 sm:px-4 py-2 rounded-lg text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all
                                         ${filtroEstatus === status
                                             ? 'bg-red-600 text-white shadow-lg'
                                             : 'text-slate-500 hover:text-slate-300'}`}

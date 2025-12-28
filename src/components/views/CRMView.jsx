@@ -59,12 +59,12 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
                     />
                 </div>
 
-                <div className="flex overflow-x-auto gap-2 scrollbar-hide pb-2">
+                <div className="flex flex-wrap gap-2 pb-2">
                     {etapas.map(etapa => (
                         <button
                             key={etapa}
                             onClick={() => setFiltroEtapa(etapa)}
-                            className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border
+                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border
                                 ${filtroEtapa === etapa
                                     ? 'bg-slate-900 text-white border-slate-900 shadow-md'
                                     : 'bg-white text-gray-400 border-gray-100 hover:border-red-200'}`}

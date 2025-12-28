@@ -12,7 +12,8 @@ export const useDatabase = (session) => {
         masterContracts: [],
         descuentosVolumen: [],
         metasComerciales: [],
-        perfil: null
+        perfil: null,
+        perfiles: []
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -31,12 +32,13 @@ export const useDatabase = (session) => {
                 supabase.from('condiciones_cliente').select('*'),
                 supabase.from('cotizaciones').select('*').order('created_at', { ascending: false }),
                 supabase.from('descuentos_volumen').select('*'),
-                supabase.from('cobranza').select('*, cotizaciones(folio, monto_total, clientes(nombre_empresa))'),
+                supabase.from('cobranza').select('*, cotizaciones(folio, monto_total, numero_contrato, cliente_id, mc_id, clientes(nombre_empresa))'),
                 supabase.from('metas_comerciales').select('*').order('anio', { ascending: false }).order('mes', { ascending: false }),
+                supabase.from('perfiles').select('*'),
                 supabase.auth.getUser().then(async ({ data: { user } }) => {
                     if (!user) return { data: null };
                     const { data: profile } = await supabase.from('perfiles').select('*').eq('id', user.id).maybeSingle();
-                    return { data: profile ? { ...profile, email: user.email } : { email: user.email } };
+                    return { data: profile ? { ...profile, email: user.email } : { id: user.id, email: user.email, nombre_completo: 'Usuario Actual' } };
                 })
             ]);
 
@@ -51,6 +53,7 @@ export const useDatabase = (session) => {
                 { data: descuentos },
                 { data: cobranza },
                 { data: metas },
+                { data: perfiles },
                 resPerfil
             ] = results;
 
@@ -106,7 +109,16 @@ export const useDatabase = (session) => {
                 descuentosVolumen: descuentos || [],
                 metasComerciales: metas || [],
                 cobranza: cobranza || [],
-                perfil: perfil
+                perfil: resPerfil?.data,
+                perfiles: (() => {
+                    const list = perfiles || [];
+                    const currentUser = resPerfil?.data;
+                    if (currentUser && !list.find(u => u.id === currentUser.id)) {
+                        return [...list, currentUser];
+                    }
+                    return list;
+                })(),
+                configuracion: configObj
             }));
 
             console.log("📊 Datos cargados:", {
