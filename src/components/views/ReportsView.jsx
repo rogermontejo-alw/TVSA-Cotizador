@@ -460,7 +460,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                             <table className="w-full text-left border-collapse min-w-[800px]">
                                 <thead>
                                     <tr className="bg-slate-50 border-b border-gray-200">
-                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sticky left-0 bg-slate-50 z-10">Cuenta / Cliente</th>
+                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sm:sticky sm:left-0 bg-slate-50 z-10">Cuenta / Cliente</th>
                                         {matrizMensual.mesesColumnas.map(m => (
                                             <th key={m} className="py-4 px-4 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{matrizMensual.mesesNombres[m]}</th>
                                         ))}
@@ -470,7 +470,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                 <tbody className="divide-y divide-gray-100">
                                     {matrizMensual.filas.map((f, i) => (
                                         <tr key={i} className="hover:bg-slate-50/50">
-                                            <td className="py-3 px-4 sm:py-4 sm:px-6 border-r border-gray-100 sticky left-0 bg-white group-hover:bg-slate-50 z-10">
+                                            <td className="py-3 px-4 sm:py-4 sm:px-6 border-r border-gray-100 sm:sticky sm:left-0 bg-white group-hover:bg-slate-50 z-10">
                                                 <span className="text-[9px] sm:text-[10px] font-black text-slate-900 uppercase truncate block max-w-[120px] sm:max-w-[150px]">{f.nombre}</span>
                                             </td>
                                             {matrizMensual.mesesColumnas.map(m => (
@@ -483,7 +483,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                     ))}
                                     {/* Fila de Totales Columnas */}
                                     <tr className="bg-[#111111] text-white font-black">
-                                        <td className="py-3 px-4 sm:py-4 sm:px-6 uppercase text-[8px] sm:text-[9px] tracking-widest border-r border-[#222222] sticky left-0 bg-[#111111] z-10">Total Mensual</td>
+                                        <td className="py-3 px-4 sm:py-4 sm:px-6 uppercase text-[8px] sm:text-[9px] tracking-widest border-r border-[#222222] sm:sticky sm:left-0 bg-[#111111] z-10">Total Mensual</td>
                                         {matrizMensual.mesesColumnas.map(m => (
                                             <td key={m} className="py-3 px-3 sm:py-4 sm:px-4 text-center text-[9px] sm:text-[10px] border-r border-slate-800">{formatMXN(matrizMensual.totalesPorMes[m], 0)}</td>
                                         ))}
@@ -509,7 +509,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                             <table className="w-full text-left border-collapse min-w-[600px]">
                                 <thead>
                                     <tr className="bg-slate-50 border-b border-gray-200">
-                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sticky left-0 bg-slate-50 z-10">Canal / Producto</th>
+                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sm:sticky sm:left-0 bg-slate-50 z-10">Canal / Producto</th>
                                         {matrizCanales.plazas.map(p => (
                                             <th key={p} className="py-4 px-6 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{p}</th>
                                         ))}
@@ -519,7 +519,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                 <tbody className="divide-y divide-gray-100">
                                     {matrizCanales.filas.map((f, i) => (
                                         <tr key={i} className="hover:bg-slate-50/50">
-                                            <td className="py-4 px-6 border-r border-gray-100 sticky left-0 bg-white z-10">
+                                            <td className="py-4 px-6 border-r border-gray-100 sm:sticky sm:left-0 bg-white z-10">
                                                 <span className="text-[10px] font-black text-slate-900 uppercase">{f.canal}</span>
                                             </td>
                                             {matrizCanales.plazas.map(p => (
@@ -532,7 +532,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                     ))}
                                     {/* Totales por Plaza */}
                                     <tr className="bg-slate-900 text-white font-black">
-                                        <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sticky left-0 bg-slate-900 z-10">Total Ciudad</td>
+                                        <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sm:sticky sm:left-0 bg-slate-900 z-10">Total Ciudad</td>
                                         {matrizCanales.plazas.map(p => (
                                             <td key={p} className="py-4 px-6 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizCanales.totalesPorPlaza[p])}</td>
                                         ))}
@@ -558,7 +558,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                             <table className="w-full text-left border-collapse min-w-[800px]">
                                 <thead>
                                     <tr className="bg-slate-50 border-b border-gray-200">
-                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sticky left-0 bg-slate-50 z-10">Cuenta / Empresa</th>
+                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sm:sticky sm:left-0 bg-slate-50 z-10">Cuenta / Empresa</th>
                                         {matrizCiudad.plazas.map(p => (
                                             <th key={p} className="py-4 px-6 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{p}</th>
                                         ))}
@@ -568,7 +568,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                 <tbody className="divide-y divide-gray-100">
                                     {matrizCiudad.filas.map((f, i) => (
                                         <tr key={i} className="hover:bg-slate-50/50">
-                                            <td className="py-4 px-6 border-r border-gray-100 sticky left-0 bg-white z-10">
+                                            <td className="py-4 px-6 border-r border-gray-100 sm:sticky sm:left-0 bg-white z-10">
                                                 <span className="text-[10px] font-black text-slate-900 uppercase block truncate max-w-[120px]">{f.nombre}</span>
                                             </td>
                                             {matrizCiudad.plazas.map(p => (
@@ -581,7 +581,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                     ))}
                                     {/* Totales por Plaza */}
                                     <tr className="bg-slate-900 text-white font-black">
-                                        <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sticky left-0 bg-slate-900 z-10">Total Ciudad</td>
+                                        <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sm:sticky sm:left-0 bg-slate-900 z-10">Total Ciudad</td>
                                         {matrizCiudad.plazas.map(p => (
                                             <td key={p} className="py-4 px-6 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizCiudad.totalesPorPlaza[p])}</td>
                                         ))}
