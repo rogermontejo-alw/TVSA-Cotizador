@@ -71,7 +71,7 @@ const AdminPanel = ({
                                     <Settings size={20} />
                                 </div>
                                 <div>
-                                    <h1 className="text-sm font-black text-white uppercase italic italic-brand tracking-[0.3em]">Central de Operaciones</h1>
+                                    <h1 className="text-sm font-black text-white uppercase tracking-[0.3em]">Central de Operaciones</h1>
                                     <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5">Premium Management Suite</p>
                                 </div>
                             </div>
@@ -93,7 +93,7 @@ const AdminPanel = ({
                                 key={tab.id}
                                 onClick={() => setSeccionActiva(tab.id)}
                                 className={`
-                                    flex items-center justify-center gap-3 px-4 py-3 rounded-2xl font-black uppercase italic italic-brand tracking-widest text-[9px] transition-all
+                                    flex items-center justify-center gap-3 px-4 py-3 rounded-2xl font-black uppercase tracking-widest text-[9px] transition-all
                                     ${seccionActiva === tab.id
                                         ? 'bg-brand-orange text-white shadow-xl shadow-brand-orange/40 scale-105 z-10'
                                         : 'bg-enterprise-900/50 text-enterprise-400 hover:text-white hover:bg-enterprise-900 border border-white/5'}
@@ -220,7 +220,7 @@ const AdminPanel = ({
 
                 <div className="mt-24 text-center pb-10">
                     <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-[0.5em] opacity-60">Televisa MID Admin Layer • Enterprise Deployment v2.0</p>
-                    <p className="text-[8px] font-bold text-enterprise-200 uppercase tracking-[0.3em] mt-2 italic italic-brand">High-Performance Media Budgeting Engine</p>
+                    <p className="text-[8px] font-bold text-enterprise-200 uppercase tracking-[0.3em] mt-2">High-Performance Media Budgeting Engine</p>
                 </div>
             </div>
         </div>

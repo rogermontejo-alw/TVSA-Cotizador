@@ -38,77 +38,77 @@ const LoginView = () => {
                 <div className="absolute top-0 left-0 w-full h-full bg-[#FF5900] opacity-10 blur-[120px] -translate-x-1/2 -translate-y-1/2" />
                 <div className="absolute bottom-0 right-0 w-full h-full bg-[#C83378] opacity-10 blur-[150px] translate-x-1/2 translate-y-1/2" />
 
-                <div className="relative z-10 text-white space-y-16 max-w-xl">
-                    <div className="flex items-center gap-6">
-                        <div className="w-20 h-20 bg-white rounded-3xl p-5 shadow-2xl flex items-center justify-center rotate-3 hover:rotate-0 transition-transform duration-500">
+                <div className="relative z-10 text-white space-y-12 max-w-lg">
+                    <div className="flex items-center gap-5">
+                        <div className="w-16 h-16 bg-white rounded-2xl p-4 shadow-2xl flex items-center justify-center -rotate-2 hover:rotate-0 transition-transform duration-500">
                             <img src="/logo-tvsa.png" alt="Televisa" className="w-full h-full object-contain" />
                         </div>
-                        <div className="h-14 w-px bg-white/20" />
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#FF5900]">Security First</p>
-                            <p className="text-2xl font-black tracking-tighter uppercase italic">Institutional <span className="text-white/30 not-italic">Gate</span></p>
+                        <div className="h-10 w-px bg-white/10" />
+                        <div className="space-y-0.5">
+                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-brand-orange">Security Protocol</p>
+                            <p className="text-xl font-black tracking-tighter uppercase italic text-white/90">Commercial <span className="text-white/30 not-italic">Identity</span></p>
                         </div>
                     </div>
 
-                    <div className="space-y-6">
-                        <h2 className="text-[14px] font-black uppercase tracking-[0.5em] text-[#FF5900]/70">Enterprise Resource Planning</h2>
-                        <h1 className="text-8xl font-black tracking-tight leading-[0.9] uppercase text-white">
+                    <div className="space-y-4">
+                        <h2 className="text-[11px] font-black uppercase tracking-[0.6em] text-white/30">Enterprise Intelligence Node</h2>
+                        <h1 className="text-6xl font-black tracking-tight leading-[0.95] uppercase text-white">
                             Comercial<br />
                             <span className="text-transparent bg-clip-text bg-univision-gradient italic">Suite</span>
                         </h1>
-                        <p className="text-xl font-bold text-white/80 leading-relaxed">
-                            Acceso unificado a la plataforma de inteligencia comercial más avanzada de <span className="text-[#FF5900] font-black">TelevisaUnivision México</span>.
+                        <p className="max-w-md text-base font-medium text-white/50 leading-relaxed">
+                            Acceso unificado a la arquitectura de inteligencia comercial de <span className="text-brand-orange font-black">TelevisaUnivision</span>.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-10 pt-10 border-t border-white/10">
-                        <div className="space-y-2">
-                            <span className="block text-5xl font-black text-white italic">0.1ms</span>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[#FF5900]">Latency Response</span>
+                    <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/5">
+                        <div className="space-y-1">
+                            <span className="block text-3xl font-black text-white italic tracking-tighter">0.1ms</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Response Global Latency</span>
                         </div>
-                        <div className="space-y-2">
-                            <span className="block text-5xl font-black text-white italic">256b</span>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[#FF5900]">AES-Encryption</span>
+                        <div className="space-y-1">
+                            <span className="block text-3xl font-black text-white italic tracking-tighter">256-AES</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Encryption Protocol</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Bottom Disclaimer */}
-                <div className="absolute bottom-12 left-20 flex items-center gap-4">
-                    <Globe size={16} className="text-[#FF5900] animate-pulse" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">
-                        TelevisaUnivision Intelligence Node • CDMX 2025
+                <div className="absolute bottom-12 left-20 flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-brand-orange animate-pulse shadow-[0_0_8px_rgba(255,89,0,0.6)]" />
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">
+                        Corporate Infrastructure • MX-NODE 4.0
                     </p>
                 </div>
             </div>
 
             {/* Login Form Side */}
-            <div className="w-full lg:w-5/12 bg-white flex items-center justify-center p-8 md:p-24 relative">
+            <div className="w-full lg:w-5/12 bg-white flex items-center justify-center p-8 md:p-24 relative shadow-[-20px_0_50px_rgba(0,0,0,0.1)]">
                 {/* Mobile Background Accent */}
-                <div className="lg:hidden absolute top-0 left-0 right-0 h-1 bg-brand-orange" />
+                <div className="lg:hidden absolute top-0 left-0 right-0 h-1.5 bg-brand-orange" />
 
-                <div className="w-full max-w-[440px] space-y-12">
+                <div className="w-full max-w-[380px] space-y-10">
                     {/* Header Section */}
                     <div className="space-y-6">
-                        <div className="lg:hidden w-16 h-16 bg-enterprise-50 rounded-2xl p-4 mb-8">
+                        <div className="lg:hidden w-14 h-14 bg-enterprise-50 rounded-2xl p-3.5 mb-8">
                             <img src="/logo-tvsa.png" alt="TU" className="w-full h-full object-contain" />
                         </div>
 
-                        <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-enterprise-50 rounded-full border border-enterprise-100">
-                            <ShieldCheck size={16} className="text-brand-orange" />
-                            <span className="text-[10px] font-black text-enterprise-700 uppercase tracking-widest">Protocolo de Acceso Seguro</span>
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-enterprise-50 rounded-lg border border-enterprise-100">
+                            <ShieldCheck size={14} className="text-brand-orange" />
+                            <span className="text-[9px] font-black text-enterprise-500 uppercase tracking-widest leading-none">Acceso Protocolizado</span>
                         </div>
 
                         <div className="space-y-2 text-left">
-                            <h2 className="text-5xl font-black text-enterprise-950 tracking-tight leading-none uppercase italic italic-brand">Inicia Sesión</h2>
-                            <p className="text-enterprise-600 font-bold text-base leading-snug">Ingresa tus credenciales TU corporativas para acceder al ecosistema.</p>
+                            <h2 className="text-3xl font-black text-enterprise-950 tracking-tight leading-none uppercase italic">Inicia Sesión</h2>
+                            <p className="text-enterprise-400 font-medium text-sm leading-snug">Autenticación corporativa requerida.</p>
                         </div>
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-8">
                         <div className="space-y-5">
                             <FloatingInput
-                                label="Dirección de E-mail"
+                                label="Identificador de Usuario"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -118,26 +118,24 @@ const LoginView = () => {
 
                             <div className="space-y-2">
                                 <FloatingInput
-                                    label="Contraseña"
+                                    label="Clave de Acceso"
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     icon={Lock}
                                     required
                                 />
-                                <div className="flex justify-end">
-                                    <button type="button" className="text-[10px] font-black text-brand-orange hover:text-brand-magenta transition-all uppercase tracking-widest">
-                                        ¿Olvidaste tu acceso?
+                                <div className="flex justify-start px-1 pt-1">
+                                    <button type="button" className="text-[9px] font-black text-enterprise-300 hover:text-brand-orange transition-all uppercase tracking-widest">
+                                        Restaurar credenciales
                                     </button>
                                 </div>
                             </div>
                         </div>
 
                         {error && (
-                            <div className="p-5 bg-error-light border border-error/10 rounded-2xl text-[11px] font-black text-error uppercase tracking-wide flex items-center gap-4 animate-in shake duration-500">
-                                <div className="w-10 h-10 bg-error/10 rounded-xl flex items-center justify-center shrink-0">
-                                    <Zap size={20} className="fill-error" />
-                                </div>
+                            <div className="p-4 bg-error-light border border-error/10 rounded-xl text-[10px] font-black text-error uppercase tracking-wide flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+                                <Zap size={16} className="fill-error shrink-0" />
                                 <span>{error}</span>
                             </div>
                         )}
@@ -146,21 +144,21 @@ const LoginView = () => {
                             <button
                                 disabled={loading}
                                 type="submit"
-                                className="w-full h-20 bg-enterprise-950 text-white rounded-[2rem] font-black uppercase tracking-[0.25em] text-xs shadow-2xl shadow-enterprise-900/30 hover:bg-brand-orange hover:shadow-brand-orange/40 hover:-translate-y-1 active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-4 group"
+                                className="w-full h-16 bg-enterprise-950 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] shadow-xl shadow-enterprise-900/10 hover:bg-brand-orange hover:shadow-brand-orange/20 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 group"
                             >
                                 {loading ? (
-                                    <Loader2 className="animate-spin" />
+                                    <Loader2 size={20} className="animate-spin" />
                                 ) : (
                                     <>
-                                        <span>Autenticar Sesión</span>
-                                        <Play size={16} className="fill-white group-hover:translate-x-1.5 transition-transform" />
+                                        <span>Autenticar Acceso</span>
+                                        <Play size={14} className="fill-white group-hover:translate-x-1 transition-transform" />
                                     </>
                                 )}
                             </button>
 
-                            <p className="text-[10px] font-bold text-enterprise-400 uppercase tracking-widest text-center leading-loose opacity-60">
-                                Este entorno está cifrado con AES-256. <br />
-                                TelevisaUnivision Cybersecurity Systems.
+                            <p className="text-[8px] font-black text-enterprise-300 uppercase tracking-widest text-center leading-loose">
+                                Entorno de seguridad restringido <br />
+                                TelevisaUnivision Cybersecurity
                             </p>
                         </div>
                     </form>
