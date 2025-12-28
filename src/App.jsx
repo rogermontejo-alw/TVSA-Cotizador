@@ -19,7 +19,7 @@ import ReportsView from './components/views/ReportsView';
 import Navbar from './components/common/Navbar';
 import StatusMessage from './components/admin/StatusMessage';
 import { supabase } from './lib/supabase';
-
+import { APP_CONFIG } from './appConfig';
 import { DashboardSkeleton } from './components/ui/Skeleton';
 
 const App = () => {
@@ -368,7 +368,7 @@ const App = () => {
             <div className="flex flex-col items-end">
               <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mb-1">Deployment</span>
               <p className="text-[10px] font-black text-white uppercase tracking-widest">
-                V25.1.0 • MID-TU
+                V{APP_CONFIG.VERSION} • MID-TU
               </p>
             </div>
           </div>
