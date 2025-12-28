@@ -15,26 +15,22 @@ import {
     LayoutDashboard,
     Target,
     RefreshCw,
-    Filter
+    Filter,
+    BarChart3,
+    ArrowRight
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
-const StatCard = ({ title, value, icon: Icon, color, trendValue, isCurrency = false }) => (
-    <div className="bg-white p-6 rounded-[2rem] shadow-xl border border-gray-100 flex flex-col justify-between transition-all hover:scale-[1.02]">
-        <div className="flex justify-between items-start mb-4">
-            <div className={`p-4 rounded-2xl ${color}`}>
-                <Icon size={22} />
-            </div>
-            {trendValue !== undefined && (
-                <div className={`flex items-center gap-1 ${trendValue >= 0 ? 'text-emerald-500 bg-emerald-50' : 'text-rose-500 bg-rose-50'} px-2.5 py-1 rounded-full text-[10px] font-black`}>
-                    {trendValue >= 0 ? <ArrowUpRight size={12} /> : <TrendingUp size={12} className="rotate-180" />}
-                    {Math.abs(trendValue)}%
-                </div>
-            )}
+const MISSING_DATA_CHAR = '0.00';
+
+const StatCard = ({ title, value, icon: Icon, color, isCurrency = false }) => (
+    <div className="bg-white p-4 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-4 transition-all hover:border-red-200 h-full">
+        <div className={`p-3 rounded-xl ${color} flex-shrink-0`}>
+            <Icon size={18} />
         </div>
-        <div>
-            <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">{title}</p>
-            <p className="text-2xl font-black text-slate-800 tracking-tighter leading-none">
+        <div className="min-w-0">
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 truncate">{title}</p>
+            <p className="text-base font-black text-slate-900 tracking-tighter leading-none truncate">
                 {isCurrency ? formatMXN(value) : value}
             </p>
         </div>
@@ -42,287 +38,300 @@ const StatCard = ({ title, value, icon: Icon, color, trendValue, isCurrency = fa
 );
 
 const DashboardView = ({
-    historial,
-    clientes,
+    historial = [],
+    clientes = [],
     metasComerciales = [],
     setVistaActual,
     actualizarDashboard,
     iniciarNuevaCotizacion
 }) => {
-    const [periodo, setPeriodo] = useState('mes'); // dia, semana, mes, anio
+    const [periodo, setPeriodo] = useState('mes');
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
-        await actualizarDashboard();
-        setTimeout(() => setIsRefreshing(false), 1000);
+        await actualizarDashboard?.();
+        setTimeout(() => setIsRefreshing(false), 800);
     };
 
-    // 🕒 Lógica de filtrado por tiempo
-    const datosFiltrados = useMemo(() => {
+    const { totalHistorial, totalLeads } = useMemo(() => {
         const ahora = new Date();
         const inicio = new Date();
+        if (periodo === 'dia') inicio.setHours(0, 0, 0, 0);
+        else if (periodo === 'semana') inicio.setDate(ahora.getDate() - ahora.getDay());
+        else if (periodo === 'mes') inicio.setDate(1);
+        else if (periodo === 'anio') inicio.setMonth(0, 1);
+        inicio.setHours(0, 0, 0, 0);
 
-        if (periodo === 'dia') {
-            inicio.setHours(0, 0, 0, 0);
-        } else if (periodo === 'semana') {
-            const diaSemana = ahora.getDay();
-            inicio.setDate(ahora.getDate() - diaSemana);
-            inicio.setHours(0, 0, 0, 0);
-        } else if (periodo === 'mes') {
-            inicio.setDate(1);
-            inicio.setHours(0, 0, 0, 0);
-        } else if (periodo === 'anio') {
-            inicio.setMonth(0, 1);
-            inicio.setHours(0, 0, 0, 0);
-        }
+        const filteredH = historial.filter(h => new Date(h.created_at || h.fecha) >= inicio);
+        const filteredC = clientes.filter(c => new Date(c.created_at) >= inicio);
 
-        const historialFiltrado = historial.filter(h => {
-            const fecha = new Date(h.created_at || h.fecha);
-            return fecha >= inicio && fecha <= ahora;
-        });
-
-        const clientesNuevos = clientes.filter(c => {
-            const fecha = new Date(c.created_at);
-            return fecha >= inicio && fecha <= ahora;
-        });
-
-        return { historialFiltrado, clientesNuevos, inicio, ahora };
+        return { totalHistorial: filteredH, totalLeads: filteredC };
     }, [historial, clientes, periodo]);
 
-    // 🎯 Meta Comercial basada en el mes actual del sistema (o el filtrado)
-    const metaActual = useMemo(() => {
-        const mesBusqueda = new Date().getMonth() + 1;
-        const anioBusqueda = new Date().getFullYear();
+    const salesStats = useMemo(() => {
+        const ganadas = totalHistorial.filter(h => h.estatus === 'ganada');
+        const totalVenta = ganadas.reduce((sum, h) => sum + (parseFloat(h.subtotalGeneral || h.total / 1.16) || 0), 0);
+        const pipeline = totalHistorial.filter(h => h.estatus !== 'ganada' && h.estatus !== 'perdida');
+        const valorPipeline = pipeline.reduce((sum, h) => sum + (parseFloat(h.subtotalGeneral || h.total / 1.16) || 0), 0);
 
-        // Busqueda estricta asegurando tipos numericos
-        const metaEncontrada = metasComerciales.find(m =>
-            Number(m.mes) === Number(mesBusqueda) &&
-            Number(m.anio) === Number(anioBusqueda)
-        );
+        const mesActual = new Date().getMonth() + 1;
+        const meta = metasComerciales.find(m => Number(m.mes) === mesActual)?.monto_meta || 1500000;
+        const cumplimiento = ((totalVenta / meta) * 100).toFixed(1);
 
-        return metaEncontrada?.monto_meta || 1500000; // Fallback 1.5M
-    }, [metasComerciales]);
+        const ventaVIX = ganadas.reduce((sum, h) => sum + (parseFloat(h.costoVIX || (h.paqueteVIX?.inversion) || 0)), 0);
 
-    const statsData = useMemo(() => {
-        const { historialFiltrado } = datosFiltrados;
+        return { totalVenta, valorPipeline, cumplimiento, meta, ventaVIX, countLeads: totalLeads.length, countCotz: totalHistorial.length };
+    }, [totalHistorial, totalLeads, metasComerciales]);
 
-        const ventaCerrada = historialFiltrado
-            .filter(q => q.estatus === 'ganada')
-            .reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
-
-        const pipelineValor = historialFiltrado
-            .filter(q => q.estatus !== 'ganada' && q.estatus !== 'perdida')
-            .reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
-
-        const porcentajeMeta = metaActual > 0 ? Math.min((ventaCerrada / metaActual) * 100, 100).toFixed(1) : 0;
-
-        return {
-            ventaCerrada,
-            pipelineValor,
-            conteoLeads: datosFiltrados.clientesNuevos.length,
-            conteoCotizaciones: historialFiltrado.length,
-            porcentajeMeta,
-            faltanteMeta: Math.max(0, metaActual - ventaCerrada)
-        };
-    }, [datosFiltrados, metaActual]);
-
-    // Ventas por Ciudad
-    const ventasPorCiudad = useMemo(() => {
-        const plazas = {};
-        datosFiltrados.historialFiltrado.filter(q => q.estatus === 'ganada').forEach(q => {
-            const plaza = q.cliente?.plaza || 'Sin Plaza';
-            plazas[plaza] = (plazas[plaza] || 0) + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0);
+    const topPlazas = useMemo(() => {
+        const p = {};
+        totalHistorial.filter(h => h.estatus === 'ganada').forEach(h => {
+            const plaza = h.cliente?.plaza || 'Mérida';
+            p[plaza] = (p[plaza] || 0) + (parseFloat(h.subtotalGeneral || h.total / 1.16) || 0);
         });
-        return Object.entries(plazas).sort((a, b) => b[1] - a[1]);
-    }, [datosFiltrados]);
+        return Object.entries(p).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    }, [totalHistorial]);
 
-    // Pipeline Visual
-    const pipelineStages = useMemo(() => {
-        const { historialFiltrado } = datosFiltrados;
-        const stages = { 'Borrador': 0, 'Enviada': 0, 'Ganada': 0, 'Perdida': 0 };
-        historialFiltrado.forEach(q => {
-            const statusKey = q.estatus ? q.estatus.charAt(0).toUpperCase() + q.estatus.slice(1) : 'Borrador';
-            if (stages[statusKey] !== undefined) stages[statusKey]++;
+    const ventaPorCanal = useMemo(() => {
+        const c = {};
+        const ganadas = totalHistorial.filter(h => h.estatus === 'ganada');
+        ganadas.forEach(q => {
+            (q.items || []).forEach(item => {
+                const canal = item.producto?.canal || 'Otros';
+                c[canal] = (c[canal] || 0) + (item.subtotal || 0);
+            });
+            const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
+            if (costoVIX > 0) c['VIX'] = (c['VIX'] || 0) + costoVIX;
         });
-        return Object.entries(stages);
-    }, [datosFiltrados]);
+        return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    }, [totalHistorial]);
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-            {/* Header Pro con Refresh y Filtros */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none flex items-center gap-3">
-                        Monitor <span className="text-red-600 font-black">Televisa</span>
-                        <button
-                            onClick={handleRefresh}
-                            className={`p-2 bg-slate-100 text-slate-400 rounded-xl hover:text-red-600 transition-all ${isRefreshing ? 'animate-spin' : ''}`}
-                        >
-                            <RefreshCw size={18} />
-                        </button>
-                    </h1>
-                    <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.3em] mt-2">
-                        Dashboard Comercial • Inteligencia en Tiempo Real
-                    </p>
+        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+
+            {/* Header Super Compacto (ALINEACIÓN HORIZONTAL) */}
+            <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-2xl shadow-xl border border-gray-100 gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="bg-slate-900 p-2.5 rounded-xl shadow-lg shadow-slate-200">
+                        <LayoutDashboard className="text-white" size={20} />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-black text-slate-900 tracking-tighter uppercase leading-none">Monitor Ejecutivo</h2>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1.5 italic">Inteligencia Comercial • Televisa</p>
+                    </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
-                    {['dia', 'semana', 'mes', 'anio'].map((p) => (
-                        <button
-                            key={p}
-                            onClick={() => setPeriodo(p)}
-                            className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all
-                                ${periodo === p
-                                    ? 'bg-red-600 text-white shadow-lg'
-                                    : 'text-slate-400 hover:bg-slate-50'}`}
-                        >
-                            {p === 'dia' ? 'Hoy' : p === 'semana' ? 'Semana' : p === 'mes' ? 'Mes' : 'Año'}
-                        </button>
-                    ))}
+                <div className="flex items-center gap-3">
+                    <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                        {['mes', 'anio'].map(v => (
+                            <button
+                                key={v}
+                                onClick={() => setPeriodo(v)}
+                                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${periodo === v ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                {v === 'mes' ? 'Este Mes' : 'Anual'}
+                            </button>
+                        ))}
+                    </div>
+                    <button onClick={handleRefresh} className={`p-2 bg-slate-900 text-white rounded-xl hover:bg-red-600 transition-all shadow-md active:scale-95 ${isRefreshing ? 'animate-spin' : ''}`}>
+                        <RefreshCw size={14} />
+                    </button>
                 </div>
             </div>
 
-            {/* Stats Grid Principal */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
-                    title={periodo === 'mes' ? 'Venta Mes' : `Venta ${periodo}`}
-                    value={statsData.ventaCerrada}
-                    isCurrency={true}
-                    icon={DollarSign}
-                    color="bg-emerald-50 text-emerald-600"
-                />
-                <StatCard
-                    title="Pipeline en Proceso"
-                    value={statsData.pipelineValor}
-                    isCurrency={true}
-                    icon={TrendingUp}
-                    color="bg-blue-50 text-blue-600"
-                />
-                <StatCard
-                    title="Nuevos Leads"
-                    value={statsData.conteoLeads}
-                    icon={Users}
-                    color="bg-purple-50 text-purple-600"
-                />
-                <StatCard
-                    title="Propuestas Generadas"
-                    value={statsData.conteoCotizaciones}
-                    icon={FileText}
-                    color="bg-red-50 text-red-600"
-                />
+            {/* Row 1: Stats Principales (ALINEACIÓN CUADRICULADA) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard title="Venta Cerrada" value={salesStats.totalVenta} isCurrency icon={DollarSign} color="bg-emerald-50 text-emerald-600" />
+                <StatCard title="Pipeline Vivo" value={salesStats.valorPipeline} isCurrency icon={TrendingUp} color="bg-blue-50 text-blue-600" />
+                <StatCard title="Nuevos Leads" value={salesStats.countLeads} icon={Users} color="bg-purple-50 text-purple-600" />
+                <StatCard title="Cotizaciones" value={salesStats.countCotz} icon={FileText} color="bg-red-50 text-red-600" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Meta y Pipeline Visual */}
-                <div className="lg:col-span-8 space-y-8">
-                    {/* Meta Mensual Pro (Viene de Supabase) */}
-                    <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden relative group">
-                        <div className="absolute right-0 top-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
-                            <Target size={160} />
-                        </div>
-                        <div className="relative z-10">
-                            <div className="flex justify-between items-end mb-6">
-                                <div>
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-2">Desempeño sobre Objetivo</h3>
-                                    <p className="text-3xl font-black text-slate-900 tracking-tighter">
-                                        Cumplimiento: <span className="text-emerald-500">{statsData.porcentajeMeta}%</span>
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1 justify-end">
-                                        Meta Guardada: {formatMXN(metaActual)}
-                                    </p>
-                                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
-                                        Resta: {formatMXN(statsData.faltanteMeta)}
-                                    </p>
-                                </div>
+            {/* Grid Principal estructurado para coincidencia Horizontal/Vertical */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+                {/* BLOQUE IZQUIERDO (Largo 8) */}
+                <div className="lg:col-span-8 flex flex-col gap-6">
+
+                    {/* Tarjeta de Meta (Row 1 del Bloque) */}
+                    <div className="bg-white p-7 rounded-[2.5rem] shadow-xl border border-gray-100 flex flex-col justify-center flex-1">
+                        <div className="flex justify-between items-end mb-5">
+                            <div>
+                                <span className="text-[10px] font-black text-red-600 uppercase tracking-[0.4em] block mb-2">Desempeño / Objetivo</span>
+                                <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none">
+                                    {salesStats.cumplimiento}% <span className="text-[11px] text-gray-300 font-bold tracking-normal italic">Cumplido</span>
+                                </h3>
                             </div>
-                            <div className="w-full h-4 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                                <div
-                                    className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full shadow-inner transition-all duration-1000"
-                                    style={{ width: `${statsData.porcentajeMeta}%` }}
-                                ></div>
+                            <div className="text-right">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Meta: {formatMXN(salesStats.meta)}</p>
+                                <p className="text-[11px] font-black text-emerald-600 uppercase mt-1">{formatMXN(salesStats.totalVenta)}</p>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Pipeline Visual Moderno */}
-                    <div className="bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl text-white">
-                        <h3 className="text-[10px] font-black text-red-500 uppercase tracking-[0.4em] mb-8 flex items-center gap-2">
-                            Propuestas por Estatus (Oportunidades)
-                            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse ml-2"></div>
-                        </h3>
-                        <div className="grid grid-cols-4 gap-4">
-                            {pipelineStages.map(([stage, count], i) => {
-                                const maxCount = Math.max(...pipelineStages.map(s => s[1]), 1);
-                                const height = (count / maxCount * 100) + 10;
-                                return (
-                                    <div key={stage} className="flex flex-col items-center">
-                                        <div className="w-full bg-slate-800 rounded-2xl relative mb-4 group h-32 flex items-end overflow-hidden border border-slate-700/50">
-                                            <div
-                                                className="w-full bg-gradient-to-t from-red-600 to-red-500 transition-all duration-1000 delay-100"
-                                                style={{ height: `${height}%` }}
-                                            ></div>
-                                            <div className="absolute inset-0 flex items-center justify-center font-black text-xl group-hover:scale-110 transition-transform">
-                                                {count}
-                                            </div>
-                                        </div>
-                                        <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest text-center">{stage}</span>
-                                    </div>
-                                );
-                            })}
+                        <div className="h-5 bg-slate-50 border border-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
+                            <div
+                                className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full shadow-lg transition-all duration-1000"
+                                style={{ width: `${Math.min(salesStats.cumplimiento, 100)}%` }}
+                            />
+                        </div>
+                        <div className="flex justify-between mt-4">
+                            <span className="text-[9px] font-bold text-gray-300 uppercase italic">Inversión Neta {periodo}</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Faltante: {formatMXN(Math.max(0, salesStats.meta - salesStats.totalVenta))}</span>
                         </div>
                     </div>
+
+                    {/* Tarjeta VIX Share (Row 2 del Bloque) */}
+                    <div className="bg-slate-900 p-7 rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col justify-center flex-1">
+                        <div className="absolute top-0 right-0 p-8 opacity-10">
+                            <Tv size={140} className="text-red-500" />
+                        </div>
+                        <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                            <div className="max-w-md">
+                                <h4 className="text-[12px] font-black text-red-500 uppercase tracking-[0.5em] mb-3 flex items-center gap-2">
+                                    Digital Power <Zap size={14} className="fill-red-500" />
+                                </h4>
+                                <h3 className="text-3xl font-black text-white tracking-tighter uppercase leading-tight mb-2">VIX Digital Share</h3>
+                                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest italic opacity-60">Consolidado de pauta en streaming</p>
+                            </div>
+                            <div className="bg-white/5 border border-white/10 p-5 rounded-3xl backdrop-blur-xl min-w-[240px] shadow-2xl">
+                                <div className="flex justify-between items-center mb-3">
+                                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Inversión VIX</span>
+                                    <span className="text-sm font-black text-red-500">{formatMXN(salesStats.ventaVIX)}</span>
+                                </div>
+                                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-red-600 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.7)]"
+                                        style={{ width: `${(salesStats.ventaVIX / (salesStats.totalVenta || 1)) * 100}%` }}
+                                    />
+                                </div>
+                                <div className="flex justify-between mt-3 text-[10px] font-black uppercase italic">
+                                    <span className="text-slate-500 lowercase tracking-normal">share digital</span>
+                                    <span className="text-slate-400">
+                                        {((salesStats.ventaVIX / (salesStats.totalVenta || 1)) * 100).toFixed(1)}% del Total
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
-                {/* Venta por Ciudad y Accesos */}
-                <div className="lg:col-span-4 space-y-8">
-                    {/* Venta por Ciudad Dinámica */}
-                    <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
-                        <div className="flex items-center gap-2 mb-6 text-slate-900">
-                            <MapPin size={18} className="text-red-600" />
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em]">Top Plazas ({periodo})</h3>
+                {/* BLOQUE DERECHO (Largo 4) - ALINEACIONES VERTICALES CON EL IZQUIERDO */}
+                <div className="lg:col-span-4 flex flex-col gap-6">
+
+                    {/* Tabla de Plazas (Row 1 del Sidebar) */}
+                    <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden flex flex-col flex-1">
+                        <div className="p-5 bg-slate-50 border-b border-gray-100 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <MapPin size={16} className="text-red-600" />
+                                <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Top Plazas</h4>
+                            </div>
+                            <span className="text-[9px] font-black text-slate-300 uppercase italic">Venta Neta</span>
                         </div>
-                        <div className="space-y-5">
-                            {ventasPorCiudad.length > 0 ? ventasPorCiudad.map(([ciudad, monto]) => (
-                                <div key={ciudad} className="space-y-1.5">
-                                    <div className="flex justify-between text-[11px] font-black text-slate-700">
-                                        <span className="uppercase tracking-tighter">{ciudad}</span>
-                                        <span>{formatMXN(monto)}</span>
-                                    </div>
-                                    <div className="w-full h-1.5 bg-slate-50 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-red-600 rounded-full transition-all duration-700"
-                                            style={{ width: `${(monto / (ventasPorCiudad[0][1] || 1)) * 100}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            )) : (
-                                <p className="text-[10px] text-gray-400 font-bold italic text-center py-4 uppercase">Sin cierres en este periodo</p>
-                            )}
+                        <div className="p-3">
+                            <table className="w-full">
+                                <tbody className="divide-y divide-gray-50">
+                                    {topPlazas.length > 0 ? topPlazas.map(([ciudad, monto], i) => (
+                                        <tr key={ciudad} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="py-3 px-3">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-[10px] font-black text-slate-200">#0{i + 1}</span>
+                                                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-tighter">{ciudad}</span>
+                                                </div>
+                                            </td>
+                                            <td className="py-3 px-3 text-right">
+                                                <span className="text-[11px] font-black text-slate-900">{formatMXN(monto)}</span>
+                                            </td>
+                                        </tr>
+                                    )) : (
+                                        <tr>
+                                            <td colSpan="2" className="py-12 text-center text-[10px] font-bold text-gray-300 uppercase italic tracking-widest">Sin cierres registrados</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    {/* Accesos Rápidos Pro */}
-                    <div className="space-y-3">
-                        <button
-                            onClick={() => setVistaActual('crm')}
-                            className="w-full bg-slate-900 text-white p-5 rounded-2xl flex items-center justify-between group hover:bg-red-600 transition-all font-black"
-                        >
-                            <span className="text-[9px] uppercase tracking-widest">Ver Pipeline Detallado</span>
-                            <ChevronRight size={16} />
-                        </button>
-                        <button
-                            onClick={() => setVistaActual('reportes')}
-                            className="w-full bg-white border border-gray-100 p-5 rounded-2xl flex items-center justify-between group hover:border-red-600 transition-all font-black text-slate-800"
-                        >
-                            <span className="text-[9px] uppercase tracking-widest">Módulo de Reportes</span>
-                            <ChevronRight size={16} className="text-gray-300 group-hover:text-red-600" />
-                        </button>
+                    {/* Tabla de Canales (Row 2 del Sidebar) */}
+                    <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden flex flex-col flex-1">
+                        <div className="p-5 bg-red-50/30 border-b border-gray-100 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Tv size={16} className="text-red-500" />
+                                <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Mezcla Canales</h4>
+                            </div>
+                            <span className="text-[9px] font-black text-red-300 uppercase italic">Share</span>
+                        </div>
+                        <div className="p-3">
+                            <table className="w-full">
+                                <tbody className="divide-y divide-gray-50">
+                                    {ventaPorCanal.length > 0 ? ventaPorCanal.map(([canal, monto]) => (
+                                        <tr key={canal} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="py-3 px-3">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                                                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-tighter">{canal}</span>
+                                                </div>
+                                            </td>
+                                            <td className="py-3 px-3 text-right">
+                                                <span className="text-[11px] font-black text-red-600">{formatMXN(monto)}</span>
+                                            </td>
+                                        </tr>
+                                    )) : (
+                                        <tr>
+                                            <td colSpan="2" className="py-12 text-center text-[10px] font-bold text-gray-300 uppercase italic tracking-widest">Sin datos</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
+
                 </div>
             </div>
+
+            {/* Accesos Rápidos - ALINEACIÓN TOTAL INFERIOR */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                    onClick={() => setVistaActual('crm')}
+                    className="p-5 bg-slate-900 text-white rounded-3xl flex items-center justify-between group hover:bg-red-600 transition-all shadow-xl active:scale-95"
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="bg-white/10 p-2.5 rounded-xl"><Target size={18} /></div>
+                        <div>
+                            <span className="text-[11px] font-black uppercase tracking-widest block">Pipeline / CRM</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-1 group-hover:text-white/60">Seguimiento de Leads</span>
+                        </div>
+                    </div>
+                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+
+                <button
+                    onClick={() => setVistaActual('reportes')}
+                    className="p-5 bg-white border border-gray-100 text-slate-800 rounded-3xl flex items-center justify-between group hover:border-red-600 transition-all shadow-lg active:scale-95"
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="bg-slate-50 p-2.5 rounded-xl text-red-600"><BarChart3 size={18} /></div>
+                        <div>
+                            <span className="text-[11px] font-black uppercase tracking-widest block">Análisis de Datos</span>
+                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mt-1">Matrices y Totales</span>
+                        </div>
+                    </div>
+                    <ArrowRight size={18} className="text-slate-300 group-hover:text-red-600 transition-colors" />
+                </button>
+
+                <div className="p-5 bg-emerald-600 text-white rounded-3xl flex items-center justify-between shadow-xl">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-white/20 p-2.5 rounded-xl"><PlusCircle size={18} /></div>
+                        <div>
+                            <span className="text-[11px] font-black uppercase tracking-widest block">Nueva Inversión</span>
+                            <button onClick={() => setVistaActual('cotizador')} className="text-[9px] font-bold text-white/80 uppercase underline decoration-white/20 hover:text-white transition-colors mt-1">Lanzar Cotización</button>
+                        </div>
+                    </div>
+                    <Zap size={18} className="fill-white" />
+                </div>
+            </div>
+
         </div>
     );
 };
