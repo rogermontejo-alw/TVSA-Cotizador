@@ -359,6 +359,22 @@ const App = () => {
           {renderVista()}
         </div>
       </main>
+
+      {/* Footer de Control de Versiones */}
+      <footer className="print:hidden pb-8 pt-6 px-8 text-center border-t border-gray-100 bg-gray-50/50 backdrop-blur-sm mt-auto">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-6 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse"></span>
+            <span>TVSA-COTIZADOR V1.2.1</span>
+          </div>
+          <div className="hidden md:block w-px h-3 bg-slate-200"></div>
+          <div>ÚLTIMA ACTUALIZACIÓN: 27 DIC 2024</div>
+          <div className="hidden md:block w-px h-3 bg-slate-200"></div>
+          <div>21:55 CST</div>
+          <div className="hidden md:block w-px h-3 bg-slate-200"></div>
+          <div className="text-slate-300 italic">Ambiente de Producción Vercel</div>
+        </div>
+      </footer>
     </div>
   );
 };
