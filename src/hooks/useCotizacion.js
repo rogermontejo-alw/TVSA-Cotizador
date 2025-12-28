@@ -25,7 +25,7 @@ export const useCotizacion = (data = {}) => {
         if (!producto) return 0;
 
         const condicion = condicionesCliente.find(
-            c => c.clienteId === clienteId && c.productoId === productoId
+            c => String(c.clienteId) === String(clienteId) && String(c.productoId) === String(productoId)
         );
 
         if (condicion) {

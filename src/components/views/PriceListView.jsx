@@ -12,7 +12,7 @@ const PriceListView = ({ clientes, productos, calcularPrecioUnitario }) => {
             p.tipo.toLowerCase().includes(busqueda.toLowerCase()))
     );
 
-    const activeClient = clientes.find(c => c.id === clienteSel);
+    const activeClient = clientes.find(c => String(c.id) === String(clienteSel));
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-20">

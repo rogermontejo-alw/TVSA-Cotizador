@@ -28,7 +28,7 @@ const ConditionsForm = ({ clientes, productos, condicionesCliente, onSave, setMe
 
     const agregarProductoParaCondicion = (producto) => {
         if (!productosParaCondicion.find(p => p.id === producto.id)) {
-            const condicionExistente = condicionesCliente.find(c => c.clienteId === clienteIdSeleccionado && c.productoId === producto.id);
+            const condicionExistente = condicionesCliente.find(c => String(c.clienteId) === String(clienteIdSeleccionado) && String(c.productoId) === String(producto.id));
 
             setProductosParaCondicion(prev => [
                 ...prev,
@@ -79,7 +79,7 @@ const ConditionsForm = ({ clientes, productos, condicionesCliente, onSave, setMe
             if (hayError) return;
 
             const condicionPrevia = condicionesCliente.find(
-                c => c.clienteId === clienteIdSeleccionado && c.productoId === p.id
+                c => String(c.clienteId) === String(clienteIdSeleccionado) && String(c.productoId) === String(p.id)
             );
 
             condicionesEnviadas.push({

@@ -35,7 +35,8 @@ export const useDatabase = (session) => {
                 supabase.from('metas_comerciales').select('*').order('anio', { ascending: false }).order('mes', { ascending: false }),
                 supabase.auth.getUser().then(async ({ data: { user } }) => {
                     if (!user) return { data: null };
-                    return supabase.from('perfiles').select('*').eq('id', user.id).maybeSingle();
+                    const { data: profile } = await supabase.from('perfiles').select('*').eq('id', user.id).maybeSingle();
+                    return { data: profile ? { ...profile, email: user.email } : { email: user.email } };
                 })
             ]);
 
@@ -141,10 +142,10 @@ export const useDatabase = (session) => {
                 resData = result.data;
                 error = result.error;
             } else {
-                const { id, ...dataRest } = payload;
-                const cleanedData = cleanObject(dataRest);
-                if (id && id !== '') {
-                    const result = await supabase.from(tabla).update(cleanedData).eq('id', id).select();
+                const cleanedData = cleanObject(payload);
+                // Si hay ID, usamos upsert para asegurar que se cree si no existe (importante para perfiles)
+                if (cleanedData.id) {
+                    const result = await supabase.from(tabla).upsert(cleanedData).select();
                     resData = result.data;
                     error = result.error;
                 } else {

@@ -27,7 +27,8 @@ const AdminPanel = ({
     perfil,
     limpiarTabla,
     historial,
-    masterContracts
+    masterContracts,
+    calcularPrecioUnitario
 }) => {
     const [seccionActiva, setSeccionActiva] = useState('clientes');
     const [clienteEdicion, setClienteEdicion] = useState(null);
@@ -154,6 +155,7 @@ const AdminPanel = ({
                             productos={productos}
                             clientes={clientes}
                             setVistaActual={setVistaActual}
+                            calcularPrecioUnitario={calcularPrecioUnitario}
                         />
                     )}
 
@@ -179,7 +181,7 @@ const AdminPanel = ({
                 </div>
 
                 <div className="mt-20 text-center">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.3.7 • CRM Cloud Enabled</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.3.8 • CRM Cloud Enabled</p>
                 </div>
             </div>
         </div>

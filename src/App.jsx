@@ -188,6 +188,7 @@ const App = () => {
             perfil={dbData.perfil}
             limpiarTabla={limpiarTabla}
             masterContracts={masterContracts}
+            calcularPrecioUnitario={cotizacionState.calcularPrecioUnitario}
           />
         );
       case 'lista-precios':
@@ -347,7 +348,7 @@ const App = () => {
             </p>
             <div className="h-4 w-px bg-slate-100"></div>
             <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-              V1.3.7 • 28 DEC 2025
+              V1.3.8 • 28 DEC 2025
             </p>
           </div>
         </div>
