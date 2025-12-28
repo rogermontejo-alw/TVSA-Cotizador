@@ -63,18 +63,10 @@ const CotizacionResult = ({
     };
 
     const handleUpdateQuoteStatus = async (newStatus) => {
-        // Validar si es ganada y faltan datos
-        if (newStatus === 'ganada') {
-            if (!cierreData.numero_contrato) {
-                setMensaje({ tipo: 'error', texto: 'El número de contrato es obligatorio para cerrar la venta.' });
-                return;
-            }
-        }
-
         setIsUpdating(true);
         try {
             // Solo si la cotización ya existe en DB (tiene ID UUID)
-            if (!cotizacion.id || cotizacion.id.startsWith('COT-')) {
+            if (!cotizacion.id || String(cotizacion.id).startsWith('COT-')) {
                 setMensaje({ tipo: 'info', texto: 'Primero debes guardar la cotización para cambiar su estatus oficial.' });
                 setConfirmingQuoteStatus(null);
                 return;
@@ -86,7 +78,7 @@ const CotizacionResult = ({
             };
 
             if (newStatus === 'ganada') {
-                payload.numero_contrato = parseInt(cierreData.numero_contrato);
+                payload.numero_contrato = cierreData.numero_contrato ? parseInt(cierreData.numero_contrato) : null;
                 payload.mc_id = cierreData.mc_id || null;
                 payload.fecha_cierre_real = new Date().toISOString();
             }
@@ -101,7 +93,7 @@ const CotizacionResult = ({
                         cotizacion_id: cotizacion.id,
                         monto_facturado: cotizacion.subtotalGeneral || cotizacion.total / 1.16,
                         estatus_pago: 'pendiente',
-                        notas: `Contrato: ${cierreData.numero_contrato}`
+                        notas: cierreData.numero_contrato ? `Contrato: ${cierreData.numero_contrato}` : 'Venta ganada, contrato pendiente'
                     });
                 }
 
@@ -130,13 +122,11 @@ const CotizacionResult = ({
             }
 
             // Preparar el payload para Supabase
-            // Si el ID empieza con COT- es un ID temporal del frontend, lo mandamos como null para que Supabase genere el UUID
             const isNew = !cotizacion.id || String(cotizacion.id).startsWith('COT-');
 
             const payload = {
                 id: isNew ? undefined : cotizacion.id,
                 cliente_id: cliente.id,
-                // Generar un folio amigable si es nueva
                 folio: cotizacion.folio || (isNew ? `FOL-${Math.floor(100000 + Math.random() * 900000)}` : cotizacion.id),
                 monto_total: cotizacion.total || 0,
                 dias_campana: cotizacion.diasCampana || 30,
@@ -154,12 +144,9 @@ const CotizacionResult = ({
                 }
             };
 
-            console.log("💾 Guardando cotización con payload:", payload);
             const result = await guardarCotizacion('cotizaciones', payload);
 
             if (result && result.length > 0) {
-                // Actualizar el objeto local para permitir cambios de estatus sin recargar
-                // Nota: Mutamos el objeto de la prop temporalmente para UX inmediata
                 cotizacion.id = result[0].id;
                 cotizacion.folio = result[0].folio;
                 setMensaje({ tipo: 'exito', texto: '¡Cotización guardada exitosamente en la base de datos!' });
@@ -245,8 +232,8 @@ const CotizacionResult = ({
                 </div>
 
                 {/* LADO DERECHO: RESUMEN FINANCIERO */}
-                <div className="md:col-span-12 lg:col-span-4 order-1 lg:order-2">
-                    <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl lg:sticky lg:top-20 w-full max-w-sm mx-auto">
+                <div className="md:col-span-5 lg:col-span-4 order-1 md:order-2">
+                    <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl md:sticky md:top-20 w-full max-w-sm mx-auto">
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 mb-6 border-b border-white/10 pb-2">
                             Resumen Financiero
                         </h3>
@@ -383,7 +370,7 @@ const CotizacionResult = ({
                                 ¡Cerrar Venta con Éxito!
                             </h3>
                             <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8 italic">
-                                Captura los datos del cierre administrativo
+                                Puedes agregar el contrato después desde el panel de cobranza
                             </p>
 
                             <div className="space-y-4 mb-8">
@@ -416,12 +403,12 @@ const CotizacionResult = ({
 
                             <div className="flex flex-col gap-2">
                                 <button
-                                    disabled={isUpdating || !cierreData.numero_contrato}
+                                    disabled={isUpdating}
                                     onClick={() => handleUpdateQuoteStatus('ganada')}
                                     className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-slate-900 transition-all active:scale-95 shadow-xl shadow-emerald-100 flex items-center justify-center gap-2"
                                 >
                                     {isUpdating && <RefreshCw size={14} className="animate-spin" />}
-                                    Confirmar y Cerrar Venta
+                                    Confirmar Ganada
                                 </button>
                                 <button
                                     onClick={() => setConfirmingQuoteStatus(null)}
@@ -503,7 +490,7 @@ const CotizacionResult = ({
                     </div>
                 )
             }
-        </div >
+        </div>
     );
 };
 

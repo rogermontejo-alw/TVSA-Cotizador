@@ -27,11 +27,11 @@ const SelectedProducts = ({
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
+            <div className="flex flex-col md:grid md:grid-cols-12 gap-6">
 
-                {/* Panel de Resumen de Presupuesto - Sticky on desktop, top on mobile */}
-                <div className="lg:col-span-4 order-first lg:order-none">
-                    <div className="bg-white rounded-xl shadow-lg p-5 border-t-4 border-red-700 sticky top-20">
+                {/* Panel de Resumen de Presupuesto - Sticky on desktop/tablet, top on mobile */}
+                <div className="md:col-span-5 lg:col-span-4 order-first md:order-none">
+                    <div className="bg-white rounded-xl shadow-lg p-5 border-t-4 border-red-700 md:sticky md:top-20">
                         <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
                             <DollarSign className="mr-2 text-red-700" size={20} />
                             Resumen Financiero
@@ -64,7 +64,7 @@ const SelectedProducts = ({
                 </div>
 
                 {/* Panel de Productos en Cotización */}
-                <div className="lg:col-span-8 bg-white rounded-xl shadow-lg p-5 border-t-4 border-red-700">
+                <div className="md:col-span-7 lg:col-span-8 bg-white rounded-xl shadow-lg p-5 border-t-4 border-red-700">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-lg font-bold text-gray-800">Productos en Cotización</h2>
                         <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">
