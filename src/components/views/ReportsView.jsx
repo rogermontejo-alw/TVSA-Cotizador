@@ -14,7 +14,8 @@ import {
     CheckCircle2,
     XCircle,
     Layout,
-    Globe
+    Globe,
+    Briefcase
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
@@ -194,6 +195,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [] }) => {
                     { id: 'ventas-mes', label: 'Ventas por Mes', icon: Calendar },
                     { id: 'ventas-canal', label: 'Ventas por Canal', icon: Tv },
                     { id: 'ventas-ciudad', label: 'Ventas por Ciudad', icon: Globe },
+                    { id: 'control-cierres', label: 'Control de Cierres', icon: Briefcase },
                     { id: 'resumen-clientes', label: 'Resumen Pipeline', icon: FileText },
                 ].map(tab => (
                     <button
@@ -374,7 +376,69 @@ const ReportsView = ({ clientes = [], cotizaciones = [] }) => {
                     </div>
                 )}
 
-                {/* 4. RESUMEN PIPELINE */}
+                {/* 5. CONTROL DE CIERRES (Listado de Contratos y MC) */}
+                {seccionReporte === 'control-cierres' && (
+                    <div className="overflow-x-auto">
+                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
+                            <div>
+                                <h3 className="text-lg font-black tracking-tighter uppercase">Control Administrativo de Cierres</h3>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Folios, Contratos y Master Contracts</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[9px] font-black uppercase text-red-500 tracking-widest">Cierres en Periodo</p>
+                                <p className="text-2xl font-black">{ganadas.length}</p>
+                            </div>
+                        </div>
+                        <table className="w-full text-left border-collapse min-w-[900px]">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-gray-200">
+                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Fecha Cierre</th>
+                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Cliente / Empresa</th>
+                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Folio Cotz</th>
+                                    <th className="py-4 px-6 text-[9px] font-black text-emerald-600 uppercase tracking-widest border-r border-gray-200">No. Contrato</th>
+                                    <th className="py-4 px-6 text-[9px] font-black text-blue-600 uppercase tracking-widest border-r border-gray-200">Master Contract</th>
+                                    <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Inversión Neta</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {ganadas.sort((a, b) => new Date(b.fecha_cierre_real) - new Date(a.fecha_cierre_real)).map((q, i) => {
+                                    const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
+                                    return (
+                                        <tr key={i} className="hover:bg-slate-50/50">
+                                            <td className="py-4 px-6 text-[10px] font-bold text-gray-400 border-r border-gray-100">
+                                                {new Date(q.fecha_cierre_real || q.created_at).toLocaleDateString('es-MX')}
+                                            </td>
+                                            <td className="py-4 px-6 border-r border-gray-100 font-black text-[10px] text-slate-900 uppercase">
+                                                {cliente?.nombre_empresa || 'S/N'}
+                                            </td>
+                                            <td className="py-4 px-6 border-r border-gray-100 text-[10px] font-bold text-red-500 uppercase tracking-tighter">
+                                                {q.folio || q.id}
+                                            </td>
+                                            <td className="py-4 px-6 border-r border-gray-100 text-center">
+                                                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${q.numero_contrato ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-400'}`}>
+                                                    {q.numero_contrato || 'FALTA'}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-6 border-r border-gray-100 text-center">
+                                                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${q.mc_id ? 'bg-blue-50 text-blue-600' : 'text-gray-300'}`}>
+                                                    {q.mc_id ? 'VINCULADO' : 'ÚNICA'}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900">
+                                                {formatMXN(q.subtotalGeneral || q.total / 1.16)}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                {ganadas.length === 0 && (
+                                    <tr>
+                                        <td colSpan="6" className="py-20 text-center text-[10px] font-black text-gray-300 uppercase italic tracking-widest">Sin ventas ganadas en este periodo</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
                 {seccionReporte === 'resumen-clientes' && (
                     <div className="overflow-x-auto sm:overflow-hidden">
                         <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">

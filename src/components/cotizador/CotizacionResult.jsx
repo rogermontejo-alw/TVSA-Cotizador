@@ -52,6 +52,16 @@ const CotizacionResult = ({
         }
     };
 
+    const handleOpenQuoteStatusModal = (status) => {
+        setConfirmingQuoteStatus({ status });
+        if (status === 'ganada') {
+            setCierreData({
+                numero_contrato: cotizacion.numero_contrato || '',
+                mc_id: cotizacion.mc_id || ''
+            });
+        }
+    };
+
     const handleUpdateQuoteStatus = async (newStatus) => {
         // Validar si es ganada y faltan datos
         if (newStatus === 'ganada') {
@@ -289,7 +299,7 @@ const CotizacionResult = ({
                                         {['enviada', 'ganada', 'perdida'].map(st => (
                                             <button
                                                 key={st}
-                                                onClick={() => setConfirmingQuoteStatus({ status: st })}
+                                                onClick={() => handleOpenQuoteStatusModal(st)}
                                                 className={`py-2 rounded-lg font-black text-[8px] uppercase tracking-widest transition-all
                                                     ${cotizacion.estatus === st
                                                         ? st === 'ganada' ? 'bg-emerald-500 text-white' : st === 'perdida' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'

@@ -27,7 +27,9 @@ const ClientFichaView = ({
     // Estado para cierre de venta desde la lista
     const [cierreData, setCierreData] = useState({
         numero_contrato: '',
-        mc_id: ''
+        mc_id: '',
+        fecha_registro_sistema: '',
+        folio_sistema: ''
     });
 
     const clientQuotes = useMemo(() => {
@@ -67,6 +69,18 @@ const ClientFichaView = ({
         }
     };
 
+    const handleOpenQuoteStatusModal = (quote, status) => {
+        setConfirmingQuoteStatus({ quote, status });
+        if (status === 'ganada') {
+            setCierreData({
+                numero_contrato: quote.numero_contrato || '',
+                mc_id: quote.mc_id || '',
+                fecha_registro_sistema: quote.fecha_registro_sistema || '',
+                folio_sistema: quote.folio_sistema || ''
+            });
+        }
+    };
+
     const handleUpdateQuoteStatus = async (quote, newStatus) => {
         if (newStatus === 'ganada' && !cierreData.numero_contrato) {
             setMensaje({ tipo: 'error', texto: 'El número de contrato es obligatorio.' });
@@ -83,7 +97,9 @@ const ClientFichaView = ({
             if (newStatus === 'ganada') {
                 updatedQuote.numero_contrato = parseInt(cierreData.numero_contrato);
                 updatedQuote.mc_id = cierreData.mc_id || null;
-                updatedQuote.fecha_cierre_real = new Date().toISOString();
+                updatedQuote.fecha_registro_sistema = cierreData.fecha_registro_sistema || null;
+                updatedQuote.folio_sistema = cierreData.folio_sistema || null;
+                updatedQuote.fecha_cierre_real = quote.fecha_cierre_real || new Date().toISOString();
             }
 
             const success = await onSaveClient('cotizaciones', updatedQuote);
@@ -109,7 +125,7 @@ const ClientFichaView = ({
                 }
 
                 // Reset cierre data
-                setCierreData({ numero_contrato: '', mc_id: '' });
+                setCierreData({ numero_contrato: '', mc_id: '', fecha_registro_sistema: '', folio_sistema: '' });
             }
         } catch (err) {
             console.error(err);
@@ -238,7 +254,7 @@ const ClientFichaView = ({
                                                 )}
                                                 <div className="flex gap-1">
                                                     {['enviada', 'ganada', 'perdida'].map(st => (
-                                                        <button key={st} onClick={() => setConfirmingQuoteStatus({ quote, status: st })} className={`text-[7px] px-2 py-0.5 rounded font-black uppercase ${quote.estatus === st ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 opacity-60 hover:opacity-100 transition-opacity'}`}>{st}</button>
+                                                        <button key={st} onClick={() => handleOpenQuoteStatusModal(quote, st)} className={`text-[7px] px-2 py-0.5 rounded font-black uppercase ${quote.estatus === st ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 opacity-60 hover:opacity-100 transition-opacity'}`}>{st}</button>
                                                     ))}
                                                 </div>
                                             </div>
@@ -246,6 +262,15 @@ const ClientFichaView = ({
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
+                                        {quote.estatus === 'ganada' && (
+                                            <button
+                                                onClick={e => { e.stopPropagation(); handleOpenQuoteStatusModal(quote, 'ganada'); }}
+                                                className="p-3 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                                                title="Datos de Cierre"
+                                            >
+                                                <Briefcase size={16} />
+                                            </button>
+                                        )}
                                         <button onClick={e => { e.stopPropagation(); onPrintQuote(quote); }} className="p-3 bg-white rounded-xl border border-gray-100"><Printer size={16} /></button>
                                     </div>
                                 </div>
@@ -263,11 +288,27 @@ const ClientFichaView = ({
 
                         {confirmingQuoteStatus.status === 'ganada' && (
                             <div className="space-y-4 mb-6">
-                                <input type="number" placeholder="Número de Contrato (Obligatorio)" value={cierreData.numero_contrato} onChange={e => setCierreData({ ...cierreData, numero_contrato: e.target.value })} className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold outline-none ring-2 ring-emerald-500/20 focus:ring-emerald-500" />
-                                <select value={cierreData.mc_id} onChange={e => setCierreData({ ...cierreData, mc_id: e.target.value })} className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold outline-none">
-                                    <option value="">S/ Master Contract</option>
-                                    {clientMCs.map(mc => <option key={mc.id} value={mc.id}>{mc.numero_mc}</option>)}
-                                </select>
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Contrato Corporativo</label>
+                                    <input type="number" placeholder="Contrato (Obligatorio)" value={cierreData.numero_contrato} onChange={e => setCierreData({ ...cierreData, numero_contrato: e.target.value })} className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold outline-none ring-2 ring-emerald-500/20 focus:ring-emerald-500" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Master Contract</label>
+                                    <select value={cierreData.mc_id} onChange={e => setCierreData({ ...cierreData, mc_id: e.target.value })} className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold outline-none">
+                                        <option value="">Venta Única</option>
+                                        {clientMCs.map(mc => <option key={mc.id} value={mc.id}>{mc.numero_mc}</option>)}
+                                    </select>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">F. Sistema Televisa</label>
+                                        <input type="date" value={cierreData.fecha_registro_sistema} onChange={e => setCierreData({ ...cierreData, fecha_registro_sistema: e.target.value })} className="w-full p-4 bg-slate-50 rounded-2xl text-[10px] font-bold outline-none" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Folio Sistema (CP)</label>
+                                        <input type="text" placeholder="Ej: CP-123" value={cierreData.folio_sistema} onChange={e => setCierreData({ ...cierreData, folio_sistema: e.target.value })} className="w-full p-4 bg-slate-50 rounded-2xl text-[10px] font-bold outline-none" />
+                                    </div>
+                                </div>
                             </div>
                         )}
 

@@ -5,6 +5,7 @@ import {
     DollarSign,
     TrendingUp,
     Clock,
+    Briefcase,
     ArrowUpRight,
     Zap,
     PlusCircle,
@@ -46,6 +47,7 @@ const DashboardView = ({
     iniciarNuevaCotizacion
 }) => {
     const [periodo, setPeriodo] = useState('mes');
+    const [criterioFecha, setCriterioFecha] = useState('comercial'); // 'comercial' o 'sistema'
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const handleRefresh = async () => {
@@ -63,11 +65,20 @@ const DashboardView = ({
         else if (periodo === 'anio') inicio.setMonth(0, 1);
         inicio.setHours(0, 0, 0, 0);
 
-        const filteredH = historial.filter(h => new Date(h.created_at || h.fecha) >= inicio);
+        const filteredH = historial.filter(h => {
+            const dateStr = criterioFecha === 'comercial'
+                ? (h.fecha_cierre_real || h.fecha)
+                : h.fecha_registro_sistema;
+
+            if (!dateStr) return false;
+            const itemDate = new Date(dateStr);
+            return itemDate >= inicio && itemDate <= ahora;
+        });
+
         const filteredC = clientes.filter(c => new Date(c.created_at) >= inicio);
 
         return { totalHistorial: filteredH, totalLeads: filteredC };
-    }, [historial, clientes, periodo]);
+    }, [historial, clientes, periodo, criterioFecha]);
 
     const salesStats = useMemo(() => {
         const ganadas = totalHistorial.filter(h => h.estatus === 'ganada');
@@ -122,7 +133,23 @@ const DashboardView = ({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col md:flex-row items-center gap-3">
+                    <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                        {[
+                            { id: 'comercial', label: 'Venta', icon: TrendingUp },
+                            { id: 'sistema', label: 'Sistema / CP', icon: Briefcase }
+                        ].map(c => (
+                            <button
+                                key={c.id}
+                                onClick={() => setCriterioFecha(c.id)}
+                                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${criterioFecha === c.id ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                <c.icon size={12} />
+                                {c.label}
+                            </button>
+                        ))}
+                    </div>
+
                     <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
                         {['mes', 'anio'].map(v => (
                             <button
@@ -142,7 +169,7 @@ const DashboardView = ({
 
             {/* Row 1: Stats Principales (ALINEACIÓN CUADRICULADA) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard title="Venta Cerrada" value={salesStats.totalVenta} isCurrency icon={DollarSign} color="bg-emerald-50 text-emerald-600" />
+                <StatCard title={criterioFecha === 'comercial' ? "Venta Cerrada" : "Netificado Sistema"} value={salesStats.totalVenta} isCurrency icon={criterioFecha === 'comercial' ? DollarSign : Briefcase} color={criterioFecha === 'comercial' ? "bg-emerald-50 text-emerald-600" : "bg-blue-600 text-white"} />
                 <StatCard title="Pipeline Vivo" value={salesStats.valorPipeline} isCurrency icon={TrendingUp} color="bg-blue-50 text-blue-600" />
                 <StatCard title="Nuevos Leads" value={salesStats.countLeads} icon={Users} color="bg-purple-50 text-purple-600" />
                 <StatCard title="Cotizaciones" value={salesStats.countCotz} icon={FileText} color="bg-red-50 text-red-600" />

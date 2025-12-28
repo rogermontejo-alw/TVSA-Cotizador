@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, FileText, Printer, Eye, Trash2, Calendar, Search, CopyPlus, Filter, CheckCircle, Clock, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, FileText, Printer, Eye, Trash2, Calendar, Search, CopyPlus, Filter, CheckCircle, Clock, XCircle, AlertCircle, RefreshCw, Briefcase } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
 const HistoryView = ({
@@ -21,8 +21,23 @@ const HistoryView = ({
     // Estado para cierre desde lista
     const [cierreData, setCierreData] = useState({
         numero_contrato: '',
-        mc_id: ''
+        mc_id: '',
+        fecha_registro_sistema: '',
+        folio_sistema: ''
     });
+
+    // Función para preparar el modal con datos existentes
+    const openStatusModal = (quote, status) => {
+        setConfirmingStatus({ quote, status });
+        if (status === 'ganada') {
+            setCierreData({
+                numero_contrato: quote.numero_contrato || '',
+                mc_id: quote.mc_id || '',
+                fecha_registro_sistema: quote.fecha_registro_sistema || '',
+                folio_sistema: quote.folio_sistema || ''
+            });
+        }
+    };
 
     const historialFiltrado = useMemo(() => {
         return (historial || []).filter(cotz => {
@@ -64,7 +79,9 @@ const HistoryView = ({
             if (newStatus === 'ganada') {
                 payload.numero_contrato = parseInt(cierreData.numero_contrato);
                 payload.mc_id = cierreData.mc_id || null;
-                payload.fecha_cierre_real = new Date().toISOString();
+                payload.fecha_registro_sistema = cierreData.fecha_registro_sistema || null;
+                payload.folio_sistema = cierreData.folio_sistema || null;
+                payload.fecha_cierre_real = quote.fecha_cierre_real || new Date().toISOString();
             }
 
             const success = await onSaveQuote('cotizaciones', payload);
@@ -81,7 +98,7 @@ const HistoryView = ({
                 }
 
                 setConfirmingStatus(null);
-                setCierreData({ numero_contrato: '', mc_id: '' });
+                setCierreData({ numero_contrato: '', mc_id: '', fecha_registro_sistema: '', folio_sistema: '' });
             }
         } catch (err) {
             console.error(err);
@@ -198,7 +215,7 @@ const HistoryView = ({
                                                     {['enviada', 'ganada', 'perdida'].map(st => (
                                                         <button
                                                             key={st}
-                                                            onClick={() => setConfirmingStatus({ quote: cotz, status: st })}
+                                                            onClick={() => openStatusModal(cotz, st)}
                                                             disabled={isUpdating}
                                                             className={`text-[8px] px-1.5 py-0.5 rounded font-black uppercase tracking-tighter transition-all relative overflow-hidden
                                                                 ${cotz.estatus === st
@@ -243,6 +260,15 @@ const HistoryView = ({
                                                     >
                                                         <Eye size={16} />
                                                     </button>
+                                                    {cotz.estatus === 'ganada' && (
+                                                        <button
+                                                            onClick={() => openStatusModal(cotz, 'ganada')}
+                                                            className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg transition-all border border-emerald-100"
+                                                            title="Datos de Cierre"
+                                                        >
+                                                            <Briefcase size={16} />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={() => mostrarPropuesta(cotz)}
                                                         className="p-1.5 bg-gray-100 hover:bg-red-600 hover:text-white rounded-lg transition-all text-gray-600"
@@ -307,6 +333,15 @@ const HistoryView = ({
                                             <Eye size={20} />
                                             <span className="text-[8px] font-black mt-1 uppercase">Ver</span>
                                         </button>
+                                        {cotz.estatus === 'ganada' && (
+                                            <button
+                                                onClick={() => openStatusModal(cotz, 'ganada')}
+                                                className="flex flex-col items-center justify-center p-3 bg-emerald-50 rounded-xl text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100"
+                                            >
+                                                <Briefcase size={20} />
+                                                <span className="text-[8px] font-black mt-1 uppercase">Cierre</span>
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => mostrarPropuesta(cotz)}
                                             className="flex flex-col items-center justify-center p-3 bg-gray-50 rounded-xl text-gray-600 hover:bg-red-600 hover:text-white transition-all"
@@ -380,6 +415,27 @@ const HistoryView = ({
                                                 <option key={mc.id} value={mc.id}>{mc.numero_mc}</option>
                                             ))}
                                         </select>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Fecha Registro Sistema</label>
+                                            <input
+                                                type="date"
+                                                value={cierreData.fecha_registro_sistema}
+                                                onChange={(e) => setCierreData({ ...cierreData, fecha_registro_sistema: e.target.value })}
+                                                className="w-full p-4 bg-slate-50 border-none rounded-2xl text-[10px] font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Folio Sistema (CP)</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Ej: CP-1234"
+                                                value={cierreData.folio_sistema}
+                                                onChange={(e) => setCierreData({ ...cierreData, folio_sistema: e.target.value })}
+                                                className="w-full p-4 bg-slate-50 border-none rounded-2xl text-[10px] font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}

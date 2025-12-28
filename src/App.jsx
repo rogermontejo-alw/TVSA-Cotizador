@@ -103,7 +103,12 @@ const App = () => {
           paqueteVIX: vixCompleto,
           presupuestoBase: detalles.inversion_inicial || 0,
           subtotalTV: detalles.subtotal_tv || 0,
-          costoVIX: detalles.costo_vix || 0
+          costoVIX: detalles.costo_vix || 0,
+          mc_id: row.mc_id,
+          numero_contrato: row.numero_contrato,
+          fecha_registro_sistema: row.fecha_registro_sistema,
+          folio_sistema: row.folio_sistema,
+          fecha_cierre_real: row.fecha_cierre_real
         };
       } catch (e) {
         console.error("Error parseando fila de historial:", row, e);
@@ -315,6 +320,7 @@ const App = () => {
             cotizaciones={historial}
             clientes={clientes}
             onSaveMC={guardarRegistro}
+            onSaveQuote={guardarRegistro}
             setMensaje={setMensajeAdmin}
           />
         );
@@ -377,12 +383,12 @@ const App = () => {
         <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-6 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse"></span>
-            <span>TVSA-COTIZADOR V1.2.1</span>
+            <span>TVSA-COTIZADOR V1.2.2</span>
           </div>
           <div className="hidden md:block w-px h-3 bg-slate-200"></div>
-          <div>ÚLTIMA ACTUALIZACIÓN: 27 DIC 2024</div>
+          <div>ÚLTIMA ACTUALIZACIÓN: 28 DIC 2025</div>
           <div className="hidden md:block w-px h-3 bg-slate-200"></div>
-          <div>21:55 CST</div>
+          <div>00:35 CST</div>
           <div className="hidden md:block w-px h-3 bg-slate-200"></div>
           <div className="text-slate-300 italic">Ambiente de Producción Vercel</div>
         </div>
