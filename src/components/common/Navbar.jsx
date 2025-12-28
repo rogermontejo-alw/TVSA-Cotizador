@@ -20,11 +20,10 @@ const Navbar = ({ vistaActual, setVistaActual, session, onLogout }) => {
     const navLinks = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'crm', label: 'Clientes', icon: Users },
-        { id: 'master-contracts', label: 'Contratos', icon: Briefcase },
-        { id: 'reportes', label: 'Reportes', icon: BarChart3 },
-        { id: 'cobranza', label: 'Cobranza', icon: DollarSign },
         { id: 'historial', label: 'Cotizaciones', icon: History },
-        { id: 'administracion', label: 'Admin', icon: Settings },
+        { id: 'master-contracts', label: 'Contratos', icon: Briefcase },
+        { id: 'cobranza', label: 'Cobranza', icon: DollarSign },
+        { id: 'reportes', label: 'Reportes', icon: BarChart3 },
     ];
 
     return (
@@ -71,11 +70,25 @@ const Navbar = ({ vistaActual, setVistaActual, session, onLogout }) => {
 
                         <div className="h-6 w-px bg-white/10 mx-4"></div>
 
-                        <div className="flex items-center gap-4">
-                            <div className="text-right hidden xl:block">
+                        <div className="flex items-center gap-2">
+                            <div className="text-right hidden xl:block mr-2">
                                 <p className="text-[8px] font-black uppercase tracking-widest text-white/40 leading-none">Usuario</p>
                                 <p className="text-[9px] font-bold text-gray-300">{session?.user?.email?.split('@')[0]}</p>
                             </div>
+
+                            <button
+                                onClick={() => setVistaActual('administracion')}
+                                className={`
+                                    p-2 rounded-xl transition-all border border-white/5
+                                    ${vistaActual === 'administracion'
+                                        ? 'bg-red-600 text-white shadow-lg shadow-red-900/40 border-red-500'
+                                        : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'}
+                                `}
+                                title="Panel Maestro"
+                            >
+                                <Settings size={16} />
+                            </button>
+
                             <button
                                 onClick={onLogout}
                                 className="p-2 rounded-xl bg-white/5 text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-all border border-white/5"
@@ -87,7 +100,13 @@ const Navbar = ({ vistaActual, setVistaActual, session, onLogout }) => {
                     </div>
 
                     {/* Mobile Button */}
-                    <div className="lg:hidden flex items-center gap-3">
+                    <div className="lg:hidden flex items-center gap-2">
+                        <button
+                            onClick={() => setVistaActual('administracion')}
+                            className={`p-2 rounded-xl ${vistaActual === 'administracion' ? 'text-red-500' : 'text-gray-400'}`}
+                        >
+                            <Settings size={20} />
+                        </button>
                         <button
                             onClick={onLogout}
                             className="p-2 text-gray-400"
