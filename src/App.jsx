@@ -262,8 +262,10 @@ const App = () => {
         onLogout={handleLogout}
       />
 
-      <main className="flex-1">
-        {renderVista()}
+      <main className="flex-1 pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {renderVista()}
+        </div>
       </main>
 
       <footer className="bg-white border-t border-slate-100 py-8 px-4">
@@ -283,7 +285,7 @@ const App = () => {
             </p>
             <div className="h-4 w-px bg-slate-100"></div>
             <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-              V1.3.0 • 28 DEC 2025
+              V1.3.1 • 28 DEC 2025
             </p>
           </div>
         </div>

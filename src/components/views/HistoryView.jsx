@@ -108,8 +108,8 @@ const HistoryView = ({
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4 md:p-8 animate-in fade-in duration-500">
-            <div className="max-w-7xl mx-auto">
+        <div className="animate-in fade-in duration-500">
+            <div>
                 <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border-b-8 border-gray-800">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                         <div className="flex items-center gap-6">

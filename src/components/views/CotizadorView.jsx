@@ -65,8 +65,8 @@ const CotizadorView = ({
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4 lg:p-8 animate-in fade-in duration-500">
-            <div className="max-w-7xl mx-auto">
+        <div className="animate-in fade-in duration-500">
+            <div>
                 <Header
                     historialLength={historial.length}
                     compararLength={comparar.length}
