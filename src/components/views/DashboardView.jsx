@@ -127,7 +127,7 @@ const DashboardView = ({
                                         ? 'bg-enterprise-950 text-white shadow-xl'
                                         : 'text-enterprise-500 hover:text-enterprise-950 hover:bg-enterprise-50'}`}
                             >
-                                {v === 'mes' ? 'Este Mes' : 'Año Fiscal'}
+                                {v === 'mes' ? 'Este Mes' : 'Año'}
                             </button>
                         ))}
                     </div>
