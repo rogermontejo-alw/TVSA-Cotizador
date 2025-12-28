@@ -103,9 +103,9 @@ const Navbar = ({ session, vistaActual, setVistaActual, onLogout }) => {
                         ))}
                     </div>
 
-                    {/* CONTROLES EJECUTIVOS (Solo Iconos) - Área Derecha */}
+                    {/* CONTROLES EJECUTIVOS (Solo Iconos) - Área Derecha (Solo Desktop) */}
                     <div className="flex items-center gap-1 sm:gap-2 ml-auto">
-                        <div className="flex items-center gap-1 sm:gap-2 bg-enterprise-50/40 p-1 rounded-2xl border border-enterprise-100/50">
+                        <div className="hidden lg:flex items-center gap-1 xl:gap-2 bg-enterprise-50/40 p-1 rounded-2xl border border-enterprise-100/50">
                             <IconButton id="dashboard" icon={LayoutDashboard} label="Dashboard" />
                             <IconButton id="reportes" icon={BarChart3} label="Reportes" />
                             <IconButton id="administracion" icon={Settings} label="Administración" />
