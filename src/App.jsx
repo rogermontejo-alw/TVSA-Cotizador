@@ -14,6 +14,7 @@ import LoginView from './components/views/LoginView';
 import CobranzaView from './components/admin/CobranzaView';
 import CRMView from './components/views/CRMView';
 import ClientFichaView from './components/views/ClientFichaView';
+import MasterContractsView from './components/views/MasterContractsView';
 import ReportsView from './components/views/ReportsView';
 import Navbar from './components/common/Navbar';
 import { supabase } from './lib/supabase';
@@ -296,6 +297,7 @@ const App = () => {
             }}
             onViewQuote={handleSelectQuote}
             onPrintQuote={handleMostrarPropuesta}
+            masterContracts={masterContracts}
             setMensaje={setMensajeAdmin}
           />
         ) : <CRMView clientes={clientes} onSelectClient={handleSelectClient} />;
@@ -304,6 +306,16 @@ const App = () => {
           <ReportsView
             clientes={clientes}
             cotizaciones={historial}
+          />
+        );
+      case 'master-contracts':
+        return (
+          <MasterContractsView
+            masterContracts={masterContracts}
+            cotizaciones={historial}
+            clientes={clientes}
+            onSaveMC={guardarRegistro}
+            setMensaje={setMensajeAdmin}
           />
         );
       case 'cobranza':
@@ -354,7 +366,7 @@ const App = () => {
         onLogout={() => supabase.auth.signOut()}
       />
 
-      <main className="flex-1 mt-16 p-4 md:p-8">
+      <main className="flex-1 mt-14 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           {renderVista()}
         </div>

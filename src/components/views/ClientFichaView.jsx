@@ -9,6 +9,7 @@ import { formatMXN } from '../../utils/formatters';
 const ClientFichaView = ({
     cliente,
     cotizaciones,
+    masterContracts = [],
     onBack,
     onSaveClient,
     onNewQuote,
@@ -18,33 +19,41 @@ const ClientFichaView = ({
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [motivoDescarte, setMotivoDescarte] = useState('');
-    const [confirmingStage, setConfirmingStage] = useState(null); // Etapa pendiente de confirmar
-    const [confirmingQuoteStatus, setConfirmingQuoteStatus] = useState(null); // { quote, status }
+    const [confirmingStage, setConfirmingStage] = useState(null);
+    const [confirmingQuoteStatus, setConfirmingQuoteStatus] = useState(null);
     const [isUpdating, setIsUpdating] = useState(false);
     const [editData, setEditData] = useState(cliente);
+
+    // Estado para cierre de venta desde la lista
+    const [cierreData, setCierreData] = useState({
+        numero_contrato: '',
+        mc_id: ''
+    });
 
     const clientQuotes = useMemo(() => {
         if (!cliente?.id || !cotizaciones) return [];
         return cotizaciones.filter(q => String(q.cliente_id) === String(cliente.id));
     }, [cotizaciones, cliente?.id]);
 
+    const clientMCs = useMemo(() => {
+        return (masterContracts || []).filter(mc =>
+            String(mc.cliente_id) === String(cliente?.id) && mc.estatus === 'activo'
+        );
+    }, [masterContracts, cliente?.id]);
+
     const stages = ['Prospecto', 'Contactado', 'Interesado', 'No Interesado', 'Cliente'];
     const currentStageIdx = stages.indexOf(cliente.etapa);
 
     const handlePromote = async (targetStage) => {
         if (!targetStage) return;
-
         setIsUpdating(true);
         try {
             let updated = { ...cliente, etapa: targetStage };
-
-            // Si es descarte, añadir el motivo a las notas si se proporcionó
             if (targetStage === 'No Interesado' && motivoDescarte) {
                 const timestamp = new Date().toLocaleDateString('es-MX');
                 const nuevaNota = `[DESCARTE ${timestamp}]: ${motivoDescarte}\n${cliente.notas_generales || ''}`;
                 updated.notas_generales = nuevaNota;
             }
-
             const success = await onSaveClient('clientes', updated);
             if (success) {
                 setMensaje({ tipo: 'exito', texto: `El cliente ahora está en etapa: ${targetStage}` });
@@ -59,6 +68,11 @@ const ClientFichaView = ({
     };
 
     const handleUpdateQuoteStatus = async (quote, newStatus) => {
+        if (newStatus === 'ganada' && !cierreData.numero_contrato) {
+            setMensaje({ tipo: 'error', texto: 'El número de contrato es obligatorio.' });
+            return;
+        }
+
         setIsUpdating(true);
         try {
             const updatedQuote = {
@@ -66,18 +80,36 @@ const ClientFichaView = ({
                 estatus: newStatus
             };
 
+            if (newStatus === 'ganada') {
+                updatedQuote.numero_contrato = parseInt(cierreData.numero_contrato);
+                updatedQuote.mc_id = cierreData.mc_id || null;
+                updatedQuote.fecha_cierre_real = new Date().toISOString();
+            }
+
             const success = await onSaveClient('cotizaciones', updatedQuote);
 
             if (success) {
                 setMensaje({ tipo: 'exito', texto: `Cotización actualizada a: ${newStatus.toUpperCase()}` });
 
-                // Lógica inteligente: Si la cotización es GANADA y el cliente no es etapa "Cliente", preguntar
+                // Crear registro en cobranza
+                if (newStatus === 'ganada') {
+                    await onSaveClient('cobranza', {
+                        cotizacion_id: quote.id,
+                        monto_facturado: quote.subtotalGeneral || quote.total / 1.16,
+                        estatus_pago: 'pendiente',
+                        notas: `Contrato: ${cierreData.numero_contrato}`
+                    });
+                }
+
                 if (newStatus === 'ganada' && cliente.etapa !== 'Cliente') {
                     setConfirmingQuoteStatus(null);
                     setConfirmingStage('Cliente');
                 } else {
                     setConfirmingQuoteStatus(null);
                 }
+
+                // Reset cierre data
+                setCierreData({ numero_contrato: '', mc_id: '' });
             }
         } catch (err) {
             console.error(err);
@@ -105,7 +137,7 @@ const ClientFichaView = ({
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-            {/* Header / Navigation */}
+            {/* Header */}
             <div className="flex items-center gap-4 mb-2">
                 <button
                     onClick={onBack}
@@ -119,7 +151,7 @@ const ClientFichaView = ({
                 </div>
             </div>
 
-            {/* Pipeline de Etapas Horizontal */}
+            {/* Pipeline */}
             <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-gray-100 mb-6 relative overflow-hidden">
                 <div className="flex items-center justify-between gap-2 relative">
                     {stages.map((s, idx) => {
@@ -146,7 +178,6 @@ const ClientFichaView = ({
                                         {s}
                                     </span>
                                 </button>
-
                                 {idx < stages.length - 1 && (
                                     <div className={`flex-1 h-0.5 mt-4 -mx-1 relative z-0
                                         ${idx < currentStageIdx ? 'bg-emerald-200' : 'bg-slate-100'}`}>
@@ -155,271 +186,108 @@ const ClientFichaView = ({
                             </React.Fragment>
                         );
                     })}
-
-                    {isUpdating && (
-                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center rounded-[2rem] z-20">
-                            <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                    )}
+                    {isUpdating && <div className="absolute inset-0 bg-white/60 flex items-center justify-center"><RefreshCw className="animate-spin" /></div>}
                 </div>
             </div>
 
             <div className="flex flex-col xl:flex-row gap-6">
                 <div className="xl:w-[400px] flex-shrink-0 space-y-6">
-                    {/* Pipeline antiguo movido arriba */}
-
-
-                    {/* Modal de Confirmación de Cambio de Etapa */}
-                    {confirmingStage && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                            <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
-                                <div className="w-16 h-16 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                                    <AlertCircle size={32} />
-                                </div>
-
-                                <h3 className="text-center text-lg font-black text-slate-900 leading-tight mb-2">
-                                    ¿Cambiar a {confirmingStage.toUpperCase()}?
-                                </h3>
-                                <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">
-                                    Esta acción actualizará el estado comercial del cliente
-                                </p>
-
-                                {confirmingStage === 'No Interesado' && (
-                                    <div className="mb-6 space-y-2">
-                                        <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Motivo del descarte (opcional)</label>
-                                        <textarea
-                                            value={motivoDescarte}
-                                            onChange={(e) => setMotivoDescarte(e.target.value)}
-                                            placeholder="Ej: Presupuesto agotado..."
-                                            className="w-full h-24 p-3 bg-slate-50 border-none rounded-2xl text-xs font-bold focus:ring-2 focus:ring-red-500 outline-none resize-none"
-                                        />
-                                    </div>
-                                )}
-
-                                <div className="flex flex-col gap-2">
-                                    <button
-                                        onClick={() => handlePromote(confirmingStage)}
-                                        className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-red-600 transition-all active:scale-95 shadow-xl shadow-slate-200"
-                                    >
-                                        Confirmar Cambio
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setConfirmingStage(null);
-                                            setMotivoDescarte('');
-                                        }}
-                                        className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
-                                    >
-                                        Cancelar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Datos de Contacto */}
+                    {/* Datos Contacto */}
                     <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
                         <div className="flex justify-between items-center mb-6">
                             <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em]">Detalles de Contacto</h4>
-                            <button
-                                onClick={() => setIsEditing(!isEditing)}
-                                className="text-red-600 hover:text-slate-900 transition-colors"
-                            >
-                                <Edit3 size={18} />
-                            </button>
+                            <button onClick={() => setIsEditing(!isEditing)} className="text-red-600"><Edit3 size={18} /></button>
                         </div>
-
                         {isEditing ? (
                             <div className="space-y-4">
-                                <div className="space-y-1">
-                                    <label className="text-[8px] font-black uppercase text-gray-400">Nombre de Contacto</label>
-                                    <input
-                                        type="text"
-                                        value={editData.nombre_contacto}
-                                        onChange={(e) => setEditData({ ...editData, nombre_contacto: e.target.value })}
-                                        className="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-red-500 outline-none"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[8px] font-black uppercase text-gray-400">Email</label>
-                                    <input
-                                        type="email"
-                                        value={editData.email}
-                                        onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                                        className="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-red-500 outline-none"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[8px] font-black uppercase text-gray-400">Teléfono</label>
-                                    <input
-                                        type="tel"
-                                        value={editData.telefono}
-                                        onChange={(e) => setEditData({ ...editData, telefono: e.target.value })}
-                                        className="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-red-500 outline-none"
-                                    />
-                                </div>
-                                <button
-                                    onClick={handleSave}
-                                    className="w-full py-3 bg-emerald-500 text-white rounded-xl font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all"
-                                >
-                                    <Save size={14} /> Guardar Cambios
-                                </button>
+                                <input placeholder="Nombre" value={editData.nombre_contacto} onChange={e => setEditData({ ...editData, nombre_contacto: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl text-xs font-bold" />
+                                <input placeholder="Email" value={editData.email} onChange={e => setEditData({ ...editData, email: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl text-xs font-bold" />
+                                <input placeholder="Tel" value={editData.telefono} onChange={e => setEditData({ ...editData, telefono: e.target.value })} className="w-full p-3 bg-gray-50 rounded-xl text-xs font-bold" />
+                                <button onClick={handleSave} className="w-full py-3 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2"><Save size={14} /> Guardar</button>
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
-                                        <User size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Contacto</p>
-                                        <p className="text-xs font-bold text-slate-900">{cliente.nombre_contacto || 'No registrado'}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
-                                        <Mail size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Email</p>
-                                        <p className="text-xs font-bold text-slate-900">{cliente.email || 'No registrado'}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
-                                        <Phone size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Teléfono</p>
-                                        <p className="text-xs font-bold text-slate-900">{cliente.telefono || 'No registrado'}</p>
-                                    </div>
-                                </div>
+                                <div className="flex items-center gap-3"><User size={18} className="text-slate-400" /><div><p className="text-[8px] font-black text-gray-400 uppercase">Contacto</p><p className="text-xs font-bold">{cliente.nombre_contacto || 'No registrado'}</p></div></div>
+                                <div className="flex items-center gap-3"><Mail size={18} className="text-slate-400" /><div><p className="text-[8px] font-black text-gray-400 uppercase">Email</p><p className="text-xs font-bold">{cliente.email || 'No registrado'}</p></div></div>
+                                <div className="flex items-center gap-3"><Phone size={18} className="text-slate-400" /><div><p className="text-[8px] font-black text-gray-400 uppercase">Teléfono</p><p className="text-xs font-bold">{cliente.telefono || 'No registrado'}</p></div></div>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Columna Derecha: Cotizaciones */}
-                <div className="flex-1 min-w-0 space-y-6">
+                <div className="flex-1 space-y-6">
                     <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 min-h-[500px]">
                         <div className="flex justify-between items-center mb-8">
-                            <div>
-                                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em]">Histórico de Cotizaciones</h4>
-                                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">Timeline de propuestas comerciales</p>
-                            </div>
-                            <button
-                                onClick={onNewQuote}
-                                className="px-5 py-2.5 bg-red-600 text-white rounded-xl font-black uppercase tracking-widest text-[9px] flex items-center gap-2 hover:bg-slate-900 transition-all shadow-lg active:scale-95"
-                            >
-                                <Plus size={14} /> Nueva Cotización
-                            </button>
+                            <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em]">Histórico de Cotizaciones</h4>
+                            <button onClick={onNewQuote} className="px-5 py-2.5 bg-red-600 text-white rounded-xl font-black uppercase text-[9px] flex items-center gap-2"><Plus size={14} /> Nueva Cotización</button>
                         </div>
-
-                        {clientQuotes.length > 0 ? (
-                            <div className="space-y-4">
-                                {clientQuotes.map(quote => (
-                                    <div
-                                        key={quote.id}
-                                        onClick={() => onViewQuote(quote)}
-                                        className="group flex flex-col md:flex-row justify-between items-start md:items-center p-6 bg-slate-50 hover:bg-white rounded-2xl border border-transparent hover:border-red-100 transition-all cursor-pointer hover:shadow-md"
-                                    >
-                                        <div className="flex items-center gap-4 mb-4 md:mb-0">
-                                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all overflow-hidden relative">
-                                                {getStatusIcon(quote.estatus)}
-                                                {isUpdating && <div className="absolute inset-0 bg-white/50 flex items-center justify-center animate-spin"><RefreshCw size={10} /></div>}
-                                            </div>
-                                            <div>
-                                                <div className="flex flex-wrap items-center gap-2 mb-1">
-                                                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{quote.folio}</span>
-                                                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                                                        {['enviada', 'ganada', 'perdida'].map(st => (
-                                                            <button
-                                                                key={st}
-                                                                onClick={() => setConfirmingQuoteStatus({ quote, status: st })}
-                                                                className={`text-[7px] px-2 py-0.5 rounded font-black uppercase tracking-tighter transition-all
-                                                                    ${quote.estatus === st
-                                                                        ? st === 'ganada' ? 'bg-emerald-500 text-white' : st === 'perdida' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
-                                                                        : 'bg-white text-slate-400 hover:bg-slate-200'}`}
-                                                            >
-                                                                {st}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                <p className="text-lg font-black text-slate-900 tracking-tight group-hover:text-red-600 transition-colors">
-                                                    {formatMXN(quote.subtotalGeneral || quote.monto_total / 1.16)}
-                                                </p>
-                                                <span className="block text-[8px] font-bold text-gray-400 -mt-1 uppercase tracking-tighter">Subtotal (Neto)</span>
-                                            </div>
+                        <div className="space-y-4">
+                            {clientQuotes.map(quote => (
+                                <div key={quote.id} onClick={() => onViewQuote(quote)} className="group p-6 bg-slate-50 hover:bg-white rounded-2xl border border-transparent hover:border-red-100 transition-all cursor-pointer flex flex-col md:flex-row justify-between items-center">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                                            {getStatusIcon(quote.estatus)}
                                         </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <div className="text-right">
-                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Creada el</p>
-                                                <p className="text-[10px] font-bold text-slate-600">
-                                                    {quote.fecha instanceof Date && !isNaN(quote.fecha)
-                                                        ? quote.fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
-                                                        : 'F. Reciente'}
-                                                </p>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1" onClick={e => e.stopPropagation()}>
+                                                <span className="text-[10px] font-black text-slate-900 uppercase">{quote.folio}</span>
+                                                {quote.estatus === 'ganada' && quote.numero_contrato && (
+                                                    <span className="text-[8px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 uppercase tracking-tighter">
+                                                        Contrato: {quote.numero_contrato}
+                                                    </span>
+                                                )}
+                                                <div className="flex gap-1">
+                                                    {['enviada', 'ganada', 'perdida'].map(st => (
+                                                        <button key={st} onClick={() => setConfirmingQuoteStatus({ quote, status: st })} className={`text-[7px] px-2 py-0.5 rounded font-black uppercase ${quote.estatus === st ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 opacity-60 hover:opacity-100 transition-opacity'}`}>{st}</button>
+                                                    ))}
+                                                </div>
                                             </div>
-
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onPrintQuote(quote);
-                                                }}
-                                                className="p-3 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-xl border border-gray-100 transition-all shadow-sm active:scale-90 group/print"
-                                                title="Imprimir Propuesta"
-                                            >
-                                                <Printer size={16} className="group-hover/print:rotate-12 transition-transform" />
-                                            </button>
+                                            <p className="text-lg font-black text-slate-900">{formatMXN(quote.subtotalGeneral || quote.total / 1.16)}</p>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center py-20 opacity-30">
-                                <FileText size={48} className="mb-4" />
-                                <p className="text-[10px] font-black uppercase tracking-widest">Sin cotizaciones registradas</p>
-                            </div>
-                        )}
+                                    <div className="flex items-center gap-3">
+                                        <button onClick={e => { e.stopPropagation(); onPrintQuote(quote); }} className="p-3 bg-white rounded-xl border border-gray-100"><Printer size={16} /></button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Modal de Confirmación de Estatus de Cotización */}
+            {/* Modales de Confirmación */}
             {confirmingQuoteStatus && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
-                        <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 ${confirmingQuoteStatus.status === 'ganada' ? 'bg-emerald-50 text-emerald-600' :
-                            confirmingQuoteStatus.status === 'perdida' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
-                            }`}>
-                            <AlertCircle size={32} />
-                        </div>
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl">
+                        <h3 className="text-center text-lg font-black uppercase mb-4 tracking-tighter">¿Marcar como {confirmingQuoteStatus.status.toUpperCase()}?</h3>
 
-                        <h3 className="text-center text-lg font-black text-slate-900 leading-tight mb-2 uppercase">
-                            ¿Marcar como {confirmingQuoteStatus.status.toUpperCase()}?
-                        </h3>
-                        <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">
-                            {confirmingQuoteStatus.status === 'ganada' ? 'Esta acción sumará el monto a los reportes de Venta Real' :
-                                confirmingQuoteStatus.status === 'perdida' ? 'Esta cotización se marcará como no aceptada' : 'Estatus informativo'}
-                        </p>
+                        {confirmingQuoteStatus.status === 'ganada' && (
+                            <div className="space-y-4 mb-6">
+                                <input type="number" placeholder="Número de Contrato (Obligatorio)" value={cierreData.numero_contrato} onChange={e => setCierreData({ ...cierreData, numero_contrato: e.target.value })} className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold outline-none ring-2 ring-emerald-500/20 focus:ring-emerald-500" />
+                                <select value={cierreData.mc_id} onChange={e => setCierreData({ ...cierreData, mc_id: e.target.value })} className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold outline-none">
+                                    <option value="">S/ Master Contract</option>
+                                    {clientMCs.map(mc => <option key={mc.id} value={mc.id}>{mc.numero_mc}</option>)}
+                                </select>
+                            </div>
+                        )}
 
                         <div className="flex flex-col gap-2">
-                            <button
-                                onClick={() => handleUpdateQuoteStatus(confirmingQuoteStatus.quote, confirmingQuoteStatus.status)}
-                                className={`w-full py-4 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all active:scale-95 shadow-xl ${confirmingQuoteStatus.status === 'ganada' ? 'bg-emerald-600' :
-                                    confirmingQuoteStatus.status === 'perdida' ? 'bg-red-600' : 'bg-slate-900'
-                                    }`}
-                            >
-                                Confirmar Cambio
-                            </button>
-                            <button
-                                onClick={() => setConfirmingQuoteStatus(null)}
-                                className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
-                            >
-                                Cancelar
-                            </button>
+                            <button onClick={() => handleUpdateQuoteStatus(confirmingQuoteStatus.quote, confirmingQuoteStatus.status)} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px]">Confirmar</button>
+                            <button onClick={() => setConfirmingQuoteStatus(null)} className="w-full py-3 text-[10px] font-black uppercase text-slate-400">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {confirmingStage && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl text-center">
+                        <CheckCircle2 size={48} className="mx-auto text-emerald-500 mb-4" />
+                        <h3 className="text-xl font-black uppercase mb-2 tracking-tighter">¡Venta Ganada!</h3>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-8">¿Promover a CLIENTE en el CRM?</p>
+                        <div className="flex flex-col gap-2">
+                            <button onClick={() => handlePromote('Cliente')} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px]">Sí, promover</button>
+                            <button onClick={() => setConfirmingStage(null)} className="w-full py-3 text-[10px] font-black uppercase text-slate-400">Ahora no</button>
                         </div>
                     </div>
                 </div>

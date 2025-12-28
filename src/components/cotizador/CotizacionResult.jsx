@@ -13,17 +13,28 @@ const CotizacionResult = ({
     mostrarPropuesta,
     configuracion,
     onSaveClient,
+    masterContracts = [],
     setMensaje
 }) => {
     const [confirmingStage, setConfirmingStage] = useState(null);
-    const [confirmingQuoteStatus, setConfirmingQuoteStatus] = useState(null); // { quote, status }
+    const [confirmingQuoteStatus, setConfirmingQuoteStatus] = useState(null); // { status }
     const [isUpdating, setIsUpdating] = useState(false);
+
+    // Estado para cierre de venta
+    const [cierreData, setCierreData] = useState({
+        numero_contrato: '',
+        mc_id: ''
+    });
 
     if (!cotizacion) return null;
 
     const cliente = cotizacion.cliente;
     const stages = ['Prospecto', 'Contactado', 'Interesado', 'No Interesado', 'Cliente'];
-    const currentStageIdx = stages.indexOf(cliente?.etapa);
+
+    // Filtrar MCs activos para este cliente
+    const clientMCs = (masterContracts || []).filter(mc =>
+        String(mc.cliente_id) === String(cliente?.id) && mc.estatus === 'activo'
+    );
 
     const handleUpdateStage = async (targetStage) => {
         setIsUpdating(true);
@@ -42,6 +53,14 @@ const CotizacionResult = ({
     };
 
     const handleUpdateQuoteStatus = async (newStatus) => {
+        // Validar si es ganada y faltan datos
+        if (newStatus === 'ganada') {
+            if (!cierreData.numero_contrato) {
+                setMensaje({ tipo: 'error', texto: 'El número de contrato es obligatorio para cerrar la venta.' });
+                return;
+            }
+        }
+
         setIsUpdating(true);
         try {
             // Solo si la cotización ya existe en DB (tiene ID UUID)
@@ -51,9 +70,30 @@ const CotizacionResult = ({
                 return;
             }
 
-            const success = await onSaveClient('cotizaciones', { id: cotizacion.id, estatus: newStatus });
+            const payload = {
+                id: cotizacion.id,
+                estatus: newStatus
+            };
+
+            if (newStatus === 'ganada') {
+                payload.numero_contrato = parseInt(cierreData.numero_contrato);
+                payload.mc_id = cierreData.mc_id || null;
+                payload.fecha_cierre_real = new Date().toISOString();
+            }
+
+            const success = await onSaveClient('cotizaciones', payload);
             if (success) {
                 setMensaje({ tipo: 'exito', texto: `Cotización marcada como ${newStatus.toUpperCase()}` });
+
+                // Al marcar como ganada, también creamos un registro inicial en cobranza
+                if (newStatus === 'ganada') {
+                    await onSaveClient('cobranza', {
+                        cotizacion_id: cotizacion.id,
+                        monto_facturado: cotizacion.subtotalGeneral || cotizacion.total / 1.16,
+                        estatus_pago: 'pendiente',
+                        notas: `Contrato: ${cierreData.numero_contrato}`
+                    });
+                }
 
                 // Si la cotización es GANADA y el cliente no es etapa "Cliente", preguntar por cambio de etapa
                 if (newStatus === 'ganada' && cliente.etapa !== 'Cliente') {
@@ -77,7 +117,6 @@ const CotizacionResult = ({
     const saldoFinal = subtotalParaTV - inversionTV;
     const inversionTotalNeto = inversionDigital + inversionTV;
 
-    // El saldo sigue teniendo color dinámico pero dentro del botón
     const saldoColor = saldoFinal >= 0 ? 'text-green-400' : 'text-red-400';
 
     return (
@@ -99,7 +138,7 @@ const CotizacionResult = ({
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
 
-                {/* LADO IZQUIERDO: DETALLES (Tablet/Desktop) */}
+                {/* LADO IZQUIERDO: DETALLES */}
                 <div className="md:col-span-7 lg:col-span-8 order-2 md:order-1 space-y-6">
 
                     {/* Inversión Digital */}
@@ -109,7 +148,7 @@ const CotizacionResult = ({
                             <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Detalle Inversión Digital</span>
                         </div>
                         <div className="p-4">
-                            {cotizacion.paqueteVIX ? (
+                            {cotizacion.paqueteVIX && cotizacion.paqueteVIX.id ? (
                                 <div className="flex justify-between items-center">
                                     <div>
                                         <p className="text-sm font-black text-gray-800">{cotizacion.paqueteVIX.nombre}</p>
@@ -143,9 +182,9 @@ const CotizacionResult = ({
                     </div>
                 </div>
 
-                {/* LADO DERECHO: RESUMEN FINANCIERO (Delgado e Invariante) */}
-                <div className="md:col-span-5 lg:col-span-4 order-1 md:order-2">
-                    <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl md:sticky md:top-6 w-full max-w-sm mx-auto">
+                {/* LADO DERECHO: RESUMEN FINANCIERO */}
+                <div className="md:col-span-12 lg:col-span-4 order-1 lg:order-2">
+                    <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl lg:sticky lg:top-6 w-full max-w-sm mx-auto">
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 mb-6 border-b border-white/10 pb-2">
                             Resumen Financiero
                         </h3>
@@ -172,7 +211,6 @@ const CotizacionResult = ({
                             </div>
 
                             <div className="pt-6 border-t border-white/10 mt-4 space-y-4">
-                                {/* CUADRO ROJO: MUESTRA LA INVERSIÓN TOTAL */}
                                 <div className="text-center">
                                     <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-2">Inversión Total Propuesta</p>
                                     <div className="inline-block px-5 py-2 bg-red-600 rounded-lg shadow-lg border border-red-500">
@@ -183,13 +221,11 @@ const CotizacionResult = ({
                                     <p className="text-[8px] font-bold text-gray-500 mt-1 uppercase">más IVA</p>
                                 </div>
 
-                                {/* SALDO FINAL (Pequeño debajo) */}
                                 <div className="flex justify-between items-center px-2 py-2 bg-white/5 rounded-lg border border-white/5">
                                     <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Saldo Final:</span>
                                     <span className={`text-sm font-black ${saldoColor}`}>${saldoFinal.toLocaleString('es-MX')}</span>
                                 </div>
 
-                                {/* Acciones Compactas */}
                                 <div className="space-y-2 pt-2">
                                     <button
                                         onClick={mostrarPropuesta}
@@ -214,8 +250,30 @@ const CotizacionResult = ({
                                     </div>
                                 </div>
 
-                                {/* Estatus de la Propuesta (NUEVO) */}
                                 <div className="pt-6 border-t border-white/10 space-y-3">
+                                    {cotizacion.estatus === 'ganada' && cotizacion.numero_contrato && (
+                                        <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl animate-in slide-in-from-top-2">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Briefcase size={12} className="text-emerald-400" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">Datos del Cierre</span>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[8px] font-bold text-gray-500 uppercase">Contrato No.</span>
+                                                    <span className="text-[10px] font-black text-white">{cotizacion.numero_contrato}</span>
+                                                </div>
+                                                {cotizacion.mc_id && (
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[8px] font-bold text-gray-500 uppercase">Master Contract</span>
+                                                        <span className="text-[10px] font-black text-white truncate max-w-[100px]">
+                                                            {masterContracts.find(mc => String(mc.id) === String(cotizacion.mc_id))?.numero_mc || 'Vinculado'}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center justify-between gap-2 mb-2">
                                         <div className="flex items-center gap-2">
                                             <FileTextIcon size={12} className="text-gray-500" />
@@ -242,97 +300,146 @@ const CotizacionResult = ({
                                         ))}
                                     </div>
                                 </div>
-
-                                {cliente && (
-                                    <div className="pt-6 border-t border-white/10 space-y-3">
-                                        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl">
-                                            <p className="text-[10px] font-black text-red-500 uppercase tracking-widest text-center">
-                                                Propuesta para: {cliente.nombre_empresa}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Modal de Confirmación de Cambio de Etapa */}
-            {confirmingStage && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
-                        <div className="w-16 h-16 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                            <AlertCircle size={32} />
-                        </div>
+            {/* Modal: Confirmación de Venta Ganada (Con Formulario) */}
+            {
+                confirmingQuoteStatus && confirmingQuoteStatus.status === 'ganada' && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
+                            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                                <Briefcase size={32} />
+                            </div>
 
-                        <h3 className="text-center text-lg font-black text-slate-900 leading-tight mb-2">
-                            {confirmingStage === 'Cliente' ? '¡FELICIDADES POR LA VENTA!' : `¿CAMBIAR A ${confirmingStage.toUpperCase()}?`}
-                        </h3>
-                        <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">
-                            {confirmingStage === 'Cliente'
-                                ? 'Esto marcará al cliente como GANADO en el Pipeline'
-                                : 'Esta acción actualizará el estado comercial del cliente'}
-                        </p>
+                            <h3 className="text-center text-lg font-black text-slate-900 leading-tight mb-2 uppercase tracking-tighter">
+                                ¡Cerrar Venta con Éxito!
+                            </h3>
+                            <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8 italic">
+                                Captura los datos del cierre administrativo
+                            </p>
 
-                        <div className="flex flex-col gap-2">
-                            <button
-                                disabled={isUpdating}
-                                onClick={() => handleUpdateStage(confirmingStage)}
-                                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-emerald-600 transition-all active:scale-95 shadow-xl shadow-slate-200 flex items-center justify-center gap-2"
-                            >
-                                {isUpdating && <RefreshCw size={14} className="animate-spin" />}
-                                {confirmingStage === 'Cliente' ? 'Cerrar Venta Ahora' : 'Confirmar Cambio'}
-                            </button>
-                            <button
-                                onClick={() => setConfirmingStage(null)}
-                                className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                            <div className="space-y-4 mb-8">
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black text-slate-400 tracking-widest uppercase ml-2">Número de Contrato</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        placeholder="Ej: 850232"
+                                        value={cierreData.numero_contrato}
+                                        onChange={(e) => setCierreData({ ...cierreData, numero_contrato: e.target.value })}
+                                        className="w-full p-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    />
+                                </div>
 
-            {/* Modal de Confirmación de Estatus de Cotización */}
-            {confirmingQuoteStatus && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
-                        <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 ${confirmingQuoteStatus.status === 'ganada' ? 'bg-emerald-50 text-emerald-600' :
-                            confirmingQuoteStatus.status === 'perdida' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
-                            }`}>
-                            <AlertCircle size={32} />
-                        </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black text-slate-400 tracking-widest uppercase ml-2">Asociar a Master Contract</label>
+                                    <select
+                                        value={cierreData.mc_id}
+                                        onChange={(e) => setCierreData({ ...cierreData, mc_id: e.target.value })}
+                                        className="w-full p-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none appearance-none"
+                                    >
+                                        <option value="">Venta Única (S/ Master Contract)</option>
+                                        {clientMCs.map(mc => (
+                                            <option key={mc.id} value={mc.id}>{mc.numero_mc} - Saldo: {formatMXN(mc.monto_aprobado)}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
 
-                        <h3 className="text-center text-lg font-black text-slate-900 leading-tight mb-2 uppercase">
-                            ¿Marcar como {confirmingQuoteStatus.status.toUpperCase()}?
-                        </h3>
-                        <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">
-                            {confirmingQuoteStatus.status === 'ganada' ? 'Esta acción sumará el monto a los reportes de Venta Real' :
-                                confirmingQuoteStatus.status === 'perdida' ? 'Esta cotización se marcará como no aceptada' : 'Estatus informativo'}
-                        </p>
-
-                        <div className="flex flex-col gap-2">
-                            <button
-                                onClick={() => handleUpdateQuoteStatus(confirmingQuoteStatus.status)}
-                                className={`w-full py-4 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all active:scale-95 shadow-xl ${confirmingQuoteStatus.status === 'ganada' ? 'bg-emerald-600' :
-                                    confirmingQuoteStatus.status === 'perdida' ? 'bg-red-600' : 'bg-slate-900'
-                                    }`}
-                            >
-                                Confirmar Cambio
-                            </button>
-                            <button
-                                onClick={() => setConfirmingQuoteStatus(null)}
-                                className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
-                            >
-                                Cancelar
-                            </button>
+                            <div className="flex flex-col gap-2">
+                                <button
+                                    disabled={isUpdating || !cierreData.numero_contrato}
+                                    onClick={() => handleUpdateQuoteStatus('ganada')}
+                                    className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-slate-900 transition-all active:scale-95 shadow-xl shadow-emerald-100 flex items-center justify-center gap-2"
+                                >
+                                    {isUpdating && <RefreshCw size={14} className="animate-spin" />}
+                                    Confirmar y Cerrar Venta
+                                </button>
+                                <button
+                                    onClick={() => setConfirmingQuoteStatus(null)}
+                                    className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+
+            {/* Modal Simple para Enviada o Perdida */}
+            {
+                confirmingQuoteStatus && confirmingQuoteStatus.status !== 'ganada' && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
+                            <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 ${confirmingQuoteStatus.status === 'perdida' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
+                                }`}>
+                                <AlertCircle size={32} />
+                            </div>
+
+                            <h3 className="text-center text-lg font-black text-slate-900 leading-tight mb-2 uppercase">
+                                ¿Marcar como {confirmingQuoteStatus.status.toUpperCase()}?
+                            </h3>
+
+                            <div className="flex flex-col gap-2 mt-8">
+                                <button
+                                    onClick={() => handleUpdateQuoteStatus(confirmingQuoteStatus.status)}
+                                    className={`w-full py-4 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all active:scale-95 shadow-xl ${confirmingQuoteStatus.status === 'perdida' ? 'bg-red-600' : 'bg-slate-900'
+                                        }`}
+                                >
+                                    Confirmar Cambio
+                                </button>
+                                <button
+                                    onClick={() => setConfirmingQuoteStatus(null)}
+                                    className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Modal de Cambio de Etapa de Cliente (Después de Ganada) */}
+            {
+                confirmingStage && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-6 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
+                            <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+                                <CheckCircle size={48} />
+                            </div>
+
+                            <h3 className="text-center text-xl font-black text-slate-900 leading-tight mb-2 uppercase tracking-tighter">
+                                ¡Venta Registrada!
+                            </h3>
+                            <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">
+                                ¿Deseas promover a {cliente.nombre_empresa} a la etapa de CLIENTE?
+                            </p>
+
+                            <div className="flex flex-col gap-2">
+                                <button
+                                    onClick={() => handleUpdateStage('Cliente')}
+                                    className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-emerald-600 transition-all active:scale-95 shadow-xl"
+                                >
+                                    Convertir en Cliente
+                                </button>
+                                <button
+                                    onClick={() => setConfirmingStage(null)}
+                                    className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400"
+                                >
+                                    Mantener etapa actual
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

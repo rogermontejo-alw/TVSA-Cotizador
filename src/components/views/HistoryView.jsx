@@ -10,12 +10,19 @@ const HistoryView = ({
     mostrarPropuesta,
     eliminarCotizacion,
     onSaveQuote,
-    setMensaje
+    setMensaje,
+    masterContracts = []
 }) => {
     const [busqueda, setBusqueda] = useState('');
     const [filtroVix, setFiltroVix] = useState('todos');
     const [confirmingStatus, setConfirmingStatus] = useState(null); // { quote, status }
     const [isUpdating, setIsUpdating] = useState(false);
+
+    // Estado para cierre desde lista
+    const [cierreData, setCierreData] = useState({
+        numero_contrato: '',
+        mc_id: ''
+    });
 
     const historialFiltrado = useMemo(() => {
         return (historial || []).filter(cotz => {
@@ -45,12 +52,36 @@ const HistoryView = ({
     };
 
     const handleUpdateStatus = async (quote, newStatus) => {
+        if (newStatus === 'ganada' && !cierreData.numero_contrato) {
+            setMensaje({ tipo: 'error', texto: 'El número de contrato es obligatorio.' });
+            return;
+        }
+
         setIsUpdating(true);
         try {
-            const success = await onSaveQuote('cotizaciones', { id: quote.id, estatus: newStatus });
+            const payload = { id: quote.id, estatus: newStatus };
+
+            if (newStatus === 'ganada') {
+                payload.numero_contrato = parseInt(cierreData.numero_contrato);
+                payload.mc_id = cierreData.mc_id || null;
+                payload.fecha_cierre_real = new Date().toISOString();
+            }
+
+            const success = await onSaveQuote('cotizaciones', payload);
             if (success) {
                 setMensaje({ tipo: 'exito', texto: `Estatus actualizado: ${newStatus.toUpperCase()}` });
+
+                if (newStatus === 'ganada') {
+                    await onSaveQuote('cobranza', {
+                        cotizacion_id: quote.id,
+                        monto_facturado: quote.subtotalGeneral || quote.data?.total / 1.16 || quote.total / 1.16,
+                        estatus_pago: 'pendiente',
+                        notas: `Contrato: ${cierreData.numero_contrato}`
+                    });
+                }
+
                 setConfirmingStatus(null);
+                setCierreData({ numero_contrato: '', mc_id: '' });
             }
         } catch (err) {
             console.error(err);
@@ -157,6 +188,9 @@ const HistoryView = ({
                                                 <div className="flex flex-col max-w-[150px]">
                                                     <span className="text-[12px] font-black text-gray-800 truncate">{cotz.cliente?.nombre_empresa || 'Cliente Desconocido'}</span>
                                                     <span className="text-[9px] font-bold text-red-600 tracking-tighter truncate">{cotz.folio || cotz.id}</span>
+                                                    {cotz.estatus === 'ganada' && cotz.numero_contrato && (
+                                                        <span className="text-[8px] font-black text-emerald-600 uppercase tracking-tighter">Contrato: {cotz.numero_contrato}</span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-4 py-4">
@@ -316,10 +350,39 @@ const HistoryView = ({
                             <h3 className="text-center text-lg font-black text-slate-900 leading-tight mb-2 uppercase">
                                 ¿Cambiar a {confirmingStatus.status.toUpperCase()}?
                             </h3>
-                            <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">
+                            <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
                                 {confirmingStatus.status === 'ganada' ? 'Este monto se reflejará como VENTA REAL en el Dashboard y Reportes.' :
                                     confirmingStatus.status === 'perdida' ? 'La cotización se marcará como rechazada.' : 'Estatus informativo.'}
                             </p>
+
+                            {confirmingStatus.status === 'ganada' && (
+                                <div className="space-y-4 mb-6">
+                                    <div className="space-y-1">
+                                        <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Número de Contrato</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            placeholder="Ej: 850232"
+                                            value={cierreData.numero_contrato}
+                                            onChange={(e) => setCierreData({ ...cierreData, numero_contrato: e.target.value })}
+                                            className="w-full p-4 bg-slate-50 border-none rounded-2xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Asociar a Master Contract</label>
+                                        <select
+                                            value={cierreData.mc_id}
+                                            onChange={(e) => setCierreData({ ...cierreData, mc_id: e.target.value })}
+                                            className="w-full p-4 bg-slate-50 border-none rounded-2xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        >
+                                            <option value="">Venta Única</option>
+                                            {(masterContracts || []).filter(mc => String(mc.cliente_id) === String(confirmingStatus.quote.cliente_id) && mc.estatus === 'activo').map(mc => (
+                                                <option key={mc.id} value={mc.id}>{mc.numero_mc}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="flex flex-col gap-2">
                                 <button

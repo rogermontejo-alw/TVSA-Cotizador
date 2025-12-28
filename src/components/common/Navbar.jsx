@@ -10,7 +10,8 @@ import {
     LayoutDashboard,
     DollarSign,
     Briefcase,
-    BarChart3
+    BarChart3,
+    Users
 } from 'lucide-react';
 
 const Navbar = ({ vistaActual, setVistaActual, session, onLogout }) => {
@@ -18,7 +19,8 @@ const Navbar = ({ vistaActual, setVistaActual, session, onLogout }) => {
 
     const navLinks = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'crm', label: 'Clientes', icon: Briefcase },
+        { id: 'crm', label: 'Clientes', icon: Users },
+        { id: 'master-contracts', label: 'Contratos', icon: Briefcase },
         { id: 'reportes', label: 'Reportes', icon: BarChart3 },
         { id: 'cobranza', label: 'Cobranza', icon: DollarSign },
         { id: 'historial', label: 'Cotizaciones', icon: History },
@@ -28,20 +30,20 @@ const Navbar = ({ vistaActual, setVistaActual, session, onLogout }) => {
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900 text-white shadow-2xl border-b border-white/5">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
+                <div className="flex justify-between items-center h-14">
                     {/* Logo */}
                     <div
                         className="flex items-center gap-3 cursor-pointer group"
                         onClick={() => setVistaActual('dashboard')}
                     >
-                        <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-900/50 group-hover:scale-105 transition-transform">
-                            <span className="font-black text-sm tracking-tighter">TV</span>
+                        <div className="w-8 h-8 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-900/50 group-hover:scale-105 transition-transform">
+                            <span className="font-black text-xs tracking-tighter">TV</span>
                         </div>
                         <div className="flex flex-col">
-                            <span className="font-black text-base leading-none tracking-tighter">
+                            <span className="font-black text-sm leading-none tracking-tighter">
                                 COTIZADOR<span className="text-red-600">MID</span>
                             </span>
-                            <span className="text-[8px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Televisa Univision</span>
+                            <span className="text-[7px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Televisa Univision</span>
                         </div>
                     </div>
 
@@ -55,13 +57,13 @@ const Navbar = ({ vistaActual, setVistaActual, session, onLogout }) => {
                                     key={link.id}
                                     onClick={() => setVistaActual(link.id)}
                                     className={`
-                                        px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all
+                                        px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all
                                         ${isActive
                                             ? 'bg-red-600 text-white shadow-lg shadow-red-900/40'
                                             : 'text-gray-400 hover:text-white hover:bg-white/5'}
                                     `}
                                 >
-                                    <Icon size={14} />
+                                    <Icon size={12} />
                                     {link.label}
                                 </button>
                             );
@@ -71,15 +73,15 @@ const Navbar = ({ vistaActual, setVistaActual, session, onLogout }) => {
 
                         <div className="flex items-center gap-4">
                             <div className="text-right hidden xl:block">
-                                <p className="text-[9px] font-black uppercase tracking-widest text-white/40 leading-none">Usuario</p>
-                                <p className="text-[10px] font-bold text-gray-300">{session?.user?.email?.split('@')[0]}</p>
+                                <p className="text-[8px] font-black uppercase tracking-widest text-white/40 leading-none">Usuario</p>
+                                <p className="text-[9px] font-bold text-gray-300">{session?.user?.email?.split('@')[0]}</p>
                             </div>
                             <button
                                 onClick={onLogout}
-                                className="p-2.5 rounded-xl bg-white/5 text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-all border border-white/5"
+                                className="p-2 rounded-xl bg-white/5 text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-all border border-white/5"
                                 title="Cerrar Sesión"
                             >
-                                <LogOut size={18} />
+                                <LogOut size={16} />
                             </button>
                         </div>
                     </div>

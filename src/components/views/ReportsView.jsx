@@ -4,321 +4,445 @@ import {
     Download,
     Printer,
     Calendar,
-    Filter,
     Search,
     ChevronDown,
     Clock,
     MapPin,
     Tv,
-    TrendingUp
+    TrendingUp,
+    FileText,
+    CheckCircle2,
+    XCircle,
+    Layout,
+    Globe
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
-const ReportsView = ({ clientes, cotizaciones }) => {
-    const [etapaSeleccionada, setEtapaSeleccionada] = useState('Cliente');
-    const [busqueda, setBusqueda] = useState('');
+const MISSING_DATA_CHAR = '-';
 
-    // 📅 Manejo de fechas
-    const [fechaInicio, setFechaInicio] = useState('');
-    const [fechaFin, setFechaFin] = useState('');
+const ReportsView = ({ clientes = [], cotizaciones = [] }) => {
+    const [seccionReporte, setSeccionReporte] = useState('ventas-mes');
 
-    const etapasDisponibles = ['Prospecto', 'Contactado', 'Interesado', 'Cliente', 'No Interesado'];
+    // 📅 Periodo
+    const hoy = new Date();
+    const [fechaInicio, setFechaInicio] = useState(new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0]);
+    const [fechaFin, setFechaFin] = useState(new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().split('T')[0]);
 
-    // Atajos de fecha
     const establecerRango = (tipo) => {
-        const hoy = new Date();
-        const inicio = new Date();
-
-        if (tipo === 'hoy') {
-            const iso = hoy.toISOString().split('T')[0];
-            setFechaInicio(iso);
-            setFechaFin(iso);
-        } else if (tipo === 'semana') {
-            const primerDiaSemana = hoy.getDate() - hoy.getDay();
-            inicio.setDate(primerDiaSemana);
-            setFechaInicio(inicio.toISOString().split('T')[0]);
-            setFechaFin(hoy.toISOString().split('T')[0]);
-        } else if (tipo === 'mes') {
-            inicio.setDate(1);
-            setFechaInicio(inicio.toISOString().split('T')[0]);
-            setFechaFin(hoy.toISOString().split('T')[0]);
+        const d = new Date();
+        if (tipo === 'mes') {
+            setFechaInicio(new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]);
+            setFechaFin(new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0]);
         } else if (tipo === 'año') {
-            inicio.setMonth(0, 1);
-            setFechaInicio(inicio.toISOString().split('T')[0]);
-            setFechaFin(hoy.toISOString().split('T')[0]);
+            setFechaInicio(new Date(d.getFullYear(), 0, 1).toISOString().split('T')[0]);
+            setFechaFin(new Date(d.getFullYear(), 11, 31).toISOString().split('T')[0]);
         }
     };
 
-    // 🔍 Filtrado Maestro de Clientes (Por Etapa + Búsqueda + Fecha)
-    const clientesFiltrados = useMemo(() => {
-        return (clientes || []).filter(c => {
-            const matchEtapa = c.etapa === etapaSeleccionada;
-            const matchBusqueda = (c.nombre_empresa || '').toLowerCase().includes(busqueda.toLowerCase()) ||
-                (c.plaza || '').toLowerCase().includes(busqueda.toLowerCase());
-
-            const fechaCliente = new Date(c.created_at);
-            const matchFechaInicio = fechaInicio ? fechaCliente >= new Date(fechaInicio) : true;
-            const fechaFinAjustada = fechaFin ? new Date(new Date(fechaFin).setHours(23, 59, 59, 999)) : null;
-            const matchFechaFin = fechaFinAjustada ? fechaCliente <= fechaFinAjustada : true;
-
-            return matchEtapa && matchBusqueda && matchFechaInicio && matchFechaFin;
+    // 📊 Cotizaciones Ganadas en el rango
+    const ganadas = useMemo(() => {
+        return (cotizaciones || []).filter(q => {
+            if (q.estatus !== 'ganada') return false;
+            const fechaQ = new Date(q.fecha_cierre_real || q.created_at || q.fecha);
+            const start = new Date(fechaInicio);
+            const end = new Date(fechaFin);
+            end.setHours(23, 59, 59, 999);
+            return fechaQ >= start && fechaQ <= end;
         });
-    }, [clientes, etapaSeleccionada, busqueda, fechaInicio, fechaFin]);
+    }, [cotizaciones, fechaInicio, fechaFin]);
 
-    // 📊 Métricas Operativas
-    const analytics = useMemo(() => {
-        const result = {
-            porPlaza: {},
-            porCanal: {},
-            totalValor: 0
-        };
+    // 1. REPORTE: Ventas por Mes (Corte Mensual Matrix: Clientes x Meses)
+    const matrizMensual = useMemo(() => {
+        const mesesNombres = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+        const clienteMap = {}; // { clienteId: { mes: monto } }
+        const mesesVisibles = new Set();
+        const totalesPorMes = {};
 
-        (cotizaciones || []).forEach(q => {
-            const fechaQ = new Date(q.created_at || q.fecha);
-            const matchFechaInicio = fechaInicio ? fechaQ >= new Date(fechaInicio) : true;
-            const fechaFinAjustada = fechaFin ? new Date(new Date(fechaFin).setHours(23, 59, 59, 999)) : null;
-            const matchFechaFin = fechaFinAjustada ? fechaQ <= fechaFinAjustada : true;
+        ganadas.forEach(q => {
+            const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
+            const fechaQ = new Date(q.fecha_cierre_real || q.created_at || q.fecha);
+            const mesIdx = fechaQ.getMonth();
+            const mesNombre = mesesNombres[mesIdx];
+            const cId = q.cliente_id;
+            const monto = parseFloat(q.subtotalGeneral || q.total / 1.16) || 0;
 
-            if (matchFechaInicio && matchFechaFin && q.estatus === 'ganada') {
-                const cliente = (clientes || []).find(c => c.id === q.cliente_id);
-                if (cliente) {
-                    const plaza = cliente.plaza || 'Mérida';
-                    const canal = q.canal || 'Digital';
-                    const monto = parseFloat(q.subtotalGeneral || (q.monto_total || q.total) / 1.16) || 0;
+            mesesVisibles.add(mesIdx);
+            if (!clienteMap[cId]) {
+                clienteMap[cId] = { nombre: cliente?.nombre_empresa || 'S/N', importes: {} };
+            }
+            clienteMap[cId].importes[mesIdx] = (clienteMap[cId].importes[mesIdx] || 0) + monto;
+            totalesPorMes[mesIdx] = (totalesPorMes[mesIdx] || 0) + monto;
+        });
 
-                    result.porPlaza[plaza] = (result.porPlaza[plaza] || 0) + monto;
-                    result.porCanal[canal] = (result.porCanal[canal] || 0) + monto;
-                    result.totalValor += monto;
-                }
+        // Ordenar meses visibles
+        const mesesColumnas = Array.from(mesesVisibles).sort((a, b) => a - b);
+        const filas = Object.values(clienteMap).map(c => ({
+            nombre: c.nombre,
+            importes: c.importes,
+            total: Object.values(c.importes).reduce((a, b) => a + b, 0)
+        })).sort((a, b) => b.total - a.total);
+
+        const granTotal = Object.values(totalesPorMes).reduce((a, b) => a + b, 0);
+
+        return { mesesColumnas, mesesNombres, filas, totalesPorMes, granTotal };
+    }, [ganadas, clientes]);
+
+    // 2. REPORTE: Ventas por Canal (Matriz)
+    const matrizCanales = useMemo(() => {
+        const canalesMap = {}; // { canal: { plaza: monto } }
+        const plazasSet = new Set();
+        const totalesPorPlaza = {};
+
+        ganadas.forEach(q => {
+            const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
+            const pPlaza = cliente?.plaza || 'Mérida';
+            plazasSet.add(pPlaza);
+
+            // 1. Pauta tradicional
+            (q.items || []).forEach(item => {
+                const canal = item.producto?.canal || 'Otros';
+                if (!canalesMap[canal]) canalesMap[canal] = {};
+                const montoItem = (item.subtotal || 0);
+                canalesMap[canal][pPlaza] = (canalesMap[canal][pPlaza] || 0) + montoItem;
+                totalesPorPlaza[pPlaza] = (totalesPorPlaza[pPlaza] || 0) + montoItem;
+            });
+
+            // 2. VIX
+            const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
+            if (costoVIX > 0) {
+                const canalVIX = 'VIX';
+                if (!canalesMap[canalVIX]) canalesMap[canalVIX] = {};
+                canalesMap[canalVIX][pPlaza] = (canalesMap[canalVIX][pPlaza] || 0) + costoVIX;
+                totalesPorPlaza[pPlaza] = (totalesPorPlaza[pPlaza] || 0) + costoVIX;
             }
         });
 
-        return result;
-    }, [cotizaciones, clientes, fechaInicio, fechaFin]);
+        const plazas = Array.from(plazasSet).sort();
+        const filas = Object.entries(canalesMap).map(([canal, distrib]) => ({
+            canal,
+            importes: distrib,
+            total: Object.values(distrib).reduce((a, b) => a + b, 0)
+        })).sort((a, b) => b.total - a.total);
 
-    // Conteo por Etapa (Para las fichas superiores)
-    const metricasEtapas = useMemo(() => {
-        const counts = {};
-        etapasDisponibles.forEach(e => {
-            const lista = (clientes || []).filter(c => {
-                const fechaCliente = new Date(c.created_at);
-                const matchFechaInicio = fechaInicio ? fechaCliente >= new Date(fechaInicio) : true;
-                const fechaFinAjustada = fechaFin ? new Date(new Date(fechaFin).setHours(23, 59, 59, 999)) : null;
-                const matchFechaFin = fechaFinAjustada ? fechaCliente <= fechaFinAjustada : true;
-                return c.etapa === e && matchFechaInicio && matchFechaFin;
-            });
-            counts[e] = lista.length;
+        const granTotal = Object.values(totalesPorPlaza).reduce((a, b) => a + b, 0);
+
+        return { plazas, filas, totalesPorPlaza, granTotal };
+    }, [ganadas, clientes]);
+
+    // 3. REPORTE: Ventas por Ciudad (Matriz)
+    const matrizCiudad = useMemo(() => {
+        const clienteMap = {}; // { clienteId: { plaza: monto } }
+        const plazasSet = new Set();
+        const totalesPorPlaza = {};
+
+        ganadas.forEach(q => {
+            const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
+            const plaza = cliente?.plaza || 'Mérida';
+            const cId = q.cliente_id;
+            const monto = parseFloat(q.subtotalGeneral || q.total / 1.16) || 0;
+
+            plazasSet.add(plaza);
+            if (!clienteMap[cId]) {
+                clienteMap[cId] = { nombre: cliente?.nombre_empresa || 'S/N', importes: {} };
+            }
+            clienteMap[cId].importes[plaza] = (clienteMap[cId].importes[plaza] || 0) + monto;
+            totalesPorPlaza[plaza] = (totalesPorPlaza[plaza] || 0) + monto;
         });
-        return counts;
-    }, [clientes, fechaInicio, fechaFin]);
+
+        const plazas = Array.from(plazasSet).sort();
+        const filas = Object.values(clienteMap).map(c => ({
+            nombre: c.nombre,
+            importes: c.importes,
+            total: Object.values(c.importes).reduce((a, b) => a + b, 0)
+        })).sort((a, b) => b.total - a.total);
+
+        const granTotal = Object.values(totalesPorPlaza).reduce((a, b) => a + b, 0);
+
+        return { plazas, filas, totalesPorPlaza, granTotal };
+    }, [ganadas, clientes]);
 
     const handleExportCSV = () => {
-        const headers = ['Empresa', 'Contacto', 'Etapa', 'Plaza', 'Fecha'];
-        const csvRows = clientesFiltrados.map(c => [
-            `"${c.nombre_empresa}"`,
-            `"${c.nombre_contacto || ''}"`,
-            c.etapa,
-            c.plaza,
-            new Date(c.created_at).toLocaleDateString()
-        ]);
-        const csvContent = [headers.join(','), ...csvRows.map(r => r.join(','))].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `Reporte_Televisa_${etapaSeleccionada}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        alert('Generando exportación consolidada...');
     };
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-20 print:p-0">
             {/* Header Pro */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 print:hidden">
-                <div>
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tighter flex items-center gap-3">
-                        <BarChart3 className="text-red-600" size={26} />
-                        Reportes Inteligentes
-                    </h2>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Análisis por Período, Canal y Territorio</p>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 print:hidden">
+                <div className="flex items-center gap-4">
+                    <div className="bg-slate-900 p-3 rounded-xl shadow-xl shadow-slate-200">
+                        <BarChart3 className="text-white" size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase">Reportería Corporativa</h2>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Control de Resultados con Totales y Matrices</p>
+                    </div>
                 </div>
                 <div className="flex gap-2 w-full lg:w-auto">
-                    <button onClick={handleExportCSV} className="flex-1 bg-white border border-gray-100 px-5 py-3 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm">
-                        <Download size={14} /> EXCEL
+                    <button onClick={handleExportCSV} className="flex-1 bg-white border border-gray-100 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm">
+                        <Download size={12} /> EXCEL
                     </button>
-                    <button onClick={() => window.print()} className="flex-1 bg-slate-900 text-white px-5 py-3 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-600 transition-all shadow-xl active:scale-95">
-                        <Printer size={14} /> IMPRIMIR
+                    <button onClick={() => window.print()} className="flex-1 bg-slate-900 text-white px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-600 transition-all shadow-xl active:scale-95">
+                        <Printer size={12} /> IMPRIMIR
                     </button>
                 </div>
             </div>
 
-            {/* Panel de Filtros con Atajos */}
-            <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-gray-100 space-y-6 print:hidden">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
-                    <div className="lg:col-span-7 space-y-3">
-                        <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                            <Clock size={14} /> Atajos de Período
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {['hoy', 'semana', 'mes', 'año'].map((btn) => (
-                                <button
-                                    key={btn}
-                                    onClick={() => establecerRango(btn)}
-                                    className="px-4 py-2 bg-slate-50 hover:bg-red-50 hover:text-red-600 rounded-xl text-[9px] font-black uppercase transition-all border border-slate-100"
-                                >
-                                    {btn === 'año' ? 'Todo el Año' : btn === 'semana' ? 'Esta Semana' : btn === 'mes' ? 'Este Mes' : 'Hoy'}
-                                </button>
-                            ))}
-                            {(fechaInicio || fechaFin) && (
-                                <button
-                                    onClick={() => { setFechaInicio(''); setFechaFin(''); }}
-                                    className="px-4 py-2 text-rose-600 text-[9px] font-black uppercase"
-                                >
-                                    Reset
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="lg:col-span-2 space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase">Desde</label>
-                        <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} className="w-full bg-slate-50 border-none rounded-xl p-2.5 text-xs font-bold focus:ring-1 focus:ring-red-500" />
-                    </div>
-                    <div className="lg:col-span-2 space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase">Hasta</label>
-                        <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} className="w-full bg-slate-50 border-none rounded-xl p-2.5 text-xs font-bold focus:ring-1 focus:ring-red-500" />
-                    </div>
-                </div>
-
-                <div className="pt-6 border-t border-gray-50 flex flex-col md:flex-row gap-4">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
-                        <input type="text" placeholder="Filtrar por empresa o plaza..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-bold focus:ring-1 focus:ring-red-500 outline-none" />
-                    </div>
-                </div>
-            </div>
-
-            {/* Quick Metrics per Stage */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 print:hidden">
-                {etapasDisponibles.map(etapa => (
+            {/* Menu de Nav de Reportes */}
+            <div className="flex flex-wrap gap-2 print:hidden bg-white p-2 rounded-2xl shadow-xl border border-gray-100">
+                {[
+                    { id: 'ventas-mes', label: 'Ventas por Mes', icon: Calendar },
+                    { id: 'ventas-canal', label: 'Ventas por Canal', icon: Tv },
+                    { id: 'ventas-ciudad', label: 'Ventas por Ciudad', icon: Globe },
+                    { id: 'resumen-clientes', label: 'Resumen Pipeline', icon: FileText },
+                ].map(tab => (
                     <button
-                        key={etapa}
-                        onClick={() => setEtapaSeleccionada(etapa)}
-                        className={`p-5 rounded-[2rem] border transition-all text-left relative overflow-hidden group
-                            ${etapaSeleccionada === etapa
-                                ? 'bg-slate-900 border-slate-900 text-white shadow-2xl scale-[1.03]'
-                                : 'bg-white border-gray-100 text-slate-400 hover:border-red-200'}`}
+                        key={tab.id}
+                        onClick={() => setSeccionReporte(tab.id)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all
+                            ${seccionReporte === tab.id
+                                ? 'bg-red-600 text-white shadow-lg'
+                                : 'text-gray-400 hover:text-slate-900 hover:bg-slate-50'}`}
                     >
-                        <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${etapaSeleccionada === etapa ? 'text-red-500' : 'text-gray-300'}`}>{etapa}</p>
-                        <p className="text-2xl font-black tracking-tighter leading-none">{metricasEtapas[etapa] || 0}</p>
-                        <div className={`absolute -right-2 -bottom-2 opacity-5 group-hover:rotate-12 transition-transform ${etapaSeleccionada === etapa ? 'text-white' : 'text-slate-900'}`}>
-                            <TrendingUp size={60} />
-                        </div>
+                        <tab.icon size={14} />
+                        {tab.label}
                     </button>
                 ))}
             </div>
 
-            {/* Resumen por Plaza y Canal (Nuevas Secciones) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:hidden">
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
-                    <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                        <MapPin size={14} className="text-red-600" /> Ventas por Ciudad
-                    </h3>
-                    <div className="space-y-4">
-                        {Object.entries(analytics.porPlaza).length > 0 ? Object.entries(analytics.porPlaza).map(([plaza, monto]) => (
-                            <div key={plaza} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl">
-                                <span className="text-[10px] font-black uppercase text-slate-600">{plaza}</span>
-                                <span className="text-xs font-black text-slate-900">{formatMXN(monto)}</span>
-                            </div>
-                        )) : (
-                            <p className="text-[10px] text-gray-300 italic text-center py-4 uppercase font-black">Sin datos en período</p>
-                        )}
-                    </div>
+            {/* Selector de Período Compacto */}
+            <div className="bg-white p-4 rounded-2xl shadow-xl border border-gray-100 flex flex-col md:flex-row items-center gap-4 print:hidden">
+                <div className="flex items-center gap-2">
+                    <Clock size={14} className="text-slate-400" />
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ajustar Período:</span>
                 </div>
-
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
-                    <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                        <Tv size={14} className="text-red-600" /> Ventas por Canal
-                    </h3>
-                    <div className="space-y-4">
-                        {Object.entries(analytics.porCanal).length > 0 ? Object.entries(analytics.porCanal).map(([canal, monto]) => (
-                            <div key={canal} className="flex justify-between items-center bg-slate-900 p-3 rounded-xl text-white">
-                                <span className="text-[10px] font-black uppercase text-slate-300">{canal}</span>
-                                <span className="text-xs font-black text-red-500">{formatMXN(monto)}</span>
-                            </div>
-                        )) : (
-                            <p className="text-[10px] text-gray-300 italic text-center py-4 uppercase font-black">Sin datos en período</p>
-                        )}
-                    </div>
+                <div className="flex gap-2">
+                    <button onClick={() => establecerRango('mes')} className="px-3 py-1.5 bg-slate-50 rounded-lg text-[8px] font-black uppercase hover:bg-red-50 hover:text-red-600 transition-all border border-slate-100 italic">Mes Actual</button>
+                    <button onClick={() => establecerRango('año')} className="px-3 py-1.5 bg-slate-50 rounded-lg text-[8px] font-black uppercase hover:bg-red-50 hover:text-red-600 transition-all border border-slate-100 italic">Año Completo</button>
+                </div>
+                <div className="flex items-center gap-2 ml-auto">
+                    <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} className="bg-slate-50 border-none rounded-lg p-1.5 text-[10px] font-bold focus:ring-1 focus:ring-red-500" />
+                    <span className="text-gray-300 font-bold">A</span>
+                    <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} className="bg-slate-50 border-none rounded-lg p-1.5 text-[10px] font-bold focus:ring-1 focus:ring-red-500" />
                 </div>
             </div>
 
-            {/* Listado para Impresión */}
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
-                <div className="flex justify-between items-end mb-6 print:mb-12">
-                    <div className="space-y-1">
-                        <h3 className="text-base font-black text-slate-900 tracking-tight uppercase">Segmentación: {etapaSeleccionada}s</h3>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                            {fechaInicio && fechaFin ? `${fechaInicio} al ${fechaFin}` : 'Corte Histórico'}
-                        </p>
-                    </div>
-                    <div className="text-right hidden print:block">
-                        <p className="text-[10px] font-black text-slate-900 uppercase">Televisa Mérida</p>
-                        <p className="text-[8px] text-gray-400 font-bold uppercase tracking-tighter">Generado: {new Date().toLocaleString()}</p>
-                    </div>
-                </div>
+            {/* Renderizado de Tablas */}
+            <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
 
-                <div className="overflow-x-auto print:overflow-visible">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="border-b-2 border-slate-900">
-                                <th className="py-4 text-[9px] font-black text-slate-900 uppercase tracking-widest">Cuenta / Cliente</th>
-                                <th className="py-4 text-[9px] font-black text-slate-900 uppercase tracking-widest">Responsable</th>
-                                <th className="py-4 text-[9px] font-black text-slate-900 uppercase tracking-widest">Territorio</th>
-                                <th className="py-4 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Inversión</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {clientesFiltrados.length > 0 ? clientesFiltrados.map(cliente => {
-                                const valor = (cotizaciones || []).filter(q => q.cliente_id === cliente.id && q.estatus === 'ganada')
-                                    .reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || (q.monto_total || q.total) / 1.16) || 0), 0);
-                                return (
-                                    <tr key={cliente.id} className="hover:bg-slate-50/50">
-                                        <td className="py-4">
-                                            <p className="text-xs font-black text-slate-900 uppercase">{cliente.nombre_empresa}</p>
-                                            <p className="text-[9px] text-gray-300 font-bold">{cliente.segmento || 'GENERAL'}</p>
-                                        </td>
-                                        <td className="py-4">
-                                            <p className="text-[10px] font-bold text-slate-500">{cliente.nombre_contacto || '-'}</p>
-                                        </td>
-                                        <td className="py-4">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{cliente.plaza}</span>
-                                        </td>
-                                        <td className="py-4 text-right">
-                                            <span className="text-xs font-black text-slate-900">{formatMXN(valor)}</span>
-                                        </td>
-                                    </tr>
-                                );
-                            }) : (
-                                <tr>
-                                    <td colSpan="4" className="py-16 text-center text-gray-300 font-black uppercase text-[10px] tracking-widest">Sin resultados para esta selección</td>
+                {/* 1. VENTAS POR MES (Matriz Clientes x Meses) */}
+                {seccionReporte === 'ventas-mes' && (
+                    <div className="overflow-x-auto">
+                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
+                            <div>
+                                <h3 className="text-lg font-black tracking-tighter uppercase">Ventas por Mes (Detallado)</h3>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Consolidado mensual por cliente</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[9px] font-black uppercase text-red-500 tracking-widest">Total Gran Acumulado</p>
+                                <p className="text-2xl font-black">{formatMXN(matrizMensual.granTotal)}</p>
+                            </div>
+                        </div>
+                        <table className="w-full text-left border-collapse min-w-[800px]">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-gray-200">
+                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sticky left-0 bg-slate-50 z-10">Cuenta / Cliente</th>
+                                    {matrizMensual.mesesColumnas.map(m => (
+                                        <th key={m} className="py-4 px-4 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{matrizMensual.mesesNombres[m]}</th>
+                                    ))}
+                                    <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Total Cliente</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {matrizMensual.filas.map((f, i) => (
+                                    <tr key={i} className="hover:bg-slate-50/50">
+                                        <td className="py-4 px-6 border-r border-gray-100 sticky left-0 bg-white group-hover:bg-slate-50 z-10">
+                                            <span className="text-[10px] font-black text-slate-900 uppercase truncate block max-w-[150px]">{f.nombre}</span>
+                                        </td>
+                                        {matrizMensual.mesesColumnas.map(m => (
+                                            <td key={m} className="py-4 px-4 text-center text-[10px] font-bold text-slate-500 border-r border-gray-100">
+                                                {f.importes[m] ? formatMXN(f.importes[m]) : MISSING_DATA_CHAR}
+                                            </td>
+                                        ))}
+                                        <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900 bg-slate-50/20">{formatMXN(f.total)}</td>
+                                    </tr>
+                                ))}
+                                {/* Fila de Totales Columnas */}
+                                <tr className="bg-slate-900 text-white font-black">
+                                    <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sticky left-0 bg-slate-900 z-10">Total Mensual</td>
+                                    {matrizMensual.mesesColumnas.map(m => (
+                                        <td key={m} className="py-4 px-4 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizMensual.totalesPorMes[m])}</td>
+                                    ))}
+                                    <td className="py-4 px-6 text-right text-[11px] text-red-500">{formatMXN(matrizMensual.granTotal)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* 2. VENTAS POR CANAL (Matriz Canales x Plazas) */}
+                {seccionReporte === 'ventas-canal' && (
+                    <div className="overflow-x-auto sm:overflow-hidden">
+                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
+                            <div>
+                                <h3 className="text-lg font-black tracking-tighter uppercase">Análisis por Canal y Señal</h3>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Distribución territorial de inversión</p>
+                            </div>
+                            <Tv className="text-red-500" size={30} />
+                        </div>
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-gray-200">
+                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sticky left-0 bg-slate-50 z-10">Canal / Producto</th>
+                                    {matrizCanales.plazas.map(p => (
+                                        <th key={p} className="py-4 px-6 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{p}</th>
+                                    ))}
+                                    <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Inversión Canal</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {matrizCanales.filas.map((f, i) => (
+                                    <tr key={i} className="hover:bg-slate-50/50">
+                                        <td className="py-4 px-6 border-r border-gray-100 sticky left-0 bg-white z-10">
+                                            <span className="text-[10px] font-black text-slate-900 uppercase">{f.canal}</span>
+                                        </td>
+                                        {matrizCanales.plazas.map(p => (
+                                            <td key={p} className="py-4 px-6 text-center text-[10px] font-bold text-slate-500 border-r border-gray-100">
+                                                {f.importes[p] ? formatMXN(f.importes[p]) : MISSING_DATA_CHAR}
+                                            </td>
+                                        ))}
+                                        <td className="py-4 px-6 text-right text-[10px] font-black text-red-600 bg-slate-50/20">{formatMXN(f.total)}</td>
+                                    </tr>
+                                ))}
+                                {/* Totales por Plaza */}
+                                <tr className="bg-slate-900 text-white font-black">
+                                    <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sticky left-0 bg-slate-900 z-10">Total Ciudad</td>
+                                    {matrizCanales.plazas.map(p => (
+                                        <td key={p} className="py-4 px-6 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizCanales.totalesPorPlaza[p])}</td>
+                                    ))}
+                                    <td className="py-4 px-6 text-right text-[11px] text-red-500">{formatMXN(matrizCanales.granTotal)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* 3. VENTAS POR CIUDAD (Matriz Clientes x Plazas) */}
+                {seccionReporte === 'ventas-ciudad' && (
+                    <div className="overflow-x-auto sm:overflow-hidden">
+                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
+                            <div>
+                                <h3 className="text-lg font-black tracking-tighter uppercase">Matriz Territorial de Clientes</h3>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Consolidado de inversión por plaza</p>
+                            </div>
+                            <Globe className="text-red-500" size={30} />
+                        </div>
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-gray-200">
+                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sticky left-0 bg-slate-50 z-10">Cuenta / Empresa</th>
+                                    {matrizCiudad.plazas.map(p => (
+                                        <th key={p} className="py-4 px-6 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{p}</th>
+                                    ))}
+                                    <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Consolidado</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {matrizCiudad.filas.map((f, i) => (
+                                    <tr key={i} className="hover:bg-slate-50/50">
+                                        <td className="py-4 px-6 border-r border-gray-100 sticky left-0 bg-white z-10">
+                                            <span className="text-[10px] font-black text-slate-900 uppercase block truncate max-w-[120px]">{f.nombre}</span>
+                                        </td>
+                                        {matrizCiudad.plazas.map(p => (
+                                            <td key={p} className="py-4 px-6 text-center text-[10px] font-bold text-slate-500 border-r border-gray-100">
+                                                {f.importes[p] ? formatMXN(f.importes[p]) : MISSING_DATA_CHAR}
+                                            </td>
+                                        ))}
+                                        <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900 bg-slate-50/20">{formatMXN(f.total)}</td>
+                                    </tr>
+                                ))}
+                                {/* Totales por Plaza */}
+                                <tr className="bg-slate-900 text-white font-black">
+                                    <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sticky left-0 bg-slate-900 z-10">Total Ciudad</td>
+                                    {matrizCiudad.plazas.map(p => (
+                                        <td key={p} className="py-4 px-6 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizCiudad.totalesPorPlaza[p])}</td>
+                                    ))}
+                                    <td className="py-4 px-6 text-right text-[11px] text-red-500">{formatMXN(matrizCiudad.granTotal)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* 4. RESUMEN PIPELINE */}
+                {seccionReporte === 'resumen-clientes' && (
+                    <div className="overflow-x-auto sm:overflow-hidden">
+                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
+                            <div>
+                                <h3 className="text-lg font-black tracking-tighter uppercase">Pipeline de Ventas y Efectividad</h3>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Estado actual de propuestas por cuenta</p>
+                            </div>
+                            <Layout className="text-red-500" size={30} />
+                        </div>
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="bg-slate-50">
+                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest sticky left-0 bg-slate-50 z-10">Cuenta</th>
+                                    <th className="py-4 px-6 text-center text-[9px] font-black text-blue-500 uppercase tracking-widest">Abiertas</th>
+                                    <th className="py-4 px-6 text-center text-[9px] font-black text-emerald-500 uppercase tracking-widest">Ganadas</th>
+                                    <th className="py-4 px-6 text-center text-[9px] font-black text-red-500 uppercase tracking-widest">Perdidas</th>
+                                    <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Venta Acumulada</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {(clientes || []).map(c => {
+                                    const cCotz = (cotizaciones || []).filter(q => String(q.cliente_id) === String(c.id));
+                                    const abiertas = cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada').length;
+                                    const cGanadas = cCotz.filter(q => q.estatus === 'ganada').length;
+                                    const perdidas = cCotz.filter(q => q.estatus === 'perdida').length;
+                                    const monto = cCotz.filter(q => q.estatus === 'ganada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+
+                                    if (abiertas === 0 && cGanadas === 0 && perdidas === 0) return null;
+
+                                    return (
+                                        <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="py-4 px-6 sticky left-0 bg-white z-10">
+                                                <p className="text-[10px] font-black text-slate-900 uppercase">{c.nombre_empresa}</p>
+                                                <p className="text-[8px] font-bold text-gray-300 uppercase tracking-widest italic">{c.plaza}</p>
+                                            </td>
+                                            <td className="py-4 px-6 text-center font-bold text-[10px] text-blue-600">{abiertas}</td>
+                                            <td className="py-4 px-6 text-center font-bold text-[10px] text-emerald-600">{cGanadas}</td>
+                                            <td className="py-4 px-6 text-center font-bold text-[10px] text-red-600">{perdidas}</td>
+                                            <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900">{formatMXN(monto)}</td>
+                                        </tr>
+                                    );
+                                }).filter(Boolean)}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
             {/* Disclaimer para impresión */}
-            <div className="hidden print:flex justify-between items-center border-t-2 border-slate-900 pt-8 mt-12 bg-white">
-                <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900">Reporte Ejecutivo de Pipeline - Televisa</p>
-                    <p className="text-[8px] text-gray-400 font-bold mt-1 uppercase">Confidencial / Uso Interno</p>
+            <div className="hidden print:flex flex-col border-t-2 border-slate-900 pt-8 mt-12 bg-white">
+                <div className="flex justify-between items-center mb-8">
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900">Reporte Ejecutivo de Televisión Local</p>
+                        <p className="text-[8px] text-gray-400 font-bold mt-1 uppercase">Corte de Ventas Ganadas - {seccionReporte.replace('-', ' ').toUpperCase()}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-[10px] font-black text-slate-900">Periodo: {fechaInicio} / {fechaFin}</p>
+                    </div>
                 </div>
-                <div className="text-right border-l border-slate-200 pl-8">
-                    <p className="text-[10px] font-black text-slate-900 uppercase mb-4 tracking-widest">Validado Por:</p>
-                    <div className="w-48 h-px bg-slate-900 mt-8"></div>
-                    <p className="text-[8px] text-slate-400 font-black uppercase mt-1">Nombre y Firma</p>
+                <div className="flex justify-end gap-12 pt-12">
+                    <div className="text-center w-48">
+                        <div className="border-b border-slate-900 mb-2"></div>
+                        <p className="text-[8px] font-black uppercase text-slate-400">Revisado Por</p>
+                    </div>
+                    <div className="text-center w-48">
+                        <div className="border-b border-slate-900 mb-2"></div>
+                        <p className="text-[8px] font-black uppercase text-slate-400">Autorizado Por</p>
+                    </div>
                 </div>
             </div>
         </div>

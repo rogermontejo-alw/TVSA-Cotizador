@@ -24,6 +24,7 @@ const CotizadorView = ({
         productos,
         clientes,
         paquetesVIX,
+        masterContracts,
         ultimaActualizacion,
         loading
     } = data;
@@ -151,6 +152,7 @@ const CotizadorView = ({
                         mostrarPropuesta={() => mostrarPropuesta(cotizacionResult)}
                         configuracion={configuracion}
                         onSaveClient={onSaveClient}
+                        masterContracts={masterContracts}
                         setMensaje={setMensajeAdmin}
                     />
                 )}

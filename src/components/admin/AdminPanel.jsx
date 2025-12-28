@@ -49,41 +49,41 @@ const AdminPanel = ({
     return (
         <div className="min-h-screen bg-gray-50 pb-20 animate-in fade-in duration-500">
             {/* Header Admin Fijo o Sticky si se desea, por ahora normal */}
-            <div className="bg-slate-900 pt-8 pb-32 px-4 md:px-8">
+            <div className="bg-slate-900 pt-6 pb-24 px-4 md:px-8">
                 <div className="max-w-7xl mx-auto">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="flex items-center gap-6">
-                            <div className="bg-red-600 p-4 rounded-2xl shadow-xl shadow-red-900/20">
-                                <Settings className="text-white" size={32} />
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-red-600 p-3 rounded-xl shadow-xl shadow-red-900/20">
+                                <Settings className="text-white" size={24} />
                             </div>
                             <div>
-                                <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter">Panel Maestro</h1>
-                                <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-1">Control Central de Televisa MID</p>
+                                <h1 className="text-2xl md:text-3xl font-black text-white tracking-tighter">Panel Maestro</h1>
+                                <p className="text-slate-400 font-bold uppercase text-[9px] tracking-widest mt-0.5">Control Central de Televisa MID</p>
                             </div>
                         </div>
 
                         <button
                             onClick={() => setVistaActual('dashboard')}
-                            className="w-full md:w-auto px-6 py-2.5 bg-white text-slate-900 rounded-xl font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-xl active:scale-95 text-[10px]"
+                            className="w-full md:w-auto px-5 py-2 bg-white text-slate-900 rounded-xl font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-xl active:scale-95 text-[9px]"
                         >
                             Salir del Panel
                         </button>
                     </div>
 
                     {/* Tabs de Navegación Responsivos */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mt-6">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setSeccionActiva(tab.id)}
                                 className={`
-                                    flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all
+                                    flex items-center justify-center gap-2 px-3 py-2 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all
                                     ${seccionActiva === tab.id
                                         ? 'bg-red-600 text-white shadow-lg shadow-red-900/40'
                                         : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}
                                 `}
                             >
-                                <tab.icon size={14} />
+                                <tab.icon size={12} />
                                 {tab.label}
                             </button>
                         ))}
