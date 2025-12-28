@@ -39,6 +39,17 @@ const App = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setSession(null);
+      setVistaActual('dashboard');
+    } catch (err) {
+      console.error("Error al cerrar sesión:", err);
+    }
+  };
+
   // Custom Hooks
   const dbData = useDatabase();
   const cotizacionState = useCotizacion(dbData);
@@ -47,6 +58,7 @@ const App = () => {
     cargarDatos,
     guardarRegistro,
     eliminarRegistro,
+    limpiarTabla,
     mensajeAdmin,
     setMensajeAdmin,
     configuracion,
@@ -99,11 +111,11 @@ const App = () => {
           probabilidad: row.probabilidad_cierre,
           items: detalles.items || [],
           distribucion: detalles.distribucion || [],
-          diasCampana: row.dias_campana || 30,
-          paqueteVIX: vixCompleto,
-          presupuestoBase: detalles.inversion_inicial || 0,
-          subtotalTV: detalles.subtotal_tv || 0,
-          costoVIX: detalles.costo_vix || 0,
+          paqueteVIX: detalles.paqueteVIX || vixCompleto,
+          costoVIX: detalles.costoVIX || (detalles.paqueteVIX?.inversion) || 0,
+          presupuestoBase: detalles.presupuestoBase || row.monto_total,
+          subtotalTV: detalles.subtotalTV || detalles.subtotal_tv || row.monto_total,
+          diasCampana: detalles.diasCampana || 30,
           mc_id: row.mc_id,
           numero_contrato: row.numero_contrato,
           fecha_registro_sistema: row.fecha_registro_sistema,
@@ -116,84 +128,14 @@ const App = () => {
       }
     }).filter(Boolean);
 
-    console.log(`✅ Historial procesado en App: ${historialFormateado.length} registros`);
     setHistorial(historialFormateado);
-  }, [rawHistorial, clientes, paquetesVIX, session]);
+    setHistorialState(historialFormateado);
+  }, [rawHistorial, session, clientes, paquetesVIX, setHistorialState]);
 
-  // Actions
-  const handleGuardarCotizacion = useCallback(async () => {
-    if (!cotizacionState.cotizacionResult) return;
+  if (authLoading) return null;
+  if (!session) return <LoginView />;
 
-    const cotz = cotizacionState.cotizacionResult;
-    // Detectar si es un UUID de Supabase (36 caracteres) o un ID temporal
-    const isUpdate = cotz.id && cotz.id.length > 20 && !cotz.id.startsWith('COT-');
-
-    const datosParaDB = {
-      cliente_id: cotz.cliente.id,
-      mc_id: cotz.mc_id || null,
-      folio: cotz.folio || `COT-${Date.now().toString().slice(-6)}`,
-      estatus: cotz.estatus || 'borrador',
-      monto_total: cotz.total,
-      dias_campana: cotz.diasCampana || 30,
-      paquete_vix: !!cotz.paqueteVIX?.id,
-      json_detalles: {
-        items: cotz.items,
-        distribucion: cotz.distribucion,
-        inversion_inicial: cotz.presupuestoBase,
-        subtotal_tv: cotz.subtotalTV,
-        costo_vix: cotz.costoVIX
-      }
-    };
-
-    let result;
-    if (isUpdate) {
-      result = await guardarRegistro('cotizaciones', datosParaDB, 'id', cotz.id);
-    } else {
-      result = await guardarRegistro('cotizaciones', datosParaDB);
-    }
-
-    if (result) {
-      cargarDatos();
-      setMensajeAdmin({
-        tipo: 'exito',
-        texto: isUpdate ? 'Cotización actualizada correctamente.' : 'Cotización guardada exitosamente.'
-      });
-      // Si era nueva, actualizar el estado local con el ID real
-      if (!isUpdate && result[0]?.id) {
-        cotizacionState.setCotizacionResult({ ...cotz, id: result[0].id, folio: result[0].folio });
-      }
-    }
-  }, [cotizacionState.cotizacionResult, guardarRegistro, cargarDatos, setMensajeAdmin]);
-
-  const handleAgregarAComparador = useCallback((cotz) => {
-    if (!comparar.some(c => c.id === cotz.id)) {
-      setComparar(prev => [...prev, cotz]);
-      setMensajeAdmin({ tipo: 'exito', texto: 'Añadido al comparador de escenarios.' });
-    } else {
-      setMensajeAdmin({ tipo: 'error', texto: 'Esta cotización ya está en el comparador.' });
-    }
-  }, [comparar, setMensajeAdmin]);
-
-  const handleMostrarPropuesta = useCallback((cotz) => {
-    generatePDF(cotz, configuracion, dbData.perfil);
-  }, [configuracion, dbData.perfil]);
-
-  const handleSelectQuote = useCallback((cotz) => {
-    if (!cotz) return;
-    // Restaurar estado del cotizador con los datos de esta cotización
-    cotizacionState.setClienteSeleccionado(cotz.cliente.id);
-    cotizacionState.setPresupuesto(cotz.presupuestoBase);
-    cotizacionState.setDuracionDias(cotz.diasCampana);
-    cotizacionState.setPaqueteVIX(cotz.paqueteVIX?.id || '');
-    cotizacionState.setProductosSeleccionados((cotz.items || []).map(i => ({
-      id: i.producto.id,
-      cantidad: i.cantidad || i.totalUnidades
-    })));
-    cotizacionState.setCotizacionResult(cotz);
-    setVistaActual('cotizador');
-  }, [cotizacionState, setVistaActual]);
-
-  const handleSelectClient = (clienteTarget) => {
+  const handleVerFichaCliente = (clienteTarget) => {
     setSelectedClient(clienteTarget);
     setVistaActual('ficha-cliente');
   };
@@ -207,16 +149,18 @@ const App = () => {
             setVistaActual={setVistaActual}
             mensajeAdmin={mensajeAdmin}
             setMensajeAdmin={setMensajeAdmin}
-            guardarEnSheets={guardarRegistro}
+            guardarRegistro={guardarRegistro}
             eliminarRegistro={eliminarRegistro}
             clientes={clientes}
             productos={productos}
             condicionesCliente={condicionesCliente}
             configuracion={configuracion}
             cobranza={dbData.cobranza}
+            historial={historial}
             metasComerciales={metasComerciales}
             perfil={dbData.perfil}
-            guardarRegistro={guardarRegistro}
+            limpiarTabla={limpiarTabla}
+            masterContracts={masterContracts}
           />
         );
       case 'lista-precios':
@@ -231,31 +175,28 @@ const App = () => {
       case 'historial':
         return (
           <HistoryView
-            setVistaActual={setVistaActual}
             historial={historial}
-            setCotizacion={(cotz) => {
-              cotizacionState.setClienteSeleccionado(cotz.cliente.id);
-              cotizacionState.setPresupuesto(cotz.presupuestoBase);
-              cotizacionState.setDuracionDias(cotz.diasCampana);
-              cotizacionState.setPaqueteVIX(cotz.paqueteVIX?.id || '');
-              cotizacionState.setProductosSeleccionados(cotz.items.map(i => ({ id: i.producto.id, cantidad: i.cantidad })));
-              cotizacionState.setCotizacionResult(cotz);
-              setVistaActual('cotizador');
-            }}
-            agregarAComparador={handleAgregarAComparador}
-            mostrarPropuesta={handleMostrarPropuesta}
-            eliminarCotizacion={(id) => eliminarRegistro('cotizaciones', 'id', id)}
-            onSaveQuote={guardarRegistro}
-            setMensaje={setMensajeAdmin}
-          />
-        );
-      case 'comparador':
-        return (
-          <ComparatorView
             setVistaActual={setVistaActual}
+            setCotizacionResult={setCotizacionResult}
             comparar={comparar}
             setComparar={setComparar}
-            mostrarPropuesta={handleMostrarPropuesta}
+            onSaveQuote={guardarRegistro}
+          />
+        );
+      case 'comparar':
+        return (
+          <ComparatorView
+            comparar={comparar}
+            setVistaActual={setVistaActual}
+            setComparar={setComparar}
+          />
+        );
+      case 'cotizador':
+        return (
+          <CotizadorView
+            setVistaActual={setVistaActual}
+            dbData={dbData}
+            cotizacionState={cotizacionState}
           />
         );
       case 'dashboard':
@@ -263,134 +204,88 @@ const App = () => {
           <DashboardView
             historial={historial}
             clientes={clientes}
-            metasComerciales={metasComerciales}
             setVistaActual={setVistaActual}
-            actualizarDashboard={cargarDatos}
-            iniciarNuevaCotizacion={(clientId) => {
-              if (clientId) {
-                const target = clientes.find(c => c.id === clientId);
-                setSelectedClient(target);
-                iniciarNuevaCotizacion(clientId);
-                setVistaActual('cotizador');
-              } else {
-                setVistaActual('crm');
-              }
-            }}
+            setCotizacionResult={setCotizacionResult}
+            onSaveQuote={guardarRegistro}
+            onVerFicha={handleVerFichaCliente}
           />
         );
       case 'crm':
         return (
           <CRMView
             clientes={clientes}
-            onSelectClient={handleSelectClient}
-            onAddNewClient={() => {
-              setSelectedClient(null);
-              setVistaActual('administracion'); // Go to admin to add client
-            }}
+            historial={historial}
+            setVistaActual={setVistaActual}
+            onVerFicha={handleVerFichaCliente}
           />
         );
       case 'ficha-cliente':
-        return selectedClient ? (
+        return (
           <ClientFichaView
             cliente={selectedClient}
-            cotizaciones={historial}
+            historial={historial.filter(h => h.cliente_id === selectedClient?.id)}
+            masterContracts={masterContracts.filter(mc => mc.cliente_id === selectedClient?.id)}
+            condiciones={condicionesCliente.filter(c => c.clienteId === selectedClient?.id)}
+            productos={productos}
             onBack={() => setVistaActual('crm')}
-            onSaveClient={guardarRegistro}
-            onNewQuote={() => {
-              iniciarNuevaCotizacion(selectedClient.id);
-              setVistaActual('cotizador');
-            }}
-            onViewQuote={handleSelectQuote}
-            onPrintQuote={handleMostrarPropuesta}
-            masterContracts={masterContracts}
-            setMensaje={setMensajeAdmin}
-          />
-        ) : <CRMView clientes={clientes} onSelectClient={handleSelectClient} />;
-      case 'reportes':
-        return (
-          <ReportsView
-            clientes={clientes}
-            cotizaciones={historial}
+            onSaveQuote={guardarRegistro}
           />
         );
       case 'master-contracts':
         return (
           <MasterContractsView
             masterContracts={masterContracts}
-            cotizaciones={historial}
             clientes={clientes}
-            onSaveMC={guardarRegistro}
+            historial={historial}
             onSaveQuote={guardarRegistro}
-            setMensaje={setMensajeAdmin}
           />
         );
-      case 'cobranza':
+      case 'reportes':
         return (
-          <CobranzaView
-            cobranza={dbData.cobranza}
-            setMensaje={setMensajeAdmin}
+          <ReportsView
+            historial={historial}
+            metas={metasComerciales}
+            clientes={clientes}
           />
         );
       default:
-        return (
-          <CotizadorView
-            data={dbData}
-            cotizacionState={cotizacionState}
-            setVistaActual={setVistaActual}
-            iniciarNuevaCotizacion={iniciarNuevaCotizacion}
-            configuracion={configuracion}
-            mostrarPropuesta={handleMostrarPropuesta}
-            guardarCotizacion={handleGuardarCotizacion}
-            agregarAComparador={handleAgregarAComparador}
-            mensajeAdmin={mensajeAdmin}
-            setMensajeAdmin={setMensajeAdmin}
-            onSaveClient={guardarRegistro}
-          />
-        );
+        return <DashboardView historial={historial} clientes={clientes} setVistaActual={setVistaActual} />;
     }
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center">
-        <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-white font-black uppercase tracking-[0.3em] text-[10px]">Verificando Credenciales...</p>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return <LoginView />;
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans antialiased text-gray-900">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar
-        vistaActual={vistaActual}
         setVistaActual={setVistaActual}
+        vistaActual={vistaActual}
         session={session}
-        onLogout={() => supabase.auth.signOut()}
+        onLogout={handleLogout}
       />
 
-      <main className="flex-1 mt-14 p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          {renderVista()}
-        </div>
+      <main className="flex-1">
+        {renderVista()}
       </main>
 
-      {/* Footer de Control de Versiones */}
-      <footer className="print:hidden pb-8 pt-6 px-8 text-center border-t border-gray-100 bg-gray-50/50 backdrop-blur-sm mt-auto">
-        <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-6 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
+      <footer className="bg-white border-t border-slate-100 py-8 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse"></span>
-            <span>TVSA-COTIZADOR V1.2.2</span>
+            <div className="w-6 h-6 bg-red-600 rounded flex items-center justify-center text-[10px] font-bold text-white uppercase italic">
+              TV
+            </div>
+            <p className="text-[11px] font-black text-slate-800 uppercase tracking-tighter">
+              TELEVISA UNIVISION <span className="text-red-600">MID</span>
+            </p>
           </div>
-          <div className="hidden md:block w-px h-3 bg-slate-200"></div>
-          <div>ÚLTIMA ACTUALIZACIÓN: 28 DIC 2025</div>
-          <div className="hidden md:block w-px h-3 bg-slate-200"></div>
-          <div>00:35 CST</div>
-          <div className="hidden md:block w-px h-3 bg-slate-200"></div>
-          <div className="text-slate-300 italic">Ambiente de Producción Vercel</div>
+
+          <div className="flex items-center gap-6">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              COTIZADOR ESTRATÉGICO 2025
+            </p>
+            <div className="h-4 w-px bg-slate-100"></div>
+            <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
+              V1.3.0 • 28 DEC 2025
+            </p>
+          </div>
         </div>
       </footer>
     </div>

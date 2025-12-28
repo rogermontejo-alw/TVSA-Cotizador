@@ -9,14 +9,15 @@ import ConfigForm from './ConfigForm';
 import CobranzaView from './CobranzaView';
 import StatusMessage from './StatusMessage';
 import ProfileForm from './ProfileForm';
+import MaintenanceView from './MaintenanceView';
 import PriceListView from '../views/PriceListView';
-import { DollarSign, UserCircle, Eye } from 'lucide-react';
+import { DollarSign, UserCircle, Eye, Wrench } from 'lucide-react';
 
 const AdminPanel = ({
     setVistaActual,
     mensajeAdmin,
     setMensajeAdmin,
-    guardarEnSheets,
+    guardarRegistro,
     eliminarRegistro,
     clientes,
     productos,
@@ -25,7 +26,9 @@ const AdminPanel = ({
     cobranza,
     metasComerciales,
     perfil,
-    guardarRegistro
+    limpiarTabla,
+    historial,
+    masterContracts
 }) => {
     const [seccionActiva, setSeccionActiva] = useState('clientes');
     const [clienteEdicion, setClienteEdicion] = useState(null);
@@ -37,6 +40,7 @@ const AdminPanel = ({
         { id: 'tarifario', label: 'Tarifario', icon: Eye },
         { id: 'metas', label: 'Metas', icon: Target },
         { id: 'config', label: 'Config', icon: Sliders },
+        { id: 'mantenimiento', label: 'Limpieza', icon: Wrench },
         { id: 'cuenta', label: 'Mi Cuenta', icon: UserCircle },
     ];
 
@@ -102,7 +106,7 @@ const AdminPanel = ({
                     {seccionActiva === 'clientes' && (
                         <div className="space-y-12">
                             <ClientForm
-                                onSave={guardarEnSheets}
+                                onSave={guardarRegistro}
                                 setMensaje={setMensajeAdmin}
                                 clienteEdicion={clienteEdicion}
                                 onCancel={() => setClienteEdicion(null)}
@@ -123,7 +127,7 @@ const AdminPanel = ({
                             clientes={clientes}
                             productos={productos}
                             condicionesCliente={condicionesCliente}
-                            onSave={guardarEnSheets}
+                            onSave={guardarRegistro}
                             setMensaje={setMensajeAdmin}
                         />
                     )}
@@ -131,7 +135,7 @@ const AdminPanel = ({
                     {seccionActiva === 'catalogo' && (
                         <ProductManager
                             productos={productos}
-                            onSave={guardarEnSheets}
+                            onSave={guardarRegistro}
                             setMensaje={setMensajeAdmin}
                         />
                     )}
@@ -160,17 +164,29 @@ const AdminPanel = ({
                         />
                     )}
 
+                    {seccionActiva === 'mantenimiento' && (
+                        <MaintenanceView
+                            limpiarTabla={limpiarTabla}
+                            historial={historial}
+                            clientes={clientes}
+                            masterContracts={masterContracts}
+                            metasComerciales={metasComerciales}
+                            cobranza={cobranza}
+                            setMensaje={setMensajeAdmin}
+                        />
+                    )}
+
                     {seccionActiva === 'cuenta' && (
                         <ProfileForm
                             perfil={perfil}
-                            onSave={guardarEnSheets}
+                            onSave={guardarRegistro}
                             setMensaje={setMensajeAdmin}
                         />
                     )}
                 </div>
 
                 <div className="mt-20 text-center">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.1 • CRM Cloud Enabled</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.3.0 • CRM Cloud Enabled</p>
                 </div>
             </div>
         </div>

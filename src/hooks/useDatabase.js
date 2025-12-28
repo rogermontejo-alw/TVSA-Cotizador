@@ -83,21 +83,24 @@ export const useDatabase = () => {
                     factorDescuento: c.factor_descuento,
                     costoFijo: c.costo_fijo
                 })),
-                historial: (historial || []).map(h => ({
-                    ...h,
-                    fecha: new Date(h.created_at),
-                    cliente: (clientes || []).find(c => String(c.id) === String(h.cliente_id)) || { nombre_empresa: 'Cargando...', id: h.cliente_id },
-                    items: h.json_detalles?.items || [],
-                    distribucion: h.json_detalles?.distribucion || [],
-                    paqueteVIX: h.json_detalles?.paqueteVIX || (h.paquete_vix ? { nombre: 'VIX' } : null),
-                    costoVIX: h.json_detalles?.costoVIX || 0,
-                    presupuestoBase: h.json_detalles?.presupuestoBase || h.monto_total,
-                    subtotalTV: h.json_detalles?.subtotalTV || h.json_detalles?.subtotal_tv || h.monto_total,
-                    total: h.monto_total,
-                    subtotalGeneral: h.json_detalles?.subtotalGeneral ||
-                        ((h.json_detalles?.subtotal_tv || 0) + (h.json_detalles?.costo_vix || 0)) ||
-                        (h.monto_total / 1.16)
-                })),
+                historial: (historial || []).map(h => {
+                    const clienteData = (clientes || []).find(c => String(c.id) === String(h.cliente_id));
+                    return {
+                        ...h,
+                        fecha: new Date(h.created_at),
+                        cliente: clienteData || { nombre_empresa: 'Cargando...', id: h.cliente_id },
+                        items: h.json_detalles?.items || [],
+                        distribucion: h.json_detalles?.distribucion || [],
+                        paqueteVIX: h.json_detalles?.paqueteVIX || (h.paquete_vix ? { nombre: 'VIX' } : null),
+                        costoVIX: h.json_detalles?.costoVIX || 0,
+                        presupuestoBase: h.json_detalles?.presupuestoBase || h.monto_total,
+                        subtotalTV: h.json_detalles?.subtotalTV || h.json_detalles?.subtotal_tv || h.monto_total,
+                        total: h.monto_total,
+                        subtotalGeneral: h.json_detalles?.subtotalGeneral ||
+                            ((h.json_detalles?.subtotal_tv || 0) + (h.json_detalles?.costo_vix || 0)) ||
+                            (h.monto_total / 1.16)
+                    };
+                }),
                 descuentosVolumen: descuentos || [],
                 metasComerciales: metas || [],
                 cobranza: cobranza || [],
@@ -123,26 +126,15 @@ export const useDatabase = () => {
         }
     }, []);
 
-    // Placeholder para guardar (PRÓXIMO PASO: Implementar lógica completa de guardado en Supabase)
-    /**
-     * Guarda uno o varios registros en una tabla.
-     * @param {string} tabla - Nombre de la tabla
-     * @param {Object|Object[]} payload - Datos a guardar
-     * @param {string} onConflict - (Opcional) Columnas para manejar conflictos en upsert (ej: 'id' o 'parametro')
-     */
     const guardarRegistro = async (tabla, payload, onConflict = 'id') => {
         setMensajeAdmin({ tipo: 'cargando', texto: 'Guardando datos...' });
-
-        // Función interna para limpiar objetos de campos vacíos/nulos
         const cleanObject = (obj) => Object.fromEntries(
             Object.entries(obj).filter(([_, v]) => v !== undefined && v !== null && v !== '')
         );
 
         try {
             let resData, error;
-
             if (Array.isArray(payload)) {
-                // Limpiar cada objeto del arreglo
                 const cleanedPayload = payload.map(item => cleanObject(item));
                 const result = await supabase.from(tabla).upsert(cleanedPayload, { onConflict }).select();
                 resData = result.data;
@@ -150,7 +142,6 @@ export const useDatabase = () => {
             } else {
                 const { id, ...dataRest } = payload;
                 const cleanedData = cleanObject(dataRest);
-
                 if (id && id !== '') {
                     const result = await supabase.from(tabla).update(cleanedData).eq('id', id).select();
                     resData = result.data;
@@ -182,11 +173,25 @@ export const useDatabase = () => {
         try {
             const { error } = await supabase.from(tabla).delete().eq(columnaId, valorId);
             if (error) throw error;
-
             setMensajeAdmin({ tipo: 'exito', texto: 'Registro eliminado.' });
             cargarDatos();
             return true;
         } catch (err) {
+            setMensajeAdmin({ tipo: 'error', texto: `Error: ${err.message}` });
+            return false;
+        }
+    };
+
+    const limpiarTabla = async (tabla) => {
+        setMensajeAdmin({ tipo: 'cargando', texto: `Limpiando tabla ${tabla}...` });
+        try {
+            const { error } = await supabase.from(tabla).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            if (error) throw error;
+            setMensajeAdmin({ tipo: 'exito', texto: `Tabla ${tabla} vaciada correctamente.` });
+            cargarDatos();
+            return true;
+        } catch (err) {
+            console.error(`Error limpiando tabla ${tabla}:`, err);
             setMensajeAdmin({ tipo: 'error', texto: `Error: ${err.message}` });
             return false;
         }
@@ -204,6 +209,7 @@ export const useDatabase = () => {
         setMensajeAdmin,
         cargarDatos,
         guardarRegistro,
-        eliminarRegistro
+        eliminarRegistro,
+        limpiarTabla
     };
 };
