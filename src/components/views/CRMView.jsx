@@ -28,46 +28,44 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-20">
             {/* Header CRM Compacto */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tighter flex items-center gap-2">
-                        <Briefcase className="text-red-600" size={24} />
+            <div className="bg-slate-900 p-4 rounded-2xl md:rounded-b-none flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300">
+                <div className="flex items-center gap-3">
+                    <Briefcase size={20} className="text-red-500" />
+                    <h3 className="text-sm font-black text-white uppercase flex items-center gap-3">
                         Pipeline de Clientes
-                    </h2>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
-                        Gestión Comercial Televisa Mérida
-                    </p>
+                    </h3>
                 </div>
+
                 <button
                     onClick={onAddNewClient}
-                    className="w-full md:w-auto px-5 py-2.5 bg-red-600 text-white rounded-xl font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 hover:bg-slate-900 transition-all shadow-lg active:scale-95"
+                    className="w-full md:w-auto px-4 py-1.5 bg-red-600 text-white rounded-lg font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-lg active:scale-95"
                 >
                     <Plus size={14} /> Alta de Prospecto
                 </button>
             </div>
 
             {/* Filtros de Navegación */}
-            <div className="space-y-4">
-                <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="flex-1 relative w-full">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                     <input
                         type="text"
                         placeholder="Buscar por empresa o contacto..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-100 rounded-2xl text-sm font-bold shadow-sm focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-2 bg-white border border-gray-100 rounded-xl text-[10px] font-bold shadow-sm focus:ring-1 focus:ring-red-500 outline-none transition-all"
                     />
                 </div>
 
-                <div className="flex flex-wrap gap-2 pb-2">
+                <div className="flex bg-slate-900 rounded-xl p-1 w-fit overflow-x-auto scrollbar-hide">
                     {etapas.map(etapa => (
                         <button
                             key={etapa}
                             onClick={() => setFiltroEtapa(etapa)}
-                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[8px] sm:text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all
                                 ${filtroEtapa === etapa
-                                    ? 'bg-slate-900 text-white border-slate-900 shadow-md'
-                                    : 'bg-white text-gray-400 border-gray-100 hover:border-red-200'}`}
+                                    ? 'bg-red-600 text-white shadow-lg'
+                                    : 'text-slate-400 hover:text-slate-200'}`}
                         >
                             {etapa}
                         </button>

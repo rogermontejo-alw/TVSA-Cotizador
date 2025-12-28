@@ -33,6 +33,20 @@ const ClientForm = ({ onSave, setMensaje, clienteEdicion = null, onCancel = null
                 etapa: clienteEdicion.etapa || 'Prospecto',
                 notas_generales: clienteEdicion.notas_generales || ''
             });
+        } else {
+            setClienteData({
+                nombre_empresa: '',
+                nombre_contacto: '',
+                email: '',
+                telefono: '',
+                direccion_completa: '',
+                plaza: 'MERIDA',
+                segmento: 'PYME',
+                tipo_acuerdo: 'SIN_ACUERDO',
+                tipo: 'prospecto',
+                etapa: 'Prospecto',
+                notas_generales: ''
+            });
         }
     }, [clienteEdicion]);
 

@@ -41,9 +41,9 @@ const ConfigForm = ({ configuracion, onSave, setMensaje }) => {
 
     return (
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 mt-8">
-            <div className="bg-gradient-to-r from-slate-700 to-slate-800 p-6">
-                <h3 className="text-xl font-black text-white flex items-center gap-3">
-                    <Settings size={24} className="text-red-500" />
+            <div className="bg-slate-900 p-4">
+                <h3 className="text-sm font-black text-white uppercase flex items-center gap-3">
+                    <Settings size={20} className="text-red-500" />
                     Configuración del Sistema
                 </h3>
             </div>

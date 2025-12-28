@@ -115,22 +115,22 @@ const ConditionsForm = ({ clientes, productos, condicionesCliente, onSave, setMe
 
     return (
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 mt-8">
-            <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-6">
-                <h3 className="text-xl font-black text-white flex items-center gap-3">
-                    <Tag size={24} className="text-red-500" />
+            <div className="bg-slate-900 p-4">
+                <h3 className="text-sm font-black text-white flex items-center gap-3">
+                    <Tag size={20} className="text-red-500" />
                     Precios Especiales por Cliente
                 </h3>
             </div>
 
-            <div className="p-8">
-                <div className="mb-8">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">1. Seleccionar Cliente</label>
+            <div className="p-6">
+                <div className="mb-6">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">1. Seleccionar Cliente</label>
                     <select
                         value={clienteIdSeleccionado}
                         onChange={(e) => setClienteIdSeleccionado(e.target.value)}
-                        className="w-full max-w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 transition-all font-bold text-gray-800 truncate"
+                        className="w-full max-w-full p-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-1 focus:ring-red-500 transition-all font-bold text-[10px] text-gray-800 truncate outline-none"
                     >
-                        <option value="">-- Seleccionar un cliente para editar --</option>
+                        <option value="">-- Seleccionar un cliente --</option>
                         {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre_empresa}</option>)}
                     </select>
                 </div>
@@ -138,31 +138,31 @@ const ConditionsForm = ({ clientes, productos, condicionesCliente, onSave, setMe
                 {clienteIdSeleccionado && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
                         {/* Buscador de Productos */}
-                        <div className="space-y-4">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block">2. Buscar Productos</label>
+                        <div className="space-y-3">
+                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block ml-1">2. Buscar Productos</label>
                             <div className="relative">
                                 <input
                                     type="text"
                                     value={busquedaProductoAdmin}
                                     onChange={(e) => setBusquedaProductoAdmin(e.target.value)}
                                     placeholder="Ver catálogo..."
-                                    className="w-full p-3 pl-10 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 transition-all font-semibold"
+                                    className="w-full p-2.5 pl-10 bg-gray-50 border border-gray-100 rounded-xl focus:ring-1 focus:ring-red-500 transition-all font-bold text-[10px] outline-none"
                                 />
-                                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                             </div>
 
-                            <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                            <div className="max-h-[350px] overflow-y-auto space-y-1 pr-2 custom-scrollbar">
                                 {productosDisponiblesFiltrados.map(p => (
-                                    <div key={p.id} className="group flex items-center justify-between p-3 border border-gray-100 rounded-xl bg-gray-50 hover:bg-white hover:border-red-200 transition-all">
+                                    <div key={p.id} className="group flex items-center justify-between p-2.5 border border-gray-100 rounded-lg bg-gray-50 hover:bg-white hover:border-red-200 transition-all">
                                         <div className="min-w-0 flex-1">
-                                            <p className="font-bold text-gray-800 text-sm truncate">{p.canal} - {p.tipo}</p>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{p.plaza} | {p.horario}</p>
+                                            <p className="font-black text-gray-800 text-[10px] truncate leading-tight">{p.canal} - {p.tipo}</p>
+                                            <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">{p.plaza} | {p.horario}</p>
                                         </div>
                                         <button
                                             onClick={() => agregarProductoParaCondicion(p)}
-                                            className="ml-3 bg-white text-red-600 p-2 rounded-full border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                                            className="ml-2 bg-white text-red-600 p-1.5 rounded-full border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"
                                         >
-                                            <Plus size={16} strokeWidth={3} />
+                                            <Plus size={12} strokeWidth={4} />
                                         </button>
                                     </div>
                                 ))}
@@ -170,51 +170,51 @@ const ConditionsForm = ({ clientes, productos, condicionesCliente, onSave, setMe
                         </div>
 
                         {/* Lista de Edición */}
-                        <div className="space-y-4">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block">3. Definir Condiciones ({productosParaCondicion.length})</label>
+                        <div className="space-y-3">
+                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block ml-1">3. Definir Condiciones ({productosParaCondicion.length})</label>
 
-                            <div className="max-h-[400px] overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                            <div className="max-h-[350px] overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                                 {productosParaCondicion.length === 0 ? (
                                     <div className="h-40 flex items-center justify-center border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50">
-                                        <p className="text-gray-400 text-sm font-medium">Agrega productos para editar precio</p>
+                                        <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Agrega productos</p>
                                     </div>
                                 ) : (
                                     productosParaCondicion.map(p => (
-                                        <div key={p.id} className="p-4 border border-red-100 rounded-2xl bg-white shadow-sm relative group">
+                                        <div key={p.id} className="p-3 border border-red-100 rounded-xl bg-white shadow-sm relative group">
                                             <button
                                                 onClick={() => eliminarProductoParaCondicion(p.id)}
-                                                className="absolute -top-2 -right-2 bg-white text-gray-400 hover:text-red-600 hover:scale-110 shadow-md rounded-full p-1 transition-all z-10"
+                                                className="absolute -top-1.5 -right-1.5 bg-white text-gray-400 hover:text-red-600 hover:scale-110 shadow-md rounded-full p-1 transition-all z-10"
                                             >
-                                                <X size={16} strokeWidth={3} />
+                                                <X size={12} strokeWidth={4} />
                                             </button>
 
-                                            <div className="mb-3">
-                                                <p className="font-black text-gray-800 text-sm">{p.canal} - {p.tipo}</p>
-                                                <p className="text-[10px] font-bold text-red-700">{p.plaza} | {p.horario} | Original: {formatMXN(p.costoBase)}</p>
+                                            <div className="mb-2">
+                                                <p className="font-black text-gray-800 text-[10px] leading-tight">{p.canal} - {p.tipo}</p>
+                                                <p className="text-[8px] font-bold text-red-700 uppercase">{p.plaza} | {p.horario} | Original: {formatMXN(p.costoBase)}</p>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-2 gap-2">
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase">Factor (0 - 1.0)</label>
+                                                    <label className="text-[8px] font-black text-gray-400 uppercase">Factor</label>
                                                     <input
                                                         type="number"
                                                         step="0.01"
                                                         value={p.factor}
                                                         onChange={(e) => handleCondicionChange(p.id, 'factor', e.target.value)}
                                                         onFocus={(e) => e.target.select()}
-                                                        className={`w-full p-2.5 rounded-lg border text-sm font-bold transition-all ${p.tipoAjuste === 'FACTOR' ? 'bg-red-50 border-red-300 text-red-800' : 'bg-gray-50 border-gray-100'}`}
-                                                        placeholder="Ej: 0.85"
+                                                        className={`w-full p-1.5 rounded-lg border text-[10px] font-black transition-all outline-none ${p.tipoAjuste === 'FACTOR' ? 'bg-red-50 border-red-300 text-red-800' : 'bg-gray-50 border-gray-100'}`}
+                                                        placeholder="0.85"
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase">Precio Net-Net</label>
+                                                    <label className="text-[8px] font-black text-gray-400 uppercase">Precio NeTo</label>
                                                     <input
                                                         type="number"
                                                         value={p.costoFijo}
                                                         onChange={(e) => handleCondicionChange(p.id, 'costoFijo', e.target.value)}
                                                         onFocus={(e) => e.target.select()}
-                                                        className={`w-full p-2.5 rounded-lg border text-sm font-bold transition-all ${p.tipoAjuste === 'FIJO' ? 'bg-red-50 border-red-300 text-red-800' : 'bg-gray-50 border-gray-100'}`}
-                                                        placeholder="Ej: 1500"
+                                                        className={`w-full p-1.5 rounded-lg border text-[10px] font-black transition-all outline-none ${p.tipoAjuste === 'FIJO' ? 'bg-red-50 border-red-300 text-red-800' : 'bg-gray-50 border-gray-100'}`}
+                                                        placeholder="1500"
                                                     />
                                                 </div>
                                             </div>
@@ -226,9 +226,9 @@ const ConditionsForm = ({ clientes, productos, condicionesCliente, onSave, setMe
                             {productosParaCondicion.length > 0 && (
                                 <button
                                     onClick={handleSubmitCondiciones}
-                                    className="w-full bg-green-600 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-green-700 transition-all flex items-center justify-center shadow-lg active:scale-95"
+                                    className="w-full bg-green-600 text-white py-2.5 rounded-xl font-black uppercase tracking-widest hover:bg-green-700 transition-all flex items-center justify-center shadow-lg active:scale-95 text-[10px]"
                                 >
-                                    <Save className="mr-3" size={20} />
+                                    <Save className="mr-2" size={14} />
                                     Actualizar Tarifas
                                 </button>
                             )}

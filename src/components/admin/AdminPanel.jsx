@@ -34,6 +34,7 @@ const AdminPanel = ({
 }) => {
     const [seccionActiva, setSeccionActiva] = useState('clientes');
     const [clienteEdicion, setClienteEdicion] = useState(null);
+    const [showClientModal, setShowClientModal] = useState(false);
 
     const tabs = [
         { id: 'clientes', label: 'Clientes', icon: Users },
@@ -49,8 +50,12 @@ const AdminPanel = ({
 
     const handleEditCliente = (cliente) => {
         setClienteEdicion(cliente);
-        setSeccionActiva('clientes');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setShowClientModal(true);
+    };
+
+    const handleNewClient = () => {
+        setClienteEdicion(null);
+        setShowClientModal(true);
     };
 
     return (
@@ -60,12 +65,9 @@ const AdminPanel = ({
                 <div className="max-w-7xl mx-auto">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="bg-red-600 p-3 rounded-xl shadow-xl shadow-red-900/20">
-                                <Settings className="text-white" size={24} />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl md:text-3xl font-black text-white tracking-tighter">Panel Maestro</h1>
-                                <p className="text-slate-400 font-bold uppercase text-[9px] tracking-widest mt-0.5">Control Central de Televisa MID</p>
+                            <div className="flex items-center gap-3">
+                                <Settings className="text-red-500" size={20} />
+                                <h1 className="text-sm font-black text-white uppercase tracking-widest">Panel Maestro</h1>
                             </div>
                         </div>
 
@@ -97,25 +99,40 @@ const AdminPanel = ({
                     </div>
                 </div>
             </div>
-
             <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-20">
                 <div className="animate-in slide-in-from-bottom-4 duration-500">
                     {seccionActiva === 'clientes' && (
-                        <div className="space-y-12">
-                            <ClientForm
-                                onSave={guardarRegistro}
-                                setMensaje={setMensajeAdmin}
-                                clienteEdicion={clienteEdicion}
-                                onCancel={() => setClienteEdicion(null)}
-                            />
-
+                        <div className="space-y-6">
                             <ClientManager
                                 clientes={clientes}
                                 onToggleEstatus={(clienteActualizado) => guardarRegistro('clientes', clienteActualizado)}
                                 onEliminar={(id) => eliminarRegistro('clientes', 'id', id)}
                                 onEdit={handleEditCliente}
+                                onNew={handleNewClient}
                                 setMensaje={setMensajeAdmin}
                             />
+
+                            {/* Modal de Cliente */}
+                            {showClientModal && (
+                                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8">
+                                    <div
+                                        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                                        onClick={() => setShowClientModal(false)}
+                                    ></div>
+                                    <div className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+                                        <ClientForm
+                                            onSave={async (tabla, payload) => {
+                                                const res = await guardarRegistro(tabla, payload);
+                                                if (res) setShowClientModal(false);
+                                                return res;
+                                            }}
+                                            setMensaje={setMensajeAdmin}
+                                            clienteEdicion={clienteEdicion}
+                                            onCancel={() => setShowClientModal(false)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -196,10 +213,10 @@ const AdminPanel = ({
                 </div>
 
                 <div className="mt-20 text-center">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.4.2 • CRM Cloud Enabled</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.4.3 • CRM Cloud Enabled</p>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

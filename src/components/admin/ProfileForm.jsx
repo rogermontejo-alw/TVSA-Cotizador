@@ -142,15 +142,10 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
 
             <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100">
                 {/* Header Responsivo */}
-                <div className="px-6 md:px-8 py-5 md:py-6 bg-slate-900 flex justify-between items-center">
+                <div className="px-4 py-4 bg-slate-900 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 md:w-10 md:h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg text-white">
-                            <ShieldCheck size={18} />
-                        </div>
-                        <div>
-                            <h3 className="text-base md:text-lg font-black text-white uppercase tracking-tight">Directorio y Acceso</h3>
-                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Gestión de Usuarios</p>
-                        </div>
+                        <ShieldCheck size={20} className="text-red-500" />
+                        <h3 className="text-sm font-black text-white uppercase tracking-widest">Mi Cuenta y Directorio</h3>
                     </div>
                     {!editMode && (
                         <button

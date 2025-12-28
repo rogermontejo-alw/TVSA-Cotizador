@@ -32,55 +32,55 @@ const GoalManager = ({ metas, onSaveGoal, onRemoveGoal }) => {
 
     return (
         <div className="space-y-6">
-            {/* Formulario de Alta */}
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="p-3 bg-red-50 text-red-600 rounded-2xl">
-                        <Target size={24} />
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Configuración de Metas</h3>
-                        <p className="text-[10px] font-bold text-gray-400 mt-0.5">Define objetivos de venta mensuales</p>
-                    </div>
+            <div className="bg-slate-900 p-4 rounded-2xl md:rounded-b-none flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300">
+                <div className="flex items-center gap-3">
+                    <Target size={20} className="text-red-500" />
+                    <h3 className="text-sm font-black text-white uppercase flex items-center gap-3">
+                        Configuración de Metas
+                    </h3>
                 </div>
+            </div>
 
-                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                    <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Mes</label>
+            {/* Formulario de Alta */}
+            <div className="bg-white p-8 rounded-b-[2.5rem] shadow-xl border border-gray-100">
+
+                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                    <div className="space-y-1">
+                        <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Mes</label>
                         <select
                             value={mes}
                             onChange={(e) => setMes(e.target.value)}
-                            className="w-full max-w-full bg-slate-50 border-none rounded-xl p-3 text-xs font-black focus:ring-1 focus:ring-red-500 outline-none truncate"
+                            className="w-full bg-slate-50 border border-gray-100 rounded-xl px-3 py-2 text-[10px] font-black focus:ring-1 focus:ring-red-500 outline-none truncate"
                         >
                             {MESES.map((m, i) => (
                                 <option key={i + 1} value={i + 1}>{m}</option>
                             ))}
                         </select>
                     </div>
-                    <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Año</label>
+                    <div className="space-y-1">
+                        <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Año</label>
                         <input
                             type="number"
                             value={anio}
                             onChange={(e) => setAnio(e.target.value)}
-                            className="w-full bg-slate-50 border-none rounded-xl p-3 text-xs font-black focus:ring-1 focus:ring-red-500 outline-none"
+                            className="w-full bg-slate-50 border border-gray-100 rounded-xl px-3 py-2 text-[10px] font-black focus:ring-1 focus:ring-red-500 outline-none"
                         />
                     </div>
-                    <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Meta (MXN)</label>
+                    <div className="space-y-1">
+                        <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Meta (MXN)</label>
                         <input
                             type="number"
                             value={monto}
                             onChange={(e) => setMonto(e.target.value)}
                             placeholder="Ej: 1500000"
-                            className="w-full bg-slate-50 border-none rounded-xl p-3 text-xs font-black focus:ring-1 focus:ring-red-500 outline-none"
+                            className="w-full bg-slate-50 border border-gray-100 rounded-xl px-3 py-2 text-[10px] font-black focus:ring-1 focus:ring-red-500 outline-none"
                         />
                     </div>
                     <button
                         type="submit"
-                        className="bg-slate-900 text-white p-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all flex items-center justify-center gap-2 h-[42px]"
+                        className="bg-slate-900 text-white px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-red-600 transition-all flex items-center justify-center gap-2 h-[34px]"
                     >
-                        <Save size={16} /> Registrar Goal
+                        <Save size={14} /> Registrar Goal
                     </button>
                 </form>
             </div>

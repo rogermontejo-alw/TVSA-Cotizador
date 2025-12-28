@@ -139,6 +139,15 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
 
     return (
         <div className="space-y-4 md:space-y-6 pb-24 animate-in fade-in duration-700 max-w-7xl mx-auto px-4 md:px-0 overflow-hidden">
+            {/* Header Cobranza */}
+            <div className="bg-slate-900 p-4 rounded-2xl md:rounded-b-none flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300">
+                <div className="flex items-center gap-3">
+                    <DollarSign size={20} className="text-red-500" />
+                    <h3 className="text-sm font-black text-white uppercase flex items-center gap-3">
+                        Gestión de Cobranza
+                    </h3>
+                </div>
+            </div>
             {/* Header Stats Compact (Estilo Reporte) */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
                 <div className="bg-white px-3 md:px-6 py-3 rounded-xl md:rounded-2xl shadow-sm border border-gray-100">
@@ -172,25 +181,25 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
             {/* Filtros */}
             <div className="flex flex-col md:flex-row gap-4 items-center">
                 <div className="flex-1 relative group w-full">
-                    <Search className="absolute left-4 md:left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-red-500 transition-colors" size={14} md={16} />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-red-500 transition-colors" size={14} />
                     <input
                         type="text"
                         placeholder="Buscar..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full pl-11 md:pl-14 pr-4 md:pr-6 py-3 md:py-4 bg-white border-none rounded-xl md:rounded-2xl font-bold text-[10px] md:text-xs shadow-xl shadow-slate-200/50 outline-none focus:ring-2 focus:ring-red-500 transition-all placeholder:text-gray-300"
+                        className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl font-bold text-[10px] shadow-sm outline-none focus:ring-1 focus:ring-red-500 transition-all placeholder:text-gray-300"
                     />
                 </div>
 
-                <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto scrollbar-hide">
+                <div className="flex bg-slate-900 rounded-xl p-1 w-fit">
                     {['todos', 'pendiente', 'programado', 'cobrado'].map(estatus => (
                         <button
                             key={estatus}
                             onClick={() => setFiltroEstatus(estatus)}
-                            className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all
+                            className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all
                                 ${filtroEstatus === estatus
-                                    ? 'bg-slate-900 text-white shadow-lg'
-                                    : 'bg-white text-gray-400 hover:text-slate-900 border border-gray-100'}`}
+                                    ? 'bg-red-600 text-white shadow-lg'
+                                    : 'text-slate-400 hover:text-slate-200'}`}
                         >
                             {estatus}
                         </button>
@@ -199,9 +208,9 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
 
                 <button
                     onClick={() => setIsShowManualForm(true)}
-                    className="w-full md:w-auto bg-red-600 hover:bg-slate-900 text-white px-4 md:px-6 py-3 md:py-4 rounded-xl font-black uppercase text-[8px] md:text-[9px] tracking-widest md:tracking-[0.2em] transition-all active:scale-95 shadow-xl flex items-center justify-center gap-2"
+                    className="w-full md:w-auto bg-red-600 hover:bg-slate-900 text-white px-4 py-2 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all active:scale-95 shadow-xl flex items-center justify-center gap-2"
                 >
-                    <Plus size={14} md={16} /> Nueva Factura
+                    <Plus size={14} /> Nueva Factura
                 </button>
             </div>
 

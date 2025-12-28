@@ -16,15 +16,25 @@ const PriceListView = ({ clientes, productos, calcularPrecioUnitario }) => {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+            {/* Header Lista de Precios */}
+            <div className="bg-slate-900 p-4 rounded-2xl md:rounded-b-none flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300">
+                <div className="flex items-center gap-3">
+                    <Tag size={20} className="text-red-500" />
+                    <h3 className="text-sm font-black text-white uppercase flex items-center gap-3">
+                        Lista de Precios
+                    </h3>
+                </div>
+            </div>
+
             {/* Header / Selector */}
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 mb-6">
+                <div className="flex flex-col lg:flex-row justify-between items-end gap-4">
                     <div className="w-full lg:w-1/2">
-                        <label className="text-[10px] font-black text-red-600 uppercase tracking-[0.3em] block mb-3">1. Seleccionar Cliente para Cotizar en Vivo</label>
+                        <label className="text-[9px] font-black text-red-600 uppercase tracking-widest block mb-2 ml-1">1. Seleccionar Cliente</label>
                         <select
                             value={clienteSel}
                             onChange={(e) => setClienteSel(e.target.value)}
-                            className="w-full max-w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-red-500 font-bold text-gray-800 outline-none appearance-none truncate"
+                            className="w-full p-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-1 focus:ring-red-500 font-bold text-[10px] text-gray-800 outline-none appearance-none truncate"
                         >
                             <option value="">Seleccionar cliente...</option>
                             {clientes.map(c => (
@@ -34,16 +44,16 @@ const PriceListView = ({ clientes, productos, calcularPrecioUnitario }) => {
                     </div>
 
                     <div className="w-full lg:w-1/2">
-                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em] block mb-3">2. Buscar Producto de Pauta</label>
+                        <label className="text-[9px] font-black text-slate-900 uppercase tracking-widest block mb-2 ml-1">2. Buscar Producto</label>
                         <div className="relative">
                             <input
                                 type="text"
                                 value={busqueda}
                                 onChange={(e) => setBusqueda(e.target.value)}
                                 placeholder="Filtrar por canal o programa..."
-                                className="w-full p-4 pl-12 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-red-500 font-bold text-gray-800 outline-none"
+                                className="w-full p-2.5 pl-10 bg-gray-50 border border-gray-100 rounded-xl focus:ring-1 focus:ring-red-500 font-bold text-[10px] text-gray-800 outline-none"
                             />
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                         </div>
                     </div>
                 </div>
@@ -51,21 +61,21 @@ const PriceListView = ({ clientes, productos, calcularPrecioUnitario }) => {
 
             {clienteSel ? (
                 <div className="space-y-6">
-                    <div className="bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="bg-slate-900 p-6 rounded-[2rem] shadow-2xl flex flex-col md:flex-row justify-between items-center gap-6">
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
-                                <Building2 size={24} />
+                            <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                <Building2 size={20} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-black text-white tracking-tight">{activeClient?.nombre_empresa}</h2>
+                                <h2 className="text-lg font-black text-white tracking-tight leading-tight">{activeClient?.nombre_empresa}</h2>
                                 <p className="text-red-500 font-bold text-[9px] uppercase tracking-widest">{activeClient?.segmento} | {activeClient?.plaza}</p>
                             </div>
                         </div>
                         <button
                             onClick={() => alert('Próximamente: Lista en PDF')}
-                            className="w-full md:w-auto px-6 py-3 bg-white/10 text-white border border-white/20 rounded-xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-[10px] hover:bg-white hover:text-slate-900 transition-all"
+                            className="w-full md:w-auto px-4 py-2 bg-white/10 text-white border border-white/20 rounded-xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-[9px] hover:bg-white hover:text-slate-900 transition-all"
                         >
-                            <Download size={16} /> Descargar Tarifario
+                            <Download size={14} /> Descargar Tarifario
                         </button>
                     </div>
 

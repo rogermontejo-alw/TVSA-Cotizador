@@ -139,14 +139,16 @@ const MaintenanceView = ({
 
     return (
         <div className="max-w-4xl mx-auto py-8 animate-in fade-in duration-500">
-            <div className="mb-12 text-center">
-                <div className="inline-flex items-center gap-3 px-4 py-2 bg-red-100/50 rounded-full text-red-600 text-[10px] font-black uppercase tracking-widest mb-4">
-                    <AlertTriangle size={14} /> Modo Mantenimiento Activo
+            <div className="bg-slate-900 p-4 rounded-2xl md:rounded-b-none flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300 mb-8">
+                <div className="flex items-center gap-3">
+                    <Database size={20} className="text-red-500" />
+                    <h3 className="text-sm font-black text-white uppercase flex items-center gap-3">
+                        Limpieza de Sistema
+                    </h3>
                 </div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Limpieza de Sistema</h1>
-                <p className="text-slate-400 font-bold uppercase text-[9px] tracking-widest mt-2">
-                    Selecciona los módulos que deseas resetear a cero. Los productos no se verán afectados.
-                </p>
+                <div className="inline-flex items-center gap-3 px-3 py-1 bg-red-600/20 rounded-lg text-red-500 text-[8px] font-black uppercase tracking-widest">
+                    <AlertTriangle size={12} /> Modo Mantenimiento
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

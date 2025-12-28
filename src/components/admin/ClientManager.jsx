@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Trash2, Search, Users, MapPin, Phone, Mail, User, ShieldCheck, Edit3, Building2, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
+import { Trash2, Search, Users, MapPin, Phone, Mail, User, ShieldCheck, Edit3, Building2, ChevronRight, CheckCircle2, XCircle, UserCircle } from 'lucide-react';
 
-const ClientManager = ({ clientes, onToggleEstatus, onEliminar, onEdit, setMensaje }) => {
+const ClientManager = ({ clientes, onToggleEstatus, onEliminar, onEdit, onNew, setMensaje }) => {
     const [busqueda, setBusqueda] = useState('');
     const [filtroEstatus, setFiltroEstatus] = useState('activo'); // activo, inactivo, todos
 
@@ -35,45 +35,50 @@ const ClientManager = ({ clientes, onToggleEstatus, onEliminar, onEdit, setMensa
     };
 
     return (
-        <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-gray-100 mt-12 animate-in fade-in duration-500 mb-20">
-            {/* Header Operativo: Base de Datos */}
-            <div className="bg-slate-900 p-8">
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-                    <div>
-                        <h3 className="text-2xl font-black text-white flex items-center gap-3 tracking-tighter">
-                            <Building2 size={28} className="text-red-500" />
-                            BASE DE DATOS CLIENTES
-                        </h3>
-                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Directorio Maestro de Cuentas y Prospectos</p>
+        <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in duration-500 mb-20">
+            <div className="bg-slate-900 p-4 flex flex-col lg:flex-row justify-between items-center gap-4">
+                <div className="flex items-center gap-3">
+                    <Building2 size={20} className="text-red-500" />
+                    <h3 className="text-sm font-black text-white uppercase flex items-center gap-3">
+                        Base de Datos Clientes
+                    </h3>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto items-center">
+                    <div className="flex bg-slate-800 rounded-lg p-1 w-fit">
+                        {['activo', 'inactivo', 'todos'].map(status => (
+                            <button
+                                key={status}
+                                onClick={() => setFiltroEstatus(status)}
+                                className={`px-3 py-1 rounded-md text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap
+                                    ${filtroEstatus === status
+                                        ? 'bg-red-600 text-white shadow-lg'
+                                        : 'text-slate-400 hover:text-slate-200'}`}
+                            >
+                                {status === 'todos' ? 'Todos' : `${status}s`}
+                            </button>
+                        ))}
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-                        {/* Filtro de Estatus */}
-                        <div className="grid grid-cols-3 bg-slate-800 rounded-xl p-1 w-full sm:w-auto">
-                            {['activo', 'inactivo', 'todos'].map(status => (
-                                <button
-                                    key={status}
-                                    onClick={() => setFiltroEstatus(status)}
-                                    className={`px-2 sm:px-4 py-2 rounded-lg text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all
-                                        ${filtroEstatus === status
-                                            ? 'bg-red-600 text-white shadow-lg'
-                                            : 'text-slate-500 hover:text-slate-300'}`}
-                                >
-                                    {status}s
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className="relative flex-1">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                    <div className="flex gap-2 w-full lg:w-auto items-center">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
                             <input
                                 type="text"
-                                placeholder="Validar existencia de cliente..."
+                                placeholder="Buscar..."
                                 value={busqueda}
                                 onChange={(e) => setBusqueda(e.target.value)}
-                                className="w-full lg:w-80 pl-12 pr-4 py-3.5 bg-slate-800/50 border border-slate-700 rounded-2xl text-white text-sm font-bold focus:ring-2 focus:ring-red-500 outline-none placeholder:text-slate-500 transition-all shadow-inner"
+                                className="w-full lg:w-48 pl-9 pr-4 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-[10px] font-bold outline-none placeholder:text-slate-600 focus:ring-1 focus:ring-red-500 transition-all font-bold"
                             />
                         </div>
+
+                        <button
+                            onClick={onNew}
+                            className="px-4 py-1.5 bg-red-600 text-white rounded-lg font-black uppercase tracking-widest text-[9px] hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2 whitespace-nowrap"
+                        >
+                            <UserCircle size={14} />
+                            Nuevo Cliente
+                        </button>
                     </div>
                 </div>
             </div>

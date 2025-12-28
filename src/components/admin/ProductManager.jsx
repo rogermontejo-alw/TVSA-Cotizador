@@ -38,20 +38,20 @@ const ProductManager = ({ productos, onSave, setMensaje }) => {
 
     return (
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 mt-8">
-            <div className="bg-gradient-to-r from-red-600 to-red-700 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                <h3 className="text-xl font-black text-white flex items-center gap-3">
-                    <Package size={24} className="text-white" />
+            <div className="bg-slate-900 p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                <h3 className="text-sm font-black text-white uppercase flex items-center gap-3">
+                    <Package size={20} className="text-red-500" />
                     Catálogo de Productos
                 </h3>
 
-                <div className="relative w-full md:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-red-300" size={18} />
+                <div className="relative w-full md:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
                     <input
                         type="text"
                         placeholder="Buscar producto..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full pl-10 p-2 bg-red-800/30 border border-red-500 rounded-xl text-white placeholder:text-red-200 outline-none focus:ring-2 focus:ring-white/50 transition-all font-bold"
+                        className="w-full pl-9 pr-4 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-[10px] placeholder:text-slate-500 outline-none focus:ring-1 focus:ring-red-500 transition-all font-bold"
                     />
                 </div>
             </div>
@@ -109,58 +109,58 @@ const ProductManager = ({ productos, onSave, setMensaje }) => {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-gray-50 border-b border-gray-100">
-                            <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Estatus</th>
-                            <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Canal / Medio</th>
-                            <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Tipo / Duración</th>
-                            <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Plaza</th>
-                            <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Costo Base</th>
-                            <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Acciones</th>
+                            <th className="p-3 text-[9px] font-black text-gray-400 uppercase tracking-widest">Estatus</th>
+                            <th className="p-3 text-[9px] font-black text-gray-400 uppercase tracking-widest">Canal / Medio</th>
+                            <th className="p-3 text-[9px] font-black text-gray-400 uppercase tracking-widest">Tipo / Duración</th>
+                            <th className="p-3 text-[9px] font-black text-gray-400 uppercase tracking-widest">Plaza</th>
+                            <th className="p-3 text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Costo Base</th>
+                            <th className="p-3 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                         {productosFiltrados.map((p) => (
                             <tr key={p.id} className={`hover:bg-gray-50/50 transition-colors ${!p.activo ? 'opacity-50' : ''}`}>
-                                <td className="p-4">
+                                <td className="p-3">
                                     <button
                                         onClick={() => handleToggleActivo(p)}
-                                        className={`flex items-center gap-2 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter transition-all ${p.activo ? 'bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700' : 'bg-red-100 text-red-700 hover:bg-green-100 hover:text-green-700'}`}
+                                        className={`flex items-center gap-2 px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-tighter transition-all ${p.activo ? 'bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700' : 'bg-red-100 text-red-700 hover:bg-green-100 hover:text-green-700'}`}
                                     >
                                         {p.activo ? (
-                                            <><Power size={10} /> Activo</>
+                                            <><Power size={8} /> Activo</>
                                         ) : (
-                                            <><PowerOff size={10} /> Suspendido</>
+                                            <><PowerOff size={8} /> Suspendido</>
                                         )}
                                     </button>
                                 </td>
-                                <td className="p-4 font-black text-gray-800 text-sm whitespace-nowrap">{p.canal}</td>
-                                <td className="p-4 font-bold text-gray-600 text-xs whitespace-nowrap">{p.tipo}</td>
-                                <td className="p-4 font-bold text-gray-500 text-xs">{p.plaza}</td>
-                                <td className="p-4">
+                                <td className="p-3 font-black text-gray-800 text-[11px] whitespace-nowrap">{p.canal}</td>
+                                <td className="p-3 font-bold text-gray-600 text-[10px] whitespace-nowrap">{p.tipo}</td>
+                                <td className="p-3 font-bold text-gray-500 text-[10px]">{p.plaza}</td>
+                                <td className="p-3 text-right">
                                     {productoEditando?.id === p.id ? (
                                         <input
                                             type="number"
                                             value={productoEditando.costo_base}
                                             onChange={(e) => setProductoEditando({ ...productoEditando, costo_base: e.target.value })}
-                                            className="w-24 p-1 border border-red-300 rounded text-sm font-bold outline-none"
+                                            className="w-20 p-1 border border-red-300 rounded text-[10px] font-bold outline-none text-right"
                                             autoFocus
                                         />
                                     ) : (
-                                        <span className="font-bold text-gray-900 text-sm">{formatMXN(p.costo_base)}</span>
+                                        <span className="font-bold text-gray-900 text-[11px]">{formatMXN(p.costo_base)}</span>
                                     )}
                                 </td>
-                                <td className="p-4 text-right">
-                                    <div className="flex justify-end gap-2">
+                                <td className="p-3 text-center">
+                                    <div className="flex justify-center gap-1">
                                         {productoEditando?.id === p.id ? (
                                             <>
-                                                <button onClick={handleSavePrecio} className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm transition-all"><Save size={14} /></button>
-                                                <button onClick={() => setProductoEditando(null)} className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 shadow-sm transition-all"><X size={14} /></button>
+                                                <button onClick={handleSavePrecio} className="p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm transition-all"><Save size={12} /></button>
+                                                <button onClick={() => setProductoEditando(null)} className="p-1.5 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 shadow-sm transition-all"><X size={12} /></button>
                                             </>
                                         ) : (
                                             <button
                                                 onClick={() => handleEditPrecio(p)}
-                                                className="p-2 bg-white text-gray-400 hover:text-red-600 border border-gray-100 rounded-lg shadow-sm hover:border-red-600/20 transition-all font-bold"
+                                                className="p-1.5 bg-white text-gray-400 hover:text-red-600 border border-gray-100 rounded-lg shadow-sm hover:border-red-600/20 transition-all font-bold"
                                             >
-                                                <Edit3 size={14} />
+                                                <Edit3 size={12} />
                                             </button>
                                         )}
                                     </div>

@@ -122,27 +122,20 @@ const MasterContractsView = ({
         <div className="min-h-screen bg-gray-50 pb-20 animate-in fade-in duration-500">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="bg-white rounded-[2rem] shadow-xl p-6 mb-6 border-b-4 border-slate-900">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200">
-                                <Briefcase size={24} />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl font-black text-gray-800 tracking-tight">Menú de Contratos</h1>
-                                <p className="text-gray-400 font-bold uppercase text-[9px] tracking-[0.3em] mt-0.5 italic">Gestión de Bolsas y Emisiones de Sistema</p>
-                            </div>
-                        </div>
-
-                        {activeTab === 'mcs' && (
-                            <button
-                                onClick={() => setIsCreating(true)}
-                                className="bg-red-600 hover:bg-slate-900 text-white px-6 py-3 rounded-xl font-black uppercase text-[9px] tracking-[0.2em] transition-all active:scale-95 shadow-xl flex items-center gap-2"
-                            >
-                                <Plus size={16} /> Nuevo Contrato Maestro
-                            </button>
-                        )}
+                <div className="bg-slate-900 p-4 rounded-2xl md:rounded-b-none flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300">
+                    <div className="flex items-center gap-3">
+                        <Briefcase size={20} className="text-red-500" />
+                        <h3 className="text-sm font-black text-white uppercase flex items-center gap-3">
+                            Menú de Contratos
+                        </h3>
                     </div>
+
+                    <button
+                        onClick={() => setIsCreating(true)}
+                        className="w-full md:w-auto px-4 py-1.5 bg-red-600 text-white rounded-lg font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+                    >
+                        <Plus size={14} /> Nuevo Contrato Maestro
+                    </button>
                 </div>
 
                 {/* Stats Superiores Compactos */}
@@ -166,16 +159,16 @@ const MasterContractsView = ({
                 </div>
 
                 {/* Selector de Pestañas */}
-                <div className="flex gap-4 mb-8 bg-white p-2 rounded-[2rem] shadow-sm border border-gray-100 max-w-md mx-auto">
+                <div className="flex bg-slate-100 p-1 rounded-xl shadow-sm border border-gray-100 max-w-sm mx-auto mb-8">
                     <button
                         onClick={() => setActiveTab('mcs')}
-                        className={`flex-1 py-3 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'mcs' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}
+                        className={`flex-1 py-1.5 px-4 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'mcs' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
                     >
                         Master Contracts
                     </button>
                     <button
                         onClick={() => setActiveTab('individuales')}
-                        className={`flex-1 py-3 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'individuales' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}
+                        className={`flex-1 py-1.5 px-4 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'individuales' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-600'}`}
                     >
                         Emisiones (CPs)
                     </button>
@@ -184,25 +177,25 @@ const MasterContractsView = ({
                 {/* Filtros */}
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
                     <div className="flex-1 relative">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                         <input
                             type="text"
-                            placeholder={activeTab === 'mcs' ? "Buscar por cliente o folio MC..." : "Buscar contrato, cliente o folio sistema..."}
+                            placeholder={activeTab === 'mcs' ? "Buscar por cliente o folio MC..." : "Buscar contrato..."}
                             value={busqueda}
                             onChange={(e) => setBusqueda(e.target.value)}
-                            className="w-full pl-14 pr-6 py-4 bg-white border-none rounded-2xl font-bold text-xs shadow-xl shadow-slate-100 outline-none focus:ring-2 focus:ring-red-500 transition-all placeholder:text-gray-300"
+                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl font-bold text-[10px] shadow-sm outline-none focus:ring-1 focus:ring-red-500 transition-all placeholder:text-gray-300"
                         />
                     </div>
                     {activeTab === 'mcs' && (
-                        <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 whitespace-nowrap">
+                        <div className="flex bg-slate-900 rounded-xl p-1 w-fit">
                             {['todos', 'activo', 'agotado', 'vencido'].map(estatus => (
                                 <button
                                     key={estatus}
                                     onClick={() => setFiltroEstatus(estatus)}
-                                    className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all
+                                    className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap
                                         ${filtroEstatus === estatus
-                                            ? 'bg-slate-900 text-white shadow-lg'
-                                            : 'bg-white text-gray-400 hover:text-slate-900 shadow-sm border border-gray-100'}`}
+                                            ? 'bg-red-600 text-white shadow-lg'
+                                            : 'text-slate-400 hover:text-slate-200'}`}
                                 >
                                     {estatus}
                                 </button>
