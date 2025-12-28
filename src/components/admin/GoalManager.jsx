@@ -50,7 +50,7 @@ const GoalManager = ({ metas, onSaveGoal, onRemoveGoal }) => {
                         <select
                             value={mes}
                             onChange={(e) => setMes(e.target.value)}
-                            className="w-full bg-slate-50 border-none rounded-xl p-3 text-xs font-black focus:ring-1 focus:ring-red-500 outline-none"
+                            className="w-full max-w-full bg-slate-50 border-none rounded-xl p-3 text-xs font-black focus:ring-1 focus:ring-red-500 outline-none truncate"
                         >
                             {MESES.map((m, i) => (
                                 <option key={i + 1} value={i + 1}>{m}</option>

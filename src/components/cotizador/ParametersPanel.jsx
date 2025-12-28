@@ -40,7 +40,7 @@ const ParametersPanel = ({
                     <select
                         value={plazaSeleccionada}
                         onChange={(e) => setPlazaSeleccionada(e.target.value)}
-                        className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 appearance-none bg-white font-medium text-gray-700"
+                        className="w-full max-w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 appearance-none bg-white font-medium text-gray-700 truncate"
                     >
                         <option value="">Todas las Plazas</option>
                         {plazasDisponibles.map(plaza => (
@@ -103,7 +103,7 @@ const ParametersPanel = ({
                     <select
                         value={paqueteVIX}
                         onChange={(e) => setPaqueteVIX(e.target.value)}
-                        className="flex-1 min-w-0 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white font-medium text-gray-700 text-sm"
+                        className="flex-1 min-w-0 max-w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white font-medium text-gray-700 text-sm truncate"
                     >
                         <option value="">Sin paquete VIX</option>
                         {paquetesVIX.map(p => (

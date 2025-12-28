@@ -294,7 +294,7 @@ const ClientFichaView = ({
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Master Contract</label>
-                                    <select value={cierreData.mc_id} onChange={e => setCierreData({ ...cierreData, mc_id: e.target.value })} className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold outline-none">
+                                    <select value={cierreData.mc_id} onChange={e => setCierreData({ ...cierreData, mc_id: e.target.value })} className="w-full max-w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold outline-none truncate">
                                         <option value="">Venta Única</option>
                                         {clientMCs.map(mc => <option key={mc.id} value={mc.id}>{mc.numero_mc}</option>)}
                                     </select>

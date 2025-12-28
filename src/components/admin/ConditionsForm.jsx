@@ -128,7 +128,7 @@ const ConditionsForm = ({ clientes, productos, condicionesCliente, onSave, setMe
                     <select
                         value={clienteIdSeleccionado}
                         onChange={(e) => setClienteIdSeleccionado(e.target.value)}
-                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 transition-all font-bold text-gray-800"
+                        className="w-full max-w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 transition-all font-bold text-gray-800 truncate"
                     >
                         <option value="">-- Seleccionar un cliente para editar --</option>
                         {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre_empresa}</option>)}

@@ -7,7 +7,6 @@ import ConditionsForm from './ConditionsForm';
 import ProductManager from './ProductManager';
 import ConfigForm from './ConfigForm';
 import CobranzaView from './CobranzaView';
-import StatusMessage from './StatusMessage';
 import ProfileForm from './ProfileForm';
 import MaintenanceView from './MaintenanceView';
 import PriceListView from '../views/PriceListView';
@@ -96,12 +95,6 @@ const AdminPanel = ({
             </div>
 
             <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-20">
-                <StatusMessage
-                    tipo={mensajeAdmin.tipo}
-                    texto={mensajeAdmin.texto}
-                    setMensaje={setMensajeAdmin}
-                />
-
                 <div className="animate-in slide-in-from-bottom-4 duration-500">
                     {seccionActiva === 'clientes' && (
                         <div className="space-y-12">
@@ -186,7 +179,7 @@ const AdminPanel = ({
                 </div>
 
                 <div className="mt-20 text-center">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.3.1 • CRM Cloud Enabled</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.3.4 • CRM Cloud Enabled</p>
                 </div>
             </div>
         </div>

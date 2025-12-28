@@ -15,7 +15,7 @@ const ClientSelector = ({ clientes, clienteSeleccionado, setClienteSeleccionado 
                 <select
                     value={clienteSeleccionado}
                     onChange={(e) => setClienteSeleccionado(e.target.value)}
-                    className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 appearance-none bg-white font-medium text-gray-700"
+                    className="w-full max-w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 appearance-none bg-white font-medium text-gray-700 truncate"
                 >
                     <option value="">Buscar cliente...</option>
                     {clientes.map(c => (

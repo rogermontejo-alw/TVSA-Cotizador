@@ -350,7 +350,7 @@ const CotizacionResult = ({
                                     <select
                                         value={cierreData.mc_id}
                                         onChange={(e) => setCierreData({ ...cierreData, mc_id: e.target.value })}
-                                        className="w-full p-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none appearance-none"
+                                        className="w-full max-w-full p-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none appearance-none truncate"
                                     >
                                         <option value="">Venta Única (S/ Master Contract)</option>
                                         {clientMCs.map(mc => (

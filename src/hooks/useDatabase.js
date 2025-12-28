@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
-export const useDatabase = () => {
+export const useDatabase = (session) => {
     const [data, setData] = useState({
         productos: [],
         clientes: [],
@@ -21,40 +21,41 @@ export const useDatabase = () => {
     const cargarDatos = useCallback(async () => {
         setLoading(true);
         try {
-            const [
-                { data: productos },
-                { data: clientes },
-                { data: paquetesVix },
-                { data: configuracionRaw },
-                { data: masterContracts },
-                { data: condiciones },
-                { data: historial },
-                { data: descuentos },
-                { data: cobranza },
-                { data: metas },
-                resPerfil
-            ] = await Promise.all([
+            // Ejecutar consultas con manejo de errores individual para evitar fallos en cascada
+            const results = await Promise.all([
                 supabase.from('productos').select('*').eq('activo', true),
                 supabase.from('clientes').select('*').order('nombre_empresa'),
                 supabase.from('paquetes_vix').select('*'),
                 supabase.from('configuracion').select('*'),
                 supabase.from('master_contracts').select('*, clientes(nombre_empresa)'),
                 supabase.from('condiciones_cliente').select('*'),
-                supabase.from('cotizaciones').select('*').order('created_at', { ascending: false }).then(r => {
-                    if (r.error) console.error("❌ Error cargando cotizaciones:", r.error);
-                    return r;
-                }),
-                supabase.from('descuentos_volumen').select('*').then(r => r.error ? { data: [] } : r),
+                supabase.from('cotizaciones').select('*').order('created_at', { ascending: false }),
+                supabase.from('descuentos_volumen').select('*'),
                 supabase.from('cobranza').select('*, cotizaciones(folio, monto_total, clientes(nombre_empresa))'),
-                supabase.from('metas_comerciales').select('*').order('anio', { ascending: false }).order('mes', { ascending: false }).then(r => {
-                    if (r.error) console.warn("Error cargando metas:", r.error);
-                    return r;
-                }),
+                supabase.from('metas_comerciales').select('*').order('anio', { ascending: false }).order('mes', { ascending: false }),
                 supabase.auth.getUser().then(async ({ data: { user } }) => {
                     if (!user) return { data: null };
                     return supabase.from('perfiles').select('*').eq('id', user.id).maybeSingle();
                 })
             ]);
+
+            const [
+                { data: productos, error: errProd },
+                { data: clientes, error: errCli },
+                { data: paquetesVix },
+                { data: configuracionRaw },
+                { data: masterContracts },
+                { data: condiciones },
+                { data: historial, error: errHist },
+                { data: descuentos },
+                { data: cobranza },
+                { data: metas },
+                resPerfil
+            ] = results;
+
+            if (errProd || errCli || errHist) {
+                console.error("⚠️ Algunos datos fallaron al cargar:", { errProd, errCli, errHist });
+            }
 
             const perfil = resPerfil?.data || null;
 
@@ -199,7 +200,7 @@ export const useDatabase = () => {
 
     useEffect(() => {
         cargarDatos();
-    }, [cargarDatos]);
+    }, [cargarDatos, session]);
 
     return {
         ...data,

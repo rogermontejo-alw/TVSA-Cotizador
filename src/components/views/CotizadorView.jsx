@@ -5,7 +5,6 @@ import ParametersPanel from '../cotizador/ParametersPanel';
 import ProductGrid from '../cotizador/ProductGrid';
 import SelectedProducts from '../cotizador/SelectedProducts';
 import CotizacionResult from '../cotizador/CotizacionResult';
-import StatusMessage from '../admin/StatusMessage';
 
 const CotizadorView = ({
     data,
@@ -75,12 +74,6 @@ const CotizadorView = ({
                     clientesCount={clientes.length}
                     setVistaActual={setVistaActual}
                     iniciarNuevaCotizacion={iniciarNuevaCotizacion}
-                />
-
-                <StatusMessage
-                    tipo={mensajeAdmin.tipo}
-                    texto={mensajeAdmin.texto}
-                    setMensaje={setMensajeAdmin}
                 />
 
                 {!cotizacionResult ? (

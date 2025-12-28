@@ -132,7 +132,7 @@ const ClientForm = ({ onSave, setMensaje, clienteEdicion = null, onCancel = null
                                 <div
                                     key={idx}
                                     className={`flex-1 rounded-full transition-all duration-500 ${isNoInteresado ? 'bg-gray-400' :
-                                            isActive ? (idx === 4 ? 'bg-green-500' : 'bg-red-600') : 'bg-gray-200'
+                                        isActive ? (idx === 4 ? 'bg-green-500' : 'bg-red-600') : 'bg-gray-200'
                                         }`}
                                 />
                             );
@@ -170,7 +170,7 @@ const ClientForm = ({ onSave, setMensaje, clienteEdicion = null, onCancel = null
                                     name="plaza"
                                     value={clienteData.plaza}
                                     onChange={handleClienteChange}
-                                    className="w-full p-4 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none appearance-none"
+                                    className="w-full max-w-full p-4 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none appearance-none truncate"
                                 >
                                     {['MERIDA', 'CANCUN', 'CAMPECHE', 'CDMX'].map(p => <option key={p} value={p}>{p}</option>)}
                                 </select>
@@ -181,7 +181,7 @@ const ClientForm = ({ onSave, setMensaje, clienteEdicion = null, onCancel = null
                                     name="segmento"
                                     value={clienteData.segmento}
                                     onChange={handleClienteChange}
-                                    className="w-full p-4 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none appearance-none"
+                                    className="w-full max-w-full p-4 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none appearance-none truncate"
                                 >
                                     {['PYME', 'CORPORATIVO', 'GOBIERNO', 'OTROS'].map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
@@ -249,7 +249,7 @@ const ClientForm = ({ onSave, setMensaje, clienteEdicion = null, onCancel = null
                                 name="tipo_acuerdo"
                                 value={clienteData.tipo_acuerdo}
                                 onChange={handleClienteChange}
-                                className="w-full p-4 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none appearance-none"
+                                className="w-full max-w-full p-4 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none appearance-none truncate"
                             >
                                 {['SIN_ACUERDO', 'ACUERDO_ANUAL', 'PRECIO_FIJO'].map(t => (
                                     <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
@@ -262,7 +262,7 @@ const ClientForm = ({ onSave, setMensaje, clienteEdicion = null, onCancel = null
                                 name="etapa"
                                 value={clienteData.etapa}
                                 onChange={handleClienteChange}
-                                className="w-full p-4 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none appearance-none"
+                                className="w-full max-w-full p-4 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-2xl transition-all font-bold outline-none appearance-none truncate"
                             >
                                 {['Prospecto', 'Contactado', 'Interesado', 'No Interesado', 'Cliente'].map(e => (
                                     <option key={e} value={e}>{e}</option>
