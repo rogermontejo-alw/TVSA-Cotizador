@@ -337,12 +337,18 @@ const App = () => {
 
       <footer className="bg-white border-t border-slate-100 py-8 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-red-600 rounded flex items-center justify-center text-[10px] font-bold text-white uppercase italic">
-              TV
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-red-600 rounded flex items-center justify-center text-[10px] font-bold text-white uppercase italic">
+                TV
+              </div>
+              <p className="text-[11px] font-black text-slate-800 uppercase tracking-tighter">
+                TELEVISA UNIVISION <span className="text-red-600">MID</span>
+              </p>
             </div>
-            <p className="text-[11px] font-black text-slate-800 uppercase tracking-tighter">
-              TELEVISA UNIVISION <span className="text-red-600">MID</span>
+            <div className="hidden md:block h-4 w-px bg-slate-200"></div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+              Desarrollado por: <span className="text-slate-600">Roger A Montejo</span>
             </p>
           </div>
 
