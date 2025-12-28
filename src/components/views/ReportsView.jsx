@@ -424,19 +424,19 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             </div>
 
             {/* Selector de Período Compacto */}
-            <div className="bg-white p-4 rounded-2xl shadow-xl border border-gray-100 flex flex-col md:flex-row items-center gap-4 print:hidden">
+            <div className="bg-white p-3 sm:p-4 rounded-2xl shadow-xl border border-gray-100 flex flex-col md:flex-row items-stretch md:items-center gap-3 sm:gap-4 print:hidden">
                 <div className="flex items-center gap-2">
                     <Clock size={14} className="text-slate-400" />
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ajustar Período:</span>
+                    <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest">Ajustar Período:</span>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={() => establecerRango('mes')} className="px-3 py-1.5 bg-slate-50 rounded-lg text-[8px] font-black uppercase hover:bg-red-50 hover:text-red-600 transition-all border border-slate-100 italic">Mes Actual</button>
-                    <button onClick={() => establecerRango('año')} className="px-3 py-1.5 bg-slate-50 rounded-lg text-[8px] font-black uppercase hover:bg-red-50 hover:text-red-600 transition-all border border-slate-100 italic">Año Completo</button>
+                    <button onClick={() => establecerRango('mes')} className="flex-1 md:flex-none px-3 py-1.5 bg-slate-50 rounded-lg text-[7px] sm:text-[8px] font-black uppercase hover:bg-black hover:text-white transition-all border border-slate-100">Mes Actual</button>
+                    <button onClick={() => establecerRango('año')} className="flex-1 md:flex-none px-3 py-1.5 bg-slate-50 rounded-lg text-[7px] sm:text-[8px] font-black uppercase hover:bg-black hover:text-white transition-all border border-slate-100">Año Completo</button>
                 </div>
-                <div className="flex items-center gap-2 ml-auto">
-                    <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} className="bg-slate-50 border-none rounded-lg p-1.5 text-[10px] font-bold focus:ring-1 focus:ring-red-500" />
-                    <span className="text-gray-300 font-bold">A</span>
-                    <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} className="bg-slate-50 border-none rounded-lg p-1.5 text-[10px] font-bold focus:ring-1 focus:ring-red-500" />
+                <div className="flex items-center gap-2 md:ml-auto">
+                    <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-red-500 min-w-0" />
+                    <span className="text-gray-300 font-bold text-[10px]">A</span>
+                    <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-red-500 min-w-0" />
                 </div>
             </div>
 
@@ -446,14 +446,14 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 {/* 1. VENTAS POR MES (Matriz Clientes x Meses) */}
                 {seccionReporte === 'ventas-mes' && (
                     <>
-                        <div className="p-6 md:p-8 border-b border-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 text-white">
+                        <div className="p-5 sm:p-8 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 bg-slate-900 text-white">
                             <div>
-                                <h3 className="text-lg font-black tracking-tighter uppercase">Ventas por Mes (Detallado)</h3>
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Consolidado mensual por cliente</p>
+                                <h3 className="text-base sm:text-lg font-black tracking-tighter uppercase">Ventas por Mes (Detallado)</h3>
+                                <p className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Consolidado mensual por cliente</p>
                             </div>
-                            <div className="text-right">
-                                <p className="text-[9px] font-black uppercase text-red-500 tracking-widest">Total Gran Acumulado</p>
-                                <p className="text-2xl font-black">{formatMXN(matrizMensual.granTotal)}</p>
+                            <div className="w-full sm:w-auto text-left sm:text-right">
+                                <p className="text-[8px] sm:text-[9px] font-black uppercase text-red-500 tracking-widest leading-none mb-1">Total Gran Acumulado</p>
+                                <p className="text-xl sm:text-2xl font-black">{formatMXN(matrizMensual.granTotal)}</p>
                             </div>
                         </div>
                         <div className="overflow-x-auto custom-scrollbar">
@@ -470,24 +470,24 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                 <tbody className="divide-y divide-gray-100">
                                     {matrizMensual.filas.map((f, i) => (
                                         <tr key={i} className="hover:bg-slate-50/50">
-                                            <td className="py-4 px-6 border-r border-gray-100 sticky left-0 bg-white group-hover:bg-slate-50 z-10">
-                                                <span className="text-[10px] font-black text-slate-900 uppercase truncate block max-w-[150px]">{f.nombre}</span>
+                                            <td className="py-3 px-4 sm:py-4 sm:px-6 border-r border-gray-100 sticky left-0 bg-white group-hover:bg-slate-50 z-10">
+                                                <span className="text-[9px] sm:text-[10px] font-black text-slate-900 uppercase truncate block max-w-[120px] sm:max-w-[150px]">{f.nombre}</span>
                                             </td>
                                             {matrizMensual.mesesColumnas.map(m => (
-                                                <td key={m} className="py-4 px-4 text-center text-[10px] font-bold text-slate-500 border-r border-gray-100">
-                                                    {f.importes[m] ? formatMXN(f.importes[m]) : MISSING_DATA_CHAR}
+                                                <td key={m} className="py-3 px-3 sm:py-4 sm:px-4 text-center text-[9px] sm:text-[10px] font-bold text-slate-500 border-r border-gray-100">
+                                                    {f.importes[m] ? formatMXN(f.importes[m], 0) : MISSING_DATA_CHAR}
                                                 </td>
                                             ))}
-                                            <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900 bg-slate-50/20">{formatMXN(f.total)}</td>
+                                            <td className="py-3 px-4 sm:py-4 sm:px-6 text-right text-[9px] sm:text-[10px] font-black text-slate-900 bg-slate-50/20">{formatMXN(f.total, 0)}</td>
                                         </tr>
                                     ))}
                                     {/* Fila de Totales Columnas */}
                                     <tr className="bg-[#111111] text-white font-black">
-                                        <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-[#222222] sticky left-0 bg-[#111111] z-10">Total Mensual</td>
+                                        <td className="py-3 px-4 sm:py-4 sm:px-6 uppercase text-[8px] sm:text-[9px] tracking-widest border-r border-[#222222] sticky left-0 bg-[#111111] z-10">Total Mensual</td>
                                         {matrizMensual.mesesColumnas.map(m => (
-                                            <td key={m} className="py-4 px-4 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizMensual.totalesPorMes[m])}</td>
+                                            <td key={m} className="py-3 px-3 sm:py-4 sm:px-4 text-center text-[9px] sm:text-[10px] border-r border-slate-800">{formatMXN(matrizMensual.totalesPorMes[m], 0)}</td>
                                         ))}
-                                        <td className="py-4 px-6 text-right text-[11px] text-red-500">{formatMXN(matrizMensual.granTotal)}</td>
+                                        <td className="py-3 px-4 sm:py-4 sm:px-6 text-right text-[10px] sm:text-[11px] text-red-500">{formatMXN(matrizMensual.granTotal, 0)}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -744,28 +744,28 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
                             return (
                                 <>
-                                    <div className="p-8 border-b border-gray-50 bg-slate-900 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="bg-emerald-500/10 p-4 rounded-3xl border border-emerald-500/20">
-                                                <DollarSign className="text-emerald-500" size={32} />
+                                    <div className="p-5 sm:p-8 border-b border-gray-50 bg-slate-900 text-white flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                                        <div className="flex items-center gap-3 sm:gap-4">
+                                            <div className="bg-emerald-500/10 p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-emerald-500/20 flex-shrink-0">
+                                                <DollarSign className="text-emerald-500" size={window.innerWidth < 640 ? 24 : 32} />
                                             </div>
                                             <div>
-                                                <h3 className="text-xl font-black uppercase tracking-tighter">Reporte de Facturación y Cobranza</h3>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Corte periódico de ingresos proyectados vs reales</p>
+                                                <h3 className="text-base sm:text-xl font-black uppercase tracking-tighter leading-tight">Facturación y Cobranza</h3>
+                                                <p className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Corte periódico de ingresos</p>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-3 gap-8">
-                                            <div className="text-right">
-                                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 italic">Total Facturado</p>
-                                                <p className="text-xl font-black">{formatMXN(totalFacturado)}</p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8 w-full lg:w-auto">
+                                            <div className="text-left sm:text-right border-l-2 sm:border-l-0 border-white/10 pl-3 sm:pl-0">
+                                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-0.5 italic">Total Facturado</p>
+                                                <p className="text-lg sm:text-xl font-black">{formatMXN(totalFacturado, 0)}</p>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1 italic">Total Cobrado</p>
-                                                <p className="text-xl font-black text-emerald-500">{formatMXN(totalCobrado)}</p>
+                                            <div className="text-left sm:text-right border-l-2 sm:border-l-0 border-emerald-500/30 pl-3 sm:pl-0">
+                                                <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-0.5 italic">Total Cobrado</p>
+                                                <p className="text-lg sm:text-xl font-black text-emerald-500">{formatMXN(totalCobrado, 0)}</p>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1 italic">Pendiente Pago</p>
-                                                <p className="text-xl font-black text-red-500">{formatMXN(pendiente)}</p>
+                                            <div className="text-left sm:text-right border-l-2 sm:border-l-0 border-red-500/30 pl-3 sm:pl-0">
+                                                <p className="text-[8px] font-black text-red-500 uppercase tracking-widest mb-0.5 italic">Pendiente Pago</p>
+                                                <p className="text-lg sm:text-xl font-black text-red-500">{formatMXN(pendiente, 0)}</p>
                                             </div>
                                         </div>
                                     </div>
