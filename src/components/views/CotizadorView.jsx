@@ -4,6 +4,7 @@ import ParametersPanel from '../cotizador/ParametersPanel';
 import ProductGrid from '../cotizador/ProductGrid';
 import SelectedProducts from '../cotizador/SelectedProducts';
 import CotizacionResult from '../cotizador/CotizacionResult';
+import { CotizadorSkeleton } from '../ui/Skeleton';
 
 const CotizadorView = ({
     data,
@@ -55,9 +56,8 @@ const CotizadorView = ({
 
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-                <div className="w-16 h-16 border-4 border-red-700 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Sincronizando con CRM Televisa MID...</p>
+            <div className="max-w-[1600px] mx-auto">
+                <CotizadorSkeleton />
             </div>
         );
     }

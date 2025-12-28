@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Lock, Mail, Loader2, Play } from 'lucide-react';
+import { Lock, Mail, Loader2, Play, ShieldCheck, Zap, Globe } from 'lucide-react';
+import FloatingInput from '../ui/FloatingInput';
 
 const LoginView = () => {
     const [email, setEmail] = useState('');
@@ -22,7 +23,7 @@ const LoginView = () => {
             if (authError) throw authError;
         } catch (err) {
             setError(err.message === 'Invalid login credentials'
-                ? 'Credenciales incorrectas. Verifica tu email y contraseña.'
+                ? 'Credenciales no reconocidas por el sistema de seguridad.'
                 : err.message);
         } finally {
             setLoading(false);
@@ -30,86 +31,145 @@ const LoginView = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4 overflow-hidden relative">
-            {/* Background Decorative Elements */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-600/20 blur-[120px] rounded-full"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full"></div>
-            </div>
+        <div className="h-screen bg-enterprise-50 flex flex-col lg:flex-row overflow-hidden font-sans">
+            {/* Visual Brand Side - Premium Gradient */}
+            <div className="hidden lg:flex w-7/12 bg-[#111111] relative overflow-hidden items-center justify-center p-20">
+                {/* Decorative Brand Background */}
+                <div className="absolute top-0 left-0 w-full h-full bg-[#FF5900] opacity-10 blur-[120px] -translate-x-1/2 -translate-y-1/2" />
+                <div className="absolute bottom-0 right-0 w-full h-full bg-[#C83378] opacity-10 blur-[150px] translate-x-1/2 translate-y-1/2" />
 
-            <div className="w-full max-w-md relative animate-in fade-in zoom-in duration-700">
-                {/* Logo / Header */}
-                <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-tr from-red-600 to-red-500 rounded-3xl shadow-2xl shadow-red-900/40 mb-6 transform hover:rotate-6 transition-transform">
-                        <Lock className="text-white" size={32} />
+                <div className="relative z-10 text-white space-y-16 max-w-xl">
+                    <div className="flex items-center gap-6">
+                        <div className="w-20 h-20 bg-white rounded-3xl p-5 shadow-2xl flex items-center justify-center rotate-3 hover:rotate-0 transition-transform duration-500">
+                            <img src="/logo-tvsa.png" alt="Televisa" className="w-full h-full object-contain" />
+                        </div>
+                        <div className="h-14 w-px bg-white/20" />
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#FF5900]">Security First</p>
+                            <p className="text-2xl font-black tracking-tighter uppercase italic">Institutional <span className="text-white/30 not-italic">Gate</span></p>
+                        </div>
                     </div>
-                    <h1 className="text-4xl font-black text-white tracking-tighter mb-2 italic">
-                        TELEVISA<span className="text-red-500">MID</span>
-                    </h1>
-                    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">
-                        Portal de Gestión de Ventas v1.4.2
-                    </p>
+
+                    <div className="space-y-6">
+                        <h2 className="text-[14px] font-black uppercase tracking-[0.5em] text-[#FF5900]/70">Enterprise Resource Planning</h2>
+                        <h1 className="text-8xl font-black tracking-tight leading-[0.9] uppercase text-white">
+                            Comercial<br />
+                            <span className="text-transparent bg-clip-text bg-univision-gradient italic">Suite</span>
+                        </h1>
+                        <p className="text-xl font-bold text-white/80 leading-relaxed">
+                            Acceso unificado a la plataforma de inteligencia comercial más avanzada de <span className="text-[#FF5900] font-black">TelevisaUnivision México</span>.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-10 pt-10 border-t border-white/10">
+                        <div className="space-y-2">
+                            <span className="block text-5xl font-black text-white italic">0.1ms</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#FF5900]">Latency Response</span>
+                        </div>
+                        <div className="space-y-2">
+                            <span className="block text-5xl font-black text-white italic">256b</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#FF5900]">AES-Encryption</span>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Login Card */}
-                <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-8 rounded-[2rem] shadow-2xl">
-                    <form onSubmit={handleLogin} className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Email Corporativo</label>
-                            <div className="relative group">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={20} />
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    className="w-full bg-slate-950 border border-slate-800 focus:border-red-500 text-white pl-12 pr-4 py-4 rounded-2xl transition-all outline-none font-bold"
-                                    placeholder="usuario@televisa.com"
-                                />
-                            </div>
+                {/* Bottom Disclaimer */}
+                <div className="absolute bottom-12 left-20 flex items-center gap-4">
+                    <Globe size={16} className="text-[#FF5900] animate-pulse" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">
+                        TelevisaUnivision Intelligence Node • CDMX 2025
+                    </p>
+                </div>
+            </div>
+
+            {/* Login Form Side */}
+            <div className="w-full lg:w-5/12 bg-white flex items-center justify-center p-8 md:p-24 relative">
+                {/* Mobile Background Accent */}
+                <div className="lg:hidden absolute top-0 left-0 right-0 h-1 bg-brand-orange" />
+
+                <div className="w-full max-w-[440px] space-y-12">
+                    {/* Header Section */}
+                    <div className="space-y-6">
+                        <div className="lg:hidden w-16 h-16 bg-enterprise-50 rounded-2xl p-4 mb-8">
+                            <img src="/logo-tvsa.png" alt="TU" className="w-full h-full object-contain" />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Contraseña</label>
-                            <div className="relative group">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={20} />
-                                <input
+                        <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-enterprise-50 rounded-full border border-enterprise-100">
+                            <ShieldCheck size={16} className="text-brand-orange" />
+                            <span className="text-[10px] font-black text-enterprise-700 uppercase tracking-widest">Protocolo de Acceso Seguro</span>
+                        </div>
+
+                        <div className="space-y-2 text-left">
+                            <h2 className="text-5xl font-black text-enterprise-950 tracking-tight leading-none uppercase italic italic-brand">Inicia Sesión</h2>
+                            <p className="text-enterprise-600 font-bold text-base leading-snug">Ingresa tus credenciales TU corporativas para acceder al ecosistema.</p>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleLogin} className="space-y-8">
+                        <div className="space-y-5">
+                            <FloatingInput
+                                label="Dirección de E-mail"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                icon={Mail}
+                                required
+                            />
+
+                            <div className="space-y-2">
+                                <FloatingInput
+                                    label="Contraseña"
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
+                                    icon={Lock}
                                     required
-                                    className="w-full bg-slate-950 border border-slate-800 focus:border-red-500 text-white pl-12 pr-4 py-4 rounded-2xl transition-all outline-none font-bold"
-                                    placeholder="••••••••"
                                 />
+                                <div className="flex justify-end">
+                                    <button type="button" className="text-[10px] font-black text-brand-orange hover:text-brand-magenta transition-all uppercase tracking-widest">
+                                        ¿Olvidaste tu acceso?
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold p-4 rounded-xl animate-in shake duration-500">
-                                {error}
+                            <div className="p-5 bg-error-light border border-error/10 rounded-2xl text-[11px] font-black text-error uppercase tracking-wide flex items-center gap-4 animate-in shake duration-500">
+                                <div className="w-10 h-10 bg-error/10 rounded-xl flex items-center justify-center shrink-0">
+                                    <Zap size={20} className="fill-error" />
+                                </div>
+                                <span>{error}</span>
                             </div>
                         )}
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-red-600 hover:bg-red-500 disabled:bg-slate-800 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-red-900/20 active:scale-95 transition-all flex items-center justify-center gap-3 overflow-hidden group"
-                        >
-                            {loading ? (
-                                <Loader2 className="animate-spin" size={20} />
-                            ) : (
-                                <>
-                                    <span>Acceder al Sistema</span>
-                                    <Play size={16} className="fill-current group-hover:translate-x-1 transition-transform" />
-                                </>
-                            )}
-                        </button>
+                        <div className="space-y-6">
+                            <button
+                                disabled={loading}
+                                type="submit"
+                                className="w-full h-20 bg-enterprise-950 text-white rounded-[2rem] font-black uppercase tracking-[0.25em] text-xs shadow-2xl shadow-enterprise-900/30 hover:bg-brand-orange hover:shadow-brand-orange/40 hover:-translate-y-1 active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-4 group"
+                            >
+                                {loading ? (
+                                    <Loader2 className="animate-spin" />
+                                ) : (
+                                    <>
+                                        <span>Autenticar Sesión</span>
+                                        <Play size={16} className="fill-white group-hover:translate-x-1.5 transition-transform" />
+                                    </>
+                                )}
+                            </button>
+
+                            <p className="text-[10px] font-bold text-enterprise-400 uppercase tracking-widest text-center leading-loose opacity-60">
+                                Este entorno está cifrado con AES-256. <br />
+                                TelevisaUnivision Cybersecurity Systems.
+                            </p>
+                        </div>
                     </form>
                 </div>
 
-                <div className="mt-10 text-center">
-                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest opacity-50">
-                        Solo personal autorizado por la Dirección Comercial
+                {/* Footer Disclaimer (Mobile) */}
+                <div className="lg:hidden absolute bottom-8 left-0 right-0 text-center px-8">
+                    <p className="text-[8px] font-black uppercase tracking-[0.4em] text-enterprise-300">
+                        TU INTELLIGENCE NODE © 2025
                     </p>
                 </div>
             </div>

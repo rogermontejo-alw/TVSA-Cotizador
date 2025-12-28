@@ -1,31 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;700;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-enterprise-50 text-enterprise-700 font-sans antialiased selection:bg-brand-orange/10 selection:text-brand-orange;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display font-black tracking-tight;
+  }
+
+  /* Fix for potential white-on-white text */
+  table {
+    @apply text-enterprise-900;
   }
 }
 
 @layer components {
+  .glass-card {
+    @apply bg-white/90 backdrop-blur-md border border-enterprise-200 shadow-premium;
+  }
+
+  .glass-card-dark {
+    @apply bg-enterprise-950/95 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+
+  /* Fixed Navbar Style - Light Corporate Glass */
+  .navbar-safe {
+    @apply bg-white/80 backdrop-blur-xl border-b border-enterprise-100 shadow-sm;
+  }
+
+  .interactive-button {
+    @apply active:scale-[0.98] transition-all duration-200 ease-out;
+  }
+
+  .premium-input {
+    @apply w-full bg-white border border-enterprise-200 rounded-xl px-4 py-3 focus:border-brand-orange focus:ring-4 focus:ring-brand-orange/5 outline-none transition-all duration-200 font-bold text-enterprise-950 placeholder:text-enterprise-400;
+  }
+
+  /* Table Styles for maximum contrast */
+  .enterprise-table {
+    @apply w-full border-collapse bg-white rounded-2xl overflow-hidden shadow-premium border border-enterprise-100;
+  }
+
+  .enterprise-table thead tr {
+    @apply bg-enterprise-900 text-white text-[10px] font-black uppercase tracking-widest;
+  }
+
+  .enterprise-table th {
+    @apply px-6 py-4 text-left;
+  }
+
+  .enterprise-table td {
+    @apply px-6 py-4 border-b border-enterprise-50 text-enterprise-800 font-medium;
+  }
+
+  .enterprise-table tr:hover td {
+    @apply bg-enterprise-50/50;
+  }
+
+  /* Custom Scrollbar using Brand Colors */
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-transparent;
+    @apply bg-enterprise-100;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-200 rounded-full hover:bg-gray-300;
+    @apply bg-enterprise-300 rounded-full hover:bg-brand-orange transition-colors;
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-premium-fade {
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Professional Mesh Background */
+  .bg-enterprise-mesh {
+    background-color: #f8f9fa;
+    background-image:
+      radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 0) 0, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 0.02) 0, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 0) 0, transparent 50%);
+  }
+
+  .premium-transition {
+    @apply transition-all duration-300 cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .skeleton {
+    @apply bg-enterprise-100 relative overflow-hidden;
+  }
+
+  .skeleton::after {
+    content: "";
+    @apply absolute inset-0 -translate-x-full;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    animation: skeletonPulse 2s infinite ease-in-out;
   }
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out;
+@keyframes skeletonPulse {
+  100% {
+    transform: translateX(100%);
+  }
 }

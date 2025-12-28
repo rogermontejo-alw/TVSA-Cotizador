@@ -7,12 +7,13 @@
  * @param {number} value - El valor a formatear
  * @returns {string} - Valor formateado como $0,000.00
  */
-export const formatMXN = (value) => {
-  if (value === undefined || value === null) return '$0.00';
+export const formatMXN = (value, decimals = 2) => {
+  if (value === undefined || value === null) return decimals > 0 ? '$0.00' : '$0';
   return value.toLocaleString('es-MX', {
     style: 'currency',
     currency: 'MXN',
-    minimumFractionDigits: 2,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   });
 };
 
@@ -25,14 +26,14 @@ export const parseCSV = (csv) => {
   try {
     const lines = csv.trim().split('\n');
     if (lines.length < 2) return [];
-    
+
     const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-    
+
     return lines.slice(1).map(line => {
       const values = [];
       let currentValue = '';
       let insideQuotes = false;
-      
+
       for (let i = 0; i < line.length; i++) {
         const char = line[i];
         if (char === '"') {
@@ -45,7 +46,7 @@ export const parseCSV = (csv) => {
         }
       }
       values.push(currentValue.trim().replace(/"/g, ''));
-      
+
       const obj = {};
       headers.forEach((header, index) => {
         obj[header] = values[index] || '';

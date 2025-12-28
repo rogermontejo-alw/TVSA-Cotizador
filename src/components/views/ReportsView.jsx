@@ -370,7 +370,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             {/* Header Pro */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 print:hidden">
                 <div className="flex items-center gap-4">
-                    <div className="bg-slate-900 p-3 rounded-xl shadow-xl shadow-slate-200">
+                    <div className="bg-[#111111] p-3 rounded-xl shadow-xl shadow-slate-200">
                         <BarChart3 className="text-white" size={24} />
                     </div>
                     <div>
@@ -393,7 +393,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     >
                         <Globe size={12} /> EXCEL (TODO)
                     </button>
-                    <button onClick={() => window.print()} className="flex-1 bg-slate-900 text-white px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-600 transition-all shadow-xl active:scale-95">
+                    <button onClick={() => window.print()} className="flex-1 bg-[#111111] text-white px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#FF5900] transition-all shadow-xl active:scale-95">
                         <Printer size={12} /> IMPRIMIR
                     </button>
                 </div>
@@ -414,8 +414,8 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                         onClick={() => setSeccionReporte(tab.id)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all
                             ${seccionReporte === tab.id
-                                ? 'bg-red-600 text-white shadow-lg'
-                                : 'text-gray-400 hover:text-slate-900 hover:bg-slate-50'}`}
+                                ? 'bg-[#FF5900] text-white shadow-lg shadow-orange-500/20'
+                                : 'text-enterprise-400 hover:text-enterprise-950 hover:bg-enterprise-50'}`}
                     >
                         <tab.icon size={14} />
                         {tab.label}
@@ -482,8 +482,8 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                         </tr>
                                     ))}
                                     {/* Fila de Totales Columnas */}
-                                    <tr className="bg-slate-900 text-white font-black">
-                                        <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sticky left-0 bg-slate-900 z-10">Total Mensual</td>
+                                    <tr className="bg-[#111111] text-white font-black">
+                                        <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-[#222222] sticky left-0 bg-[#111111] z-10">Total Mensual</td>
                                         {matrizMensual.mesesColumnas.map(m => (
                                             <td key={m} className="py-4 px-4 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizMensual.totalesPorMes[m])}</td>
                                         ))}

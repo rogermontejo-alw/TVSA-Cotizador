@@ -1,10 +1,24 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, FileText, Printer, Eye, Trash2, Calendar, Search, CopyPlus, Filter, CheckCircle, Clock, XCircle, AlertCircle, RefreshCw, Briefcase } from 'lucide-react';
+import {
+    ArrowLeft,
+    FileText,
+    Printer,
+    Eye,
+    Trash2,
+    Search,
+    Filter,
+    AlertCircle,
+    RefreshCw,
+    Briefcase,
+    CalendarDays,
+    BadgeDollarSign,
+    MoreHorizontal
+} from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
 const HistoryView = ({
     setVistaActual,
-    historial,
+    historial = [],
     setCotizacion,
     agregarAComparador,
     mostrarPropuesta,
@@ -15,10 +29,9 @@ const HistoryView = ({
 }) => {
     const [busqueda, setBusqueda] = useState('');
     const [filtroVix, setFiltroVix] = useState('todos');
-    const [confirmingStatus, setConfirmingStatus] = useState(null); // { quote, status }
+    const [confirmingStatus, setConfirmingStatus] = useState(null);
     const [isUpdating, setIsUpdating] = useState(false);
 
-    // Estado para cierre desde lista
     const [cierreData, setCierreData] = useState({
         numero_contrato: '',
         mc_id: '',
@@ -26,7 +39,6 @@ const HistoryView = ({
         folio_sistema: ''
     });
 
-    // Función para preparar el modal con datos existentes
     const openStatusModal = (quote, status) => {
         setConfirmingStatus({ quote, status });
         if (status === 'ganada') {
@@ -59,12 +71,6 @@ const HistoryView = ({
             return matchesSearch && matchesVix;
         });
     }, [historial, busqueda, filtroVix]);
-
-    const handleEliminar = (id) => {
-        if (window.confirm('¿Seguro que deseas eliminar esta cotización? Esta acción no se puede deshacer.')) {
-            eliminarCotizacion(id);
-        }
-    };
 
     const handleUpdateStatus = async (quote, newStatus) => {
         if (newStatus === 'ganada' && !cierreData.numero_contrato) {
@@ -108,353 +114,244 @@ const HistoryView = ({
     };
 
     return (
-        <div className="animate-in fade-in duration-500">
-            <div className="bg-slate-900 p-4 rounded-2xl md:rounded-b-none flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300">
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setVistaActual('cotizador')}
-                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-600 text-white transition-all shadow-sm"
+        <div className="space-y-6 animate-premium-fade">
+            {/* Header Area */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div>
+                    <div className="flex items-center gap-3 sm:gap-4 mb-2">
+                        <button
+                            onClick={() => setVistaActual('cotizador')}
+                            className="p-2 sm:p-2.5 bg-white rounded-2xl shadow-premium border border-enterprise-100 text-enterprise-400 hover:text-brand-orange transition-all active:scale-90"
+                        >
+                            <ArrowLeft size={window.innerWidth < 640 ? 16 : 20} />
+                        </button>
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-enterprise-950 tracking-tight leading-none uppercase italic italic-brand">
+                            Historical <span className="text-brand-orange not-italic">Records</span>
+                        </h1>
+                    </div>
+                    <p className="text-[9px] sm:text-[10px] font-bold text-enterprise-500 uppercase tracking-widest ml-12 sm:ml-14">
+                        Master Database / Commercial Activity
+                    </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4 bg-white p-3 rounded-2xl shadow-premium border border-enterprise-100 w-full md:w-auto">
+                    <div className="relative flex-1 md:w-64">
+                        <input
+                            type="text"
+                            placeholder="Buscar Cliente o ID..."
+                            value={busqueda}
+                            onChange={(e) => setBusqueda(e.target.value)}
+                            className="w-full h-11 bg-enterprise-50 border border-enterprise-100 rounded-xl pl-10 pr-4 text-xs font-bold focus:border-brand-orange outline-none transition-all"
+                        />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-enterprise-400" size={16} />
+                    </div>
+                    <select
+                        value={filtroVix}
+                        onChange={(e) => setFiltroVix(e.target.value)}
+                        className="h-11 bg-enterprise-50 border border-enterprise-100 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest outline-none transition-all cursor-pointer"
                     >
-                        <ArrowLeft size={16} />
-                    </button>
-                    <div className="flex items-center gap-3">
-                        <FileText size={20} className="text-red-500" />
-                        <h3 className="text-sm font-black text-white uppercase flex items-center gap-3">
-                            Historial de Cotizaciones
-                        </h3>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <div className="bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-2">
-                        <FileText className="text-slate-500" size={14} />
-                        <span className="text-[9px] font-black text-white uppercase tracking-widest">{historialFiltrado.length} Registros</span>
-                    </div>
+                        <option value="todos">Todos los Escenarios</option>
+                        <option value="vix">Plan Digital VIX</option>
+                        <option value="no_vix">Televisión Abierta</option>
+                    </select>
                 </div>
             </div>
 
-            <div className="bg-white p-4 flex flex-col md:flex-row gap-4 mb-4 border-x border-gray-100 items-center">
-                <div className="relative flex-1 w-full">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por cliente, ID o ciudad..."
-                        value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-xl focus:ring-1 focus:ring-red-500 font-bold text-[10px] outline-none"
-                    />
-                </div>
-                <select
-                    value={filtroVix}
-                    onChange={(e) => setFiltroVix(e.target.value)}
-                    className="w-full md:w-auto px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl font-black uppercase text-[9px] tracking-widest focus:ring-1 focus:ring-red-500 cursor-pointer outline-none"
-                >
-                    <option value="todos">Todos los Escenarios</option>
-                    <option value="vix">Solo con VIX</option>
-                    <option value="no_vix">Solo TV</option>
-                </select>
-            </div>
-
-            {historialFiltrado.length === 0 ? (
-                <div className="bg-white rounded-2xl shadow-xl p-20 text-center border border-gray-100">
-                    <div className="bg-gray-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <FileText size={40} className="text-gray-300" />
-                    </div>
-                    <h2 className="text-2xl font-black text-gray-800 mb-2">Sin resultados</h2>
-                    <p className="text-gray-400 font-medium">No se encontraron cotizaciones con esos criterios.</p>
-                </div>
-            ) : (
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                    {/* Desktop Table View */}
-                    <div className="hidden md:block overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-slate-900 text-white font-black uppercase text-[9px] tracking-widest">
-                                    <th className="px-4 py-3 text-left">Fecha y Hora</th>
-                                    <th className="px-4 py-3 text-left">Cliente / ID</th>
-                                    <th className="px-4 py-3 text-left">Estatus</th>
-                                    <th className="px-4 py-3 text-left">Detalle</th>
-                                    <th className="px-4 py-3 text-right">Inversión</th>
-                                    <th className="px-4 py-3 text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {historialFiltrado.map(cotz => (
-                                    <tr key={cotz.id} className="hover:bg-gray-50 transition-colors group">
-                                        <td className="px-4 py-4">
-                                            <div className="flex flex-col">
-                                                <span className="text-[11px] font-black text-gray-800">
-                                                    {cotz.fecha instanceof Date && !isNaN(cotz.fecha)
-                                                        ? cotz.fecha.toLocaleDateString('es-MX')
-                                                        : 'Fecha no válida'}
+            {/* Main Content */}
+            <div className="bg-white rounded-[2.5rem] shadow-premium border border-enterprise-100 overflow-hidden">
+                <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full border-collapse">
+                        <thead>
+                            <tr className="bg-enterprise-950 text-white border-b border-white/5">
+                                <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Timeline</th>
+                                <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Entidad Legal / Referencia</th>
+                                <th className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Fase Comercial</th>
+                                <th className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Carga</th>
+                                <th className="px-6 py-5 text-right text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Valor Neto</th>
+                                <th className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-enterprise-50">
+                            {historialFiltrado.length > 0 ? historialFiltrado.map(cotz => (
+                                <tr key={cotz.id} className="group hover:bg-enterprise-50/50 transition-all duration-300">
+                                    <td className="px-6 py-5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-enterprise-100 flex flex-col items-center justify-center">
+                                                <CalendarDays size={16} className="text-enterprise-400" />
+                                            </div>
+                                            <div>
+                                                <span className="block text-xs font-black text-enterprise-900 leading-none mb-1">
+                                                    {cotz.fecha instanceof Date && !isNaN(cotz.fecha) ? cotz.fecha.toLocaleDateString('es-MX') : '-- / --'}
                                                 </span>
-                                                <span className="text-[9px] font-bold text-gray-400">
-                                                    {cotz.fecha instanceof Date && !isNaN(cotz.fecha)
-                                                        ? cotz.fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                                        : ''}
-                                                </span>
+                                                <span className="text-[10px] font-bold text-enterprise-400 uppercase tracking-tighter">Sincronizado</span>
                                             </div>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <div className="flex flex-col max-w-[150px]">
-                                                <span className="text-[12px] font-black text-gray-800 truncate">{cotz.cliente?.nombre_empresa || 'Cliente Desconocido'}</span>
-                                                <span className="text-[9px] font-bold text-red-600 tracking-tighter truncate">{cotz.folio || cotz.id}</span>
-                                                {cotz.estatus === 'ganada' && cotz.numero_contrato && (
-                                                    <span className="text-[8px] font-black text-emerald-600 uppercase tracking-tighter">Contrato: {cotz.numero_contrato}</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <div className="flex gap-1">
-                                                {['enviada', 'ganada', 'perdida'].map(st => (
-                                                    <button
-                                                        key={st}
-                                                        onClick={() => openStatusModal(cotz, st)}
-                                                        disabled={isUpdating}
-                                                        className={`text-[8px] px-1.5 py-0.5 rounded font-black uppercase tracking-tighter transition-all relative overflow-hidden
-                                                                ${cotz.estatus === st
-                                                                ? st === 'ganada' ? 'bg-emerald-500 text-white shadow-lg' : st === 'perdida' ? 'bg-red-500 text-white shadow-lg' : 'bg-blue-500 text-white shadow-lg'
-                                                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
-                                                    >
-                                                        {st}
-                                                        {isUpdating && cotz.estatus === st && (
-                                                            <div className="absolute inset-0 bg-black/10 flex items-center justify-center animate-spin">
-                                                                <RefreshCw size={8} />
-                                                            </div>
-                                                        )}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <div className="flex flex-wrap gap-1 max-w-[120px]">
-                                                <span className="text-[8px] font-black bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 uppercase">
-                                                    {cotz.items.length}P
-                                                </span>
-                                                {cotz.paqueteVIX && (
-                                                    <span className="text-[8px] font-black bg-blue-50 px-1.5 py-0.5 rounded text-blue-600 uppercase border border-blue-100">
-                                                        VIX
-                                                    </span>
-                                                )}
-                                                <span className="text-[8px] font-black bg-red-50 px-1.5 py-0.5 rounded text-red-600 uppercase border border-red-100">
-                                                    {cotz.diasCampana}D
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-4 text-right whitespace-nowrap">
-                                            <span className="text-[12px] font-black text-gray-800">{formatMXN(cotz.subtotalGeneral || (cotz.monto_total || cotz.total) / 1.16)}</span>
-                                            <span className="block text-[8px] font-bold text-gray-400 mt-0.5 uppercase tracking-widest">Neta</span>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <div className="flex items-center justify-center gap-1">
-                                                <button
-                                                    onClick={() => { setCotizacion(cotz); setVistaActual('cotizador'); }}
-                                                    className="p-1.5 bg-gray-100 hover:bg-gray-800 hover:text-white rounded-lg transition-all text-gray-600"
-                                                    title="Editar"
-                                                >
-                                                    <Eye size={16} />
-                                                </button>
-                                                {cotz.estatus === 'ganada' && (
-                                                    <button
-                                                        onClick={() => openStatusModal(cotz, 'ganada')}
-                                                        className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg transition-all border border-emerald-100"
-                                                        title="Datos de Cierre"
-                                                    >
-                                                        <Briefcase size={16} />
-                                                    </button>
-                                                )}
-                                                <button
-                                                    onClick={() => mostrarPropuesta(cotz)}
-                                                    className="p-1.5 bg-gray-100 hover:bg-red-600 hover:text-white rounded-lg transition-all text-gray-600"
-                                                    title="Imprimir"
-                                                >
-                                                    <Printer size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleEliminar(cotz.id)}
-                                                    className="p-1.5 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition-all"
-                                                    title="Eliminar"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Mobile Card View */}
-                    <div className="md:hidden divide-y divide-gray-100">
-                        {historialFiltrado.map(cotz => (
-                            <div key={cotz.id} className="p-6 space-y-4 hover:bg-gray-50 transition-colors">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                                            {cotz.fecha instanceof Date && !isNaN(cotz.fecha)
-                                                ? cotz.fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
-                                                : 'Fecha no válida'}
                                         </div>
-                                        <div className="font-black text-gray-800 text-lg leading-tight">{cotz.cliente?.nombre_empresa}</div>
-                                        <div className="text-[10px] font-bold text-red-600 mt-1">{cotz.folio || cotz.id}</div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-lg font-black text-gray-900">{formatMXN(cotz.subtotalGeneral || (cotz.monto_total || cotz.total) / 1.16)}</div>
-                                        <div className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">SUBTOTAL</div>
-                                    </div>
-                                </div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div>
+                                            <span className="block text-sm font-black text-enterprise-950 uppercase truncate max-w-[200px] mb-1">
+                                                {cotz.cliente?.nombre_empresa || 'Cliente S/N'}
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[9px] font-black text-brand-orange uppercase tracking-widest">{cotz.folio || cotz.id.slice(0, 8)}</span>
+                                                {cotz.numero_contrato && (
+                                                    <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black rounded uppercase">CT: {cotz.numero_contrato}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div className="flex justify-center gap-1.5">
+                                            {['enviada', 'ganada', 'perdida'].map(st => (
+                                                <button
+                                                    key={st}
+                                                    onClick={() => openStatusModal(cotz, st)}
+                                                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${cotz.estatus === st
+                                                        ? st === 'ganada' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : st === 'perdida' ? 'bg-brand-magenta text-white shadow-lg shadow-brand-magenta/20' : 'bg-enterprise-950 text-white shadow-lg shadow-enterprise-950/20'
+                                                        : 'bg-enterprise-100 text-enterprise-400 hover:bg-enterprise-200'
+                                                        }`}
+                                                >
+                                                    {st}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <span className="w-8 h-8 rounded-lg bg-enterprise-50 flex items-center justify-center text-[10px] font-black text-enterprise-600" title="Productos">{cotz.items.length}P</span>
+                                            {cotz.paqueteVIX && <div className="w-3 h-3 rounded-full bg-brand-orange animate-pulse" title="Digital Activo" />}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5 text-right font-black text-enterprise-900 tracking-tight">
+                                        {formatMXN(cotz.subtotalGeneral || (cotz.monto_total || cotz.total) / 1.16)}
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <button
+                                                onClick={() => { setCotizacion(cotz); setVistaActual('cotizador'); }}
+                                                className="w-9 h-9 flex items-center justify-center bg-enterprise-50 text-enterprise-400 hover:bg-enterprise-900 hover:text-white rounded-xl transition-all"
+                                                title="Revisar Parámetros"
+                                            >
+                                                <Eye size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => mostrarPropuesta(cotz)}
+                                                className="w-9 h-9 flex items-center justify-center bg-enterprise-50 text-enterprise-500 hover:bg-brand-orange hover:text-white rounded-xl transition-all"
+                                                title="Generar Exportable"
+                                            >
+                                                <Printer size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => { if (window.confirm('Eliminar registro?')) eliminarCotizacion(cotz.id); }}
+                                                className="w-9 h-9 flex items-center justify-center bg-enterprise-50 text-enterprise-500 hover:bg-brand-orange/10 hover:text-brand-orange rounded-xl transition-all"
+                                                title="Archivar"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan="6" className="py-20 text-center">
+                                        <div className="bg-enterprise-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-enterprise-200">
+                                            <Search size={32} />
+                                        </div>
+                                        <h3 className="text-lg font-black text-enterprise-900 uppercase">Sin Actividad Estratégica</h3>
+                                        <p className="text-xs text-enterprise-400 font-bold uppercase tracking-widest mt-1 italic">Realiza una consulta diferente</p>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
 
-                                <div className="flex flex-wrap gap-2">
-                                    <span className="text-[9px] font-black bg-gray-100 px-3 py-1 rounded-full text-gray-600">
-                                        {cotz.items.length} PRODUCTOS
-                                    </span>
-                                    {cotz.paqueteVIX && (
-                                        <span className="text-[9px] font-black bg-blue-50 px-3 py-1 rounded-full text-blue-600 border border-blue-100">
-                                            VIX INCLUIDO
-                                        </span>
-                                    )}
-                                    <span className="text-[9px] font-black bg-red-50 px-3 py-1 rounded-full text-red-600 border border-red-100">
-                                        {cotz.diasCampana} DÍAS
-                                    </span>
-                                </div>
-
-                                <div className="grid grid-cols-4 gap-2 pt-2">
-                                    <button
-                                        onClick={() => { setCotizacion(cotz); setVistaActual('cotizador'); }}
-                                        className="flex flex-col items-center justify-center p-3 bg-gray-50 rounded-xl text-gray-600 hover:bg-gray-800 hover:text-white transition-all"
-                                    >
-                                        <Eye size={20} />
-                                        <span className="text-[8px] font-black mt-1 uppercase">Ver</span>
-                                    </button>
-                                    {cotz.estatus === 'ganada' && (
-                                        <button
-                                            onClick={() => openStatusModal(cotz, 'ganada')}
-                                            className="flex flex-col items-center justify-center p-3 bg-emerald-50 rounded-xl text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100"
-                                        >
-                                            <Briefcase size={20} />
-                                            <span className="text-[8px] font-black mt-1 uppercase">Cierre</span>
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={() => mostrarPropuesta(cotz)}
-                                        className="flex flex-col items-center justify-center p-3 bg-gray-50 rounded-xl text-gray-600 hover:bg-red-600 hover:text-white transition-all"
-                                    >
-                                        <Printer size={20} />
-                                        <span className="text-[8px] font-black mt-1 uppercase">PDF</span>
-                                    </button>
-                                    <button
-                                        onClick={() => agregarAComparador(cotz)}
-                                        className="flex flex-col items-center justify-center p-3 bg-gray-50 rounded-xl text-gray-600 hover:bg-slate-900 hover:text-white transition-all"
-                                    >
-                                        <CopyPlus size={20} />
-                                        <span className="text-[8px] font-black mt-1 uppercase">Comp.</span>
-                                    </button>
-                                    <button
-                                        onClick={() => handleEliminar(cotz.id)}
-                                        className="flex flex-col items-center justify-center p-3 bg-red-50 rounded-xl text-red-500 hover:bg-red-600 hover:text-white transition-all"
-                                    >
-                                        <Trash2 size={20} />
-                                        <span className="text-[8px] font-black mt-1 uppercase">Borrar</span>
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                <div className="bg-enterprise-50 p-6 border-t border-enterprise-100 flex items-center justify-between">
+                    <p className="text-[10px] font-black text-enterprise-400 uppercase tracking-widest">
+                        Mostrando {historialFiltrado.length} de {historial.length} transacciones registradas.
+                    </p>
+                    <div className="flex gap-2 text-enterprise-300">
+                        <MoreHorizontal size={20} />
                     </div>
                 </div>
-            )}
+            </div>
 
-            {/* Modal de Confirmación de Estatus */}
+            {/* Modal de Cierre */}
             {confirmingStatus && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
-                        <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 ${confirmingStatus.status === 'ganada' ? 'bg-emerald-50 text-emerald-600' :
-                            confirmingStatus.status === 'perdida' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
-                            }`}>
-                            <AlertCircle size={32} />
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-enterprise-950/80 backdrop-blur-md animate-premium-fade">
+                    <div className="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl relative overflow-hidden border border-enterprise-100">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-brand-orange" />
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="w-14 h-14 bg-brand-orange/10 rounded-[1.5rem] flex items-center justify-center text-brand-orange">
+                                <BadgeDollarSign size={28} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black text-enterprise-900 uppercase leading-none mb-1">Protocolo de Cierre</h3>
+                                <p className="text-[10px] font-bold text-enterprise-400 uppercase tracking-widest">Validación de Estatus Comercial</p>
+                            </div>
                         </div>
 
-                        <h3 className="text-center text-lg font-black text-slate-900 leading-tight mb-2 uppercase">
-                            ¿Cambiar a {confirmingStatus.status.toUpperCase()}?
-                        </h3>
-                        <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
-                            {confirmingStatus.status === 'ganada' ? 'Este monto se reflejará como VENTA REAL en el Dashboard y Reportes.' :
-                                confirmingStatus.status === 'perdida' ? 'La cotización se marcará como rechazada.' : 'Estatus informativo.'}
-                        </p>
-
-                        {confirmingStatus.status === 'ganada' && (
-                            <div className="space-y-4 mb-6">
-                                <div className="space-y-1">
-                                    <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Número de Contrato</label>
+                        {confirmingStatus.status === 'ganada' ? (
+                            <div className="space-y-6 mb-8">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-enterprise-400 uppercase tracking-widest ml-1">Referencia Contrato SAP/MID</label>
                                     <input
                                         type="number"
-                                        required
-                                        placeholder="Ej: 850232"
                                         value={cierreData.numero_contrato}
                                         onChange={(e) => setCierreData({ ...cierreData, numero_contrato: e.target.value })}
-                                        className="w-full p-4 bg-slate-50 border-none rounded-2xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        className="premium-input text-lg py-4 h-16"
+                                        placeholder="Ej: 994021"
                                     />
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Asociar a Master Contract</label>
-                                    <select
-                                        value={cierreData.mc_id}
-                                        onChange={(e) => setCierreData({ ...cierreData, mc_id: e.target.value })}
-                                        className="w-full p-4 bg-slate-50 border-none rounded-2xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
-                                    >
-                                        <option value="">Venta Única</option>
-                                        {(masterContracts || []).filter(mc => String(mc.cliente_id) === String(confirmingStatus.quote.cliente_id) && mc.estatus === 'activo').map(mc => (
-                                            <option key={mc.id} value={mc.id}>{mc.numero_mc}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1">
-                                        <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Fecha Registro Sistema</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-enterprise-400 uppercase tracking-widest ml-1">Folio Sistema</label>
+                                        <input
+                                            type="text"
+                                            value={cierreData.folio_sistema}
+                                            onChange={(e) => setCierreData({ ...cierreData, folio_sistema: e.target.value })}
+                                            className="premium-input text-xs"
+                                            placeholder="CP-XXXX"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-enterprise-400 uppercase tracking-widest ml-1">Fecha Registro</label>
                                         <input
                                             type="date"
                                             value={cierreData.fecha_registro_sistema}
                                             onChange={(e) => setCierreData({ ...cierreData, fecha_registro_sistema: e.target.value })}
-                                            className="w-full p-4 bg-slate-50 border-none rounded-2xl text-[10px] font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Folio Sistema (CP)</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Ej: CP-1234"
-                                            value={cierreData.folio_sistema}
-                                            onChange={(e) => setCierreData({ ...cierreData, folio_sistema: e.target.value })}
-                                            className="w-full p-4 bg-slate-50 border-none rounded-2xl text-[10px] font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                                            className="premium-input text-xs"
                                         />
                                     </div>
                                 </div>
                             </div>
+                        ) : (
+                            <div className="p-6 bg-enterprise-50 rounded-2xl mb-8 border border-enterprise-100 flex items-center gap-4">
+                                <AlertCircle size={24} className="text-brand-orange" />
+                                <p className="text-xs font-bold text-enterprise-700 uppercase tracking-widest leading-relaxed">
+                                    Confirma el cambio a {confirmingStatus.status.toUpperCase()}. Esto archivará el registro en la fase correspondiente.
+                                </p>
+                            </div>
                         )}
 
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-3">
                             <button
-                                disabled={isUpdating}
                                 onClick={() => handleUpdateStatus(confirmingStatus.quote, confirmingStatus.status)}
-                                className={`w-full py-4 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all active:scale-95 shadow-xl flex items-center justify-center gap-2 ${confirmingStatus.status === 'ganada' ? 'bg-emerald-600' :
-                                    confirmingStatus.status === 'perdida' ? 'bg-red-600' : 'bg-slate-900'
-                                    }`}
+                                className="w-full h-14 bg-brand-orange text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-xl shadow-brand-orange/20 hover:bg-brand-magenta hover:shadow-brand-magenta/40 hover:-translate-y-1 active:scale-[0.98] transition-all duration-300"
                             >
-                                {isUpdating && <RefreshCw size={14} className="animate-spin" />}
-                                Confirmar Cambio
+                                {isUpdating ? <RefreshCw className="animate-spin" size={18} /> : <span>Confirmar Operación</span>}
                             </button>
                             <button
                                 onClick={() => setConfirmingStatus(null)}
-                                className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
+                                className="w-full h-12 text-[10px] font-black uppercase tracking-widest text-enterprise-400 hover:text-enterprise-600 transition-colors"
                             >
-                                Cancelar
+                                Regresar
                             </button>
                         </div>
                     </div>
                 </div>
-            )
-            }
-        </div >
+            )}
+        </div>
     );
 };
 

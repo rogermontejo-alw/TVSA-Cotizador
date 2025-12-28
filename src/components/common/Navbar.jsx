@@ -1,158 +1,188 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
+    LayoutDashboard,
+    Users,
+    Calculator,
+    History,
+    Briefcase,
+    DollarSign,
+    BarChart3,
+    LogOut,
+    Settings,
     Menu,
     X,
-    History,
-    Settings,
-    LogOut,
-    Eye,
-    Calculator,
-    LayoutDashboard,
-    DollarSign,
-    Briefcase,
-    BarChart3,
-    Users
+    User,
+    ChevronRight
 } from 'lucide-react';
+import { APP_CONFIG } from '../../appConfig';
 
-const Navbar = ({ vistaActual, setVistaActual, session, onLogout }) => {
-    const [isOpen, setIsOpen] = useState(false);
+const Navbar = ({ session, vistaActual, setVistaActual, onLogout }) => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const userEmail = session?.user?.email || 'N/A';
 
-    const navLinks = [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    // Bloquear scroll del body cuando el menú móvil está abierto
+    useEffect(() => {
+        if (isMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => { document.body.style.overflow = 'unset'; };
+    }, [isMenuOpen]);
+
+    // Enlaces operativos centrales
+    const middleLinks = [
         { id: 'crm', label: 'Clientes', icon: Users },
-        { id: 'historial', label: 'Cotizaciones', icon: History },
+        { id: 'cotizador', label: 'Cotizador', icon: Calculator },
+        { id: 'historial', label: 'Historial', icon: History },
         { id: 'master-contracts', label: 'Contratos', icon: Briefcase },
         { id: 'cobranza', label: 'Cobranza', icon: DollarSign },
-        { id: 'reportes', label: 'Reportes', icon: BarChart3 },
     ];
 
+    const handleLogout = async () => {
+        if (onLogout) {
+            await onLogout();
+        }
+    };
+
+    const isActive = (id) => vistaActual === id;
+
+    // Botones de icono especializados (Dashboard, Reportes, Admin, Logout)
+    const IconButton = ({ id, icon: Icon, label, onClick, className = "" }) => (
+        <button
+            onClick={onClick || (() => setVistaActual(id))}
+            className={`w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl transition-all relative group
+                ${isActive(id) ? 'bg-enterprise-50' : 'hover:bg-enterprise-50'} ${className}`}
+            title={label}
+        >
+            <Icon size={19} className={isActive(id) ? 'text-brand-orange' : 'text-enterprise-400 group-hover:text-enterprise-950'} />
+            {isActive(id) && (
+                <div className="absolute -bottom-1 left-2 right-2 h-[3px] bg-brand-orange rounded-full" />
+            )}
+        </button>
+    );
+
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900 text-white shadow-2xl border-b border-white/5">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-14">
-                    {/* Logo */}
+        <>
+            {/* Navbar Híbrida Optimizada */}
+            <nav className="fixed top-0 left-0 right-0 z-[60] bg-white border-b border-enterprise-100 shadow-sm h-16 sm:h-20 flex items-center px-4 sm:px-6">
+                {/* Línea de acento visual */}
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-orange" />
+
+                <div className="max-w-[1600px] mx-auto w-full flex items-center gap-2 sm:gap-6">
+                    {/* LOGO DE MARCA (Izquierda) */}
                     <div
-                        className="flex items-center gap-3 cursor-pointer group"
+                        className="flex items-center gap-2 sm:gap-3 cursor-pointer group flex-shrink-0"
                         onClick={() => setVistaActual('dashboard')}
                     >
-                        <div className="w-8 h-8 p-1.5 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-black/20 group-hover:scale-105 transition-transform">
-                            <img src="/logo-tvsa.png" alt="TVSA Logo" className="w-full h-full object-contain" />
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 bg-enterprise-950 rounded-xl flex items-center justify-center p-1.5 shadow-lg group-hover:scale-105 transition-transform">
+                            <img src="/logo-tvsa.png" alt="TU" className="w-full h-full object-contain brightness-0 invert" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="font-black text-sm leading-none tracking-tighter">
-                                COTIZADOR<span className="text-red-600">MID</span>
+                            <span className="text-enterprise-950 font-black text-[14px] sm:text-[16px] tracking-tighter leading-none uppercase italic">
+                                Commercial <span className="text-brand-orange not-italic">Suite</span>
                             </span>
-                            <span className="text-[7px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Televisa Univision</span>
+                            <span className="text-enterprise-500 text-[8px] font-black uppercase tracking-widest hidden lg:block">{APP_CONFIG.ORGANIZATION}</span>
                         </div>
                     </div>
 
-                    {/* Desktop Menu */}
-                    <div className="hidden lg:flex items-center gap-1">
-                        {navLinks.map((link) => {
-                            const Icon = link.icon;
-                            const isActive = vistaActual === link.id;
-                            return (
-                                <button
-                                    key={link.id}
-                                    onClick={() => setVistaActual(link.id)}
-                                    className={`
-                                        px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all
-                                        ${isActive
-                                            ? 'bg-red-600 text-white shadow-lg shadow-red-900/40'
-                                            : 'text-gray-400 hover:text-white hover:bg-white/5'}
-                                    `}
-                                >
-                                    <Icon size={12} />
-                                    {link.label}
-                                </button>
-                            );
-                        })}
-
-                        <div className="h-6 w-px bg-white/10 mx-4"></div>
-
-                        <div className="flex items-center gap-2">
-                            <div className="text-right hidden xl:block mr-2">
-                                <p className="text-[8px] font-black uppercase tracking-widest text-white/40 leading-none">Usuario</p>
-                                <p className="text-[9px] font-bold text-gray-300">{session?.user?.email?.split('@')[0]}</p>
-                            </div>
-
+                    {/* NAVEGACIÓN OPERATIVA (Icono + Texto) - Solo Desktop */}
+                    <div className="hidden lg:flex items-center gap-1 xl:gap-2 ml-4">
+                        {middleLinks.map((link) => (
                             <button
-                                onClick={() => setVistaActual('administracion')}
-                                className={`
-                                    p-2 rounded-xl transition-all border border-white/5
-                                    ${vistaActual === 'administracion'
-                                        ? 'bg-red-600 text-white shadow-lg shadow-red-900/40 border-red-500'
-                                        : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'}
-                                `}
-                                title="Panel Maestro"
+                                key={link.id}
+                                onClick={() => setVistaActual(link.id)}
+                                className={`px-2 xl:px-3 h-10 rounded-xl text-[10px] font-black uppercase tracking-tight transition-all flex items-center gap-2 group whitespace-nowrap
+                                    ${isActive(link.id)
+                                        ? 'text-enterprise-950 bg-enterprise-50/80 shadow-sm'
+                                        : 'text-enterprise-500 hover:text-enterprise-950 hover:bg-enterprise-50/50'}`}
                             >
-                                <Settings size={16} />
+                                <link.icon size={15} className={isActive(link.id) ? 'text-brand-orange' : 'text-enterprise-400 group-hover:text-brand-orange transition-colors'} />
+                                <span>{link.label}</span>
                             </button>
-
-                            <button
-                                onClick={onLogout}
-                                className="p-2 rounded-xl bg-white/5 text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-all border border-white/5"
-                                title="Cerrar Sesión"
-                            >
-                                <LogOut size={16} />
-                            </button>
-                        </div>
+                        ))}
                     </div>
 
-                    {/* Mobile Button */}
-                    <div className="lg:hidden flex items-center gap-2">
+                    {/* CONTROLES EJECUTIVOS (Solo Iconos) - Área Derecha */}
+                    <div className="flex items-center gap-1 sm:gap-2 ml-auto">
+                        <div className="flex items-center gap-1 sm:gap-2 bg-enterprise-50/40 p-1 rounded-2xl border border-enterprise-100/50">
+                            <IconButton id="dashboard" icon={LayoutDashboard} label="Dashboard" />
+                            <IconButton id="reportes" icon={BarChart3} label="Reportes" />
+                            <IconButton id="administracion" icon={Settings} label="Administración" />
+                            <IconButton id="logout" icon={LogOut} label="Log Out" onClick={handleLogout} />
+                        </div>
+
+                        {/* Hamburguesa Trigger (Solo Móvil/Tablet) */}
                         <button
-                            onClick={() => setVistaActual('administracion')}
-                            className={`p-2 rounded-xl ${vistaActual === 'administracion' ? 'text-red-500' : 'text-gray-400'}`}
+                            onClick={() => setIsMenuOpen(true)}
+                            className="lg:hidden w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center bg-enterprise-950 text-white rounded-xl shadow-lg hover:shadow-brand-orange/30 active:scale-95 transition-all"
                         >
-                            <Settings size={20} />
-                        </button>
-                        <button
-                            onClick={onLogout}
-                            className="p-2 text-gray-400"
-                        >
-                            <LogOut size={20} />
-                        </button>
-                        <button
-                            onClick={() => setIsOpen(!isOpen)}
-                            className="p-2 rounded-xl bg-white/5 text-gray-400"
-                        >
-                            {isOpen ? <X size={24} /> : <Menu size={24} />}
+                            <Menu size={22} />
                         </button>
                     </div>
                 </div>
-            </div>
+            </nav>
 
-            {/* Mobile Menu */}
-            {isOpen && (
-                <div className="lg:hidden bg-slate-800 border-t border-white/5 animate-in slide-in-from-top duration-300">
-                    <div className="px-4 pt-2 pb-6 space-y-1">
-                        {navLinks.map((link) => {
-                            const Icon = link.icon;
-                            const isActive = vistaActual === link.id;
-                            return (
-                                <button
-                                    key={link.id}
-                                    onClick={() => {
-                                        setVistaActual(link.id);
-                                        setIsOpen(false);
-                                    }}
-                                    className={`
-                                        w-full p-4 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-3 transition-all
-                                        ${isActive
-                                            ? 'bg-red-600 text-white shadow-lg'
-                                            : 'text-gray-400 hover:text-white hover:bg-white/5'}
-                                    `}
-                                >
-                                    <Icon size={18} />
-                                    {link.label}
-                                </button>
-                            );
-                        })}
-                    </div>
+            {/* MENÚ HAMBURGUESA ULTRA-COMPACTO (Cero Scroll en 100vh) */}
+            {isMenuOpen && (
+                <div className="fixed inset-0 z-[100] bg-[#111111] text-white flex flex-col h-[100dvh] w-screen animate-in fade-in duration-300">
+                    {/* Header: Iconos Ejecutivos Puros */}
+                    <header className="h-14 flex items-center justify-between px-6 border-b border-white/5 bg-black/40 backdrop-blur-xl flex-shrink-0">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <IconButton id="dashboard" icon={LayoutDashboard} label="D" onClick={() => { setVistaActual('dashboard'); setIsMenuOpen(false); }} className="bg-white/5 w-9 h-9" />
+                            <IconButton id="reportes" icon={BarChart3} label="R" onClick={() => { setVistaActual('reportes'); setIsMenuOpen(false); }} className="bg-white/5 w-9 h-9" />
+                            <IconButton id="administracion" icon={Settings} label="A" onClick={() => { setVistaActual('administracion'); setIsMenuOpen(false); }} className="bg-white/5 w-9 h-9" />
+                            <IconButton id="logout" icon={LogOut} label="E" onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="bg-white/5 w-9 h-9" />
+                        </div>
+                        <button
+                            onClick={() => setIsMenuOpen(false)}
+                            className="w-10 h-10 flex items-center justify-center bg-brand-orange rounded-xl shadow-lg"
+                        >
+                            <X size={20} />
+                        </button>
+                    </header>
+
+                    {/* Lista de Navegación Compacta */}
+                    <main className="flex-1 flex flex-col justify-center px-6 py-4 space-y-1.5 overflow-hidden">
+                        <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.4em] mb-2 text-center">Executive Intelligence Menu</p>
+
+                        {[
+                            { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                            ...middleLinks,
+                            { id: 'reportes', label: 'Reportes', icon: BarChart3 }
+                        ].map((link) => (
+                            <button
+                                key={link.id}
+                                onClick={() => { setVistaActual(link.id); setIsMenuOpen(false); }}
+                                className={`w-full flex items-center justify-between px-5 py-2.5 rounded-xl transition-all border group
+                                    ${isActive(link.id)
+                                        ? 'bg-brand-orange border-brand-orange text-white'
+                                        : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-1.5 rounded-lg ${isActive(link.id) ? 'bg-white/20' : 'bg-brand-orange/10'}`}>
+                                        <link.icon size={18} className={isActive(link.id) ? 'text-white' : 'text-brand-orange'} />
+                                    </div>
+                                    <span className="font-black uppercase tracking-[0.1em] text-[10px] sm:text-[11px]">{link.label}</span>
+                                </div>
+                                <ChevronRight size={14} className="opacity-20" />
+                            </button>
+                        ))}
+                    </main>
+
+                    {/* Footer Minimalista */}
+                    <footer className="p-4 border-t border-white/5 bg-black/20 flex items-center justify-between flex-shrink-0">
+                        <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 bg-brand-orange/20 rounded-lg flex items-center justify-center text-brand-orange">
+                                <User size={14} />
+                            </div>
+                            <span className="text-[9px] font-black uppercase text-white/30 truncate max-w-[100px]">{userEmail.split('@')[0]}</span>
+                        </div>
+                        <span className="text-[7px] font-bold text-white/20 uppercase tracking-widest italic">{APP_CONFIG.FULL_VERSION_LABEL}</span>
+                    </footer>
                 </div>
             )}
-        </nav>
+        </>
     );
 };
 

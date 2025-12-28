@@ -16,29 +16,29 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
 
     const getStageColor = (etapa) => {
         switch (etapa) {
-            case 'Cliente': return 'bg-green-500';
-            case 'No Interesado': return 'bg-gray-400';
+            case 'Cliente': return 'bg-emerald-500';
+            case 'No Interesado': return 'bg-enterprise-400';
             case 'Prospecto': return 'bg-blue-500';
-            case 'Contactado': return 'bg-orange-500';
-            case 'Interesado': return 'bg-red-600';
-            default: return 'bg-slate-400';
+            case 'Contactado': return 'bg-brand-orange';
+            case 'Interesado': return 'bg-brand-magenta';
+            default: return 'bg-enterprise-300';
         }
     };
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-20">
             {/* Header CRM Compacto */}
-            <div className="bg-slate-900 p-4 rounded-2xl md:rounded-b-none flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300">
+            <div className="bg-[#111111] p-4 rounded-t-2xl flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-3">
-                    <Briefcase size={20} className="text-red-500" />
-                    <h3 className="text-sm font-black text-white uppercase flex items-center gap-3">
+                    <Briefcase size={20} className="text-[#FF5900]" />
+                    <h3 className="text-sm font-black text-white uppercase tracking-widest">
                         Pipeline de Clientes
                     </h3>
                 </div>
 
                 <button
                     onClick={onAddNewClient}
-                    className="w-full md:w-auto px-4 py-1.5 bg-red-600 text-white rounded-lg font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+                    className="w-full md:w-auto px-6 py-2 bg-[#FF5900] text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-[#e65000] transition-all shadow-lg active:scale-95 shadow-orange-500/20"
                 >
                     <Plus size={14} /> Alta de Prospecto
                 </button>
@@ -53,19 +53,19 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
                         placeholder="Buscar por empresa o contacto..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-white border border-gray-100 rounded-xl text-[10px] font-bold shadow-sm focus:ring-1 focus:ring-red-500 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-2 bg-white border border-enterprise-100 rounded-xl text-[10px] font-bold shadow-sm focus:ring-1 focus:ring-brand-orange/20 outline-none transition-all"
                     />
                 </div>
 
-                <div className="flex bg-slate-900 rounded-xl p-1 w-fit overflow-x-auto scrollbar-hide">
+                <div className="flex bg-[#111111] rounded-xl p-1 w-fit overflow-x-auto scrollbar-hide border border-white/5">
                     {etapas.map(etapa => (
                         <button
                             key={etapa}
                             onClick={() => setFiltroEtapa(etapa)}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all
+                            className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all
                                 ${filtroEtapa === etapa
-                                    ? 'bg-red-600 text-white shadow-lg'
-                                    : 'text-slate-400 hover:text-slate-200'}`}
+                                    ? 'bg-[#FF5900] text-white shadow-lg shadow-orange-500/20'
+                                    : 'text-white/40 hover:text-white/80'}`}
                         >
                             {etapa}
                         </button>
@@ -76,11 +76,11 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
             {/* Listado de Clientes (Formato Lista Responsive) */}
             <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
                 {/* Header de la Lista (Solo Desktop) */}
-                <div className="hidden lg:grid grid-cols-12 gap-4 px-8 py-4 bg-slate-50 border-b border-gray-100 items-center">
-                    <div className="col-span-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Empresa / Contacto</div>
-                    <div className="col-span-2 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Etapa CRM</div>
-                    <div className="col-span-2 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Plaza</div>
-                    <div className="col-span-3 text-[9px] font-black text-gray-400 uppercase tracking-widest">Segmento</div>
+                <div className="hidden lg:grid grid-cols-12 gap-4 px-8 py-4 bg-enterprise-50 border-b border-enterprise-100 items-center">
+                    <div className="col-span-4 text-[9px] font-black text-enterprise-400 uppercase tracking-widest">Empresa / Contacto</div>
+                    <div className="col-span-2 text-[9px] font-black text-enterprise-400 uppercase tracking-widest text-center">Etapa CRM</div>
+                    <div className="col-span-2 text-[9px] font-black text-enterprise-400 uppercase tracking-widest text-center">Plaza</div>
+                    <div className="col-span-3 text-[9px] font-black text-enterprise-400 uppercase tracking-widest">Segmento</div>
                     <div className="col-span-1"></div>
                 </div>
 
@@ -98,7 +98,7 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
                                         {cliente.nombre_empresa.substring(0, 1)}
                                     </div>
                                     <div className="min-w-0">
-                                        <h3 className="text-sm font-black text-slate-900 tracking-tight group-hover:text-red-600 transition-colors truncate">
+                                        <h3 className="text-sm font-black text-enterprise-950 tracking-tight group-hover:text-brand-orange transition-colors truncate">
                                             {cliente.nombre_empresa}
                                         </h3>
                                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
@@ -129,7 +129,7 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
 
                                 {/* Accción (Bottom-right on mobile) */}
                                 <div className="col-span-6 lg:col-span-1 flex justify-end">
-                                    <div className="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center transition-all text-gray-300">
+                                    <div className="w-8 h-8 rounded-full bg-enterprise-50 group-hover:bg-brand-orange group-hover:text-white flex items-center justify-center transition-all text-enterprise-300">
                                         <ChevronRight size={18} />
                                     </div>
                                 </div>
@@ -137,8 +137,8 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
                         ))
                     ) : (
                         <div className="py-20 text-center bg-white">
-                            <Users className="mx-auto text-gray-100 mb-4" size={48} />
-                            <p className="text-gray-400 font-black uppercase text-xs tracking-widest">Sin coincidencias en el CRM</p>
+                            <Users className="mx-auto text-enterprise-100 mb-4" size={48} />
+                            <p className="text-enterprise-400 font-black uppercase text-xs tracking-widest">Sin coincidencias en el CRM</p>
                         </div>
                     )}
                 </div>

@@ -20,6 +20,8 @@ import Navbar from './components/common/Navbar';
 import StatusMessage from './components/admin/StatusMessage';
 import { supabase } from './lib/supabase';
 
+import { DashboardSkeleton } from './components/ui/Skeleton';
+
 const App = () => {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -89,7 +91,6 @@ const App = () => {
       try {
         if (!row.id) return null;
 
-        // El row ya viene parcialmente formateado de useDatabase, pero App añade capas extras (como VIX detallado)
         const detalles = typeof row.json_detalles === 'string'
           ? JSON.parse(row.json_detalles)
           : (row.json_detalles || {});
@@ -118,26 +119,26 @@ const App = () => {
     }).filter(Boolean);
   }, [rawHistorial, clientes, paquetesVIX]);
 
-  // Sincronizar el historial formateado con el hook de cotización
   useEffect(() => {
     setHistorialState(historial);
   }, [historial, setHistorialState]);
 
-  if (authLoading) return null;
+  if (authLoading) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
   if (!session) return <LoginView />;
 
-  // Si no hay datos y está cargando, mostrar la cara de carga corporativa
+  // Skeletons while loading initial data
   if (dbData.loading && clientes.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <div className="relative">
-          <div className="w-20 h-20 border-4 border-slate-100 rounded-2xl"></div>
-          <div className="absolute inset-0 w-20 h-20 border-4 border-red-600 border-t-transparent rounded-2xl animate-spin"></div>
-        </div>
-        <div className="mt-8 text-center">
-          <p className="text-slate-900 font-black uppercase tracking-[0.4em] text-[10px]">Sincronizando Televisa MID</p>
-          <p className="text-slate-400 font-bold uppercase tracking-widest text-[8px] mt-2">Accediendo a la nube segura...</p>
-        </div>
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        <div className="h-20 bg-white border-b border-enterprise-100 mb-10" />
+        <main className="flex-1 max-w-[1600px] w-full mx-auto px-6">
+          <DashboardSkeleton />
+        </main>
       </div>
     );
   }
@@ -321,45 +322,55 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-enterprise-50 flex flex-col font-sans selection:bg-brand-orange/10 selection:text-brand-orange">
       <Navbar
         setVistaActual={setVistaActual}
         vistaActual={vistaActual}
         session={session}
         onLogout={handleLogout}
+        onNuevaCotizacion={() => {
+          iniciarNuevaCotizacion();
+          setVistaActual('cotizador');
+        }}
       />
 
-      <main className="flex-1 pt-20 pb-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      <main className="flex-1 pt-24 pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1600px] mx-auto">
           {renderVista()}
         </div>
       </main>
 
-      <footer className="bg-white border-t border-slate-100 py-8 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-600 rounded flex items-center justify-center text-[10px] font-bold text-white uppercase italic">
-                TV
+      <footer className="bg-enterprise-950 py-12 px-6 text-white border-t border-white/5 mt-auto">
+        <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-brand-orange rounded-xl flex items-center justify-center text-[12px] font-black text-white uppercase italic shadow-lg shadow-brand-orange/20 rotate-3 transition-transform hover:rotate-0">
+                TU
               </div>
-              <p className="text-[11px] font-black text-slate-800 uppercase tracking-tighter">
-                TELEVISA UNIVISION <span className="text-red-600">MID</span>
+              <p className="text-sm font-black text-white uppercase tracking-tighter">
+                TELEVISA UNIVISION <span className="text-brand-orange">MID</span>
               </p>
             </div>
-            <div className="hidden md:block h-4 w-px bg-slate-200"></div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-              Desarrollado por: <span className="text-slate-600">Roger A Montejo</span>
+            <div className="hidden md:block h-6 w-px bg-white/10"></div>
+            <p className="text-[10px] font-bold text-white/50 uppercase tracking-[0.4em]">
+              Executive Platform <span className="text-white/70">© 2025</span>
             </p>
           </div>
 
-          <div className="flex items-center gap-6">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              COTIZADOR ESTRATÉGICO 2025
-            </p>
-            <div className="h-4 w-px bg-slate-100"></div>
-            <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-              V1.4.2 • 28 DEC 2025
-            </p>
+          <div className="flex items-center gap-10">
+            <div className="flex flex-col items-end">
+              <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mb-1">Architecture</span>
+              <p className="text-[10px] font-black text-white/70 uppercase tracking-widest">
+                Roger A Montejo
+              </p>
+            </div>
+            <div className="h-8 w-px bg-white/10"></div>
+            <div className="flex flex-col items-end">
+              <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mb-1">Deployment</span>
+              <p className="text-[10px] font-black text-white uppercase tracking-widest">
+                V25.1.0 • MID-TU
+              </p>
+            </div>
           </div>
         </div>
       </footer>

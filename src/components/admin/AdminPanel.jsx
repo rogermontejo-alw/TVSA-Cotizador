@@ -59,48 +59,55 @@ const AdminPanel = ({
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20 animate-in fade-in duration-500">
-            {/* Header Admin Fijo o Sticky si se desea, por ahora normal */}
-            <div className="bg-slate-900 pt-6 pb-24 px-4 md:px-8">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="min-h-screen bg-enterprise-50 pb-20 animate-premium-fade">
+            {/* Header Admin Fijo */}
+            <div className="bg-enterprise-950 pt-10 pb-36 px-4 md:px-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-brand-orange/10 blur-[100px] -mr-48 -mt-48"></div>
+                <div className="max-w-7xl mx-auto relative z-10">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                         <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-3">
-                                <Settings className="text-red-500" size={20} />
-                                <h1 className="text-sm font-black text-white uppercase tracking-widest">Panel Maestro</h1>
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-brand-orange rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-orange/20">
+                                    <Settings size={20} />
+                                </div>
+                                <div>
+                                    <h1 className="text-sm font-black text-white uppercase italic italic-brand tracking-[0.3em]">Central de Operaciones</h1>
+                                    <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5">Premium Management Suite</p>
+                                </div>
                             </div>
                         </div>
 
                         <button
                             onClick={() => setVistaActual('dashboard')}
-                            className="w-full md:w-auto px-5 py-2 bg-white text-slate-900 rounded-xl font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-xl active:scale-95 text-[9px]"
+                            className="w-full md:w-auto h-14 px-8 bg-white/5 border border-white/10 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-brand-orange transition-all shadow-xl active:scale-95 text-[10px] flex items-center justify-center gap-3"
                         >
-                            Salir del Panel
+                            <UserCircle size={18} />
+                            Terminal Directiva
                         </button>
                     </div>
 
                     {/* Tabs de Navegación Responsivos */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mt-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-3 mt-10">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setSeccionActiva(tab.id)}
                                 className={`
-                                    flex items-center justify-center gap-2 px-3 py-2 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all
+                                    flex items-center justify-center gap-3 px-4 py-3 rounded-2xl font-black uppercase italic italic-brand tracking-widest text-[9px] transition-all
                                     ${seccionActiva === tab.id
-                                        ? 'bg-red-600 text-white shadow-lg shadow-red-900/40'
-                                        : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}
+                                        ? 'bg-brand-orange text-white shadow-xl shadow-brand-orange/40 scale-105 z-10'
+                                        : 'bg-enterprise-900/50 text-enterprise-400 hover:text-white hover:bg-enterprise-900 border border-white/5'}
                                 `}
                             >
-                                <tab.icon size={12} />
+                                <tab.icon size={14} className={seccionActiva === tab.id ? 'text-white' : 'text-brand-orange'} />
                                 {tab.label}
                             </button>
                         ))}
                     </div>
                 </div>
             </div>
-            <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-20">
-                <div className="animate-in slide-in-from-bottom-4 duration-500">
+            <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-24 relative z-20">
+                <div className="bg-enterprise-50 rounded-[3rem] p-6 md:p-10 shadow-2xl border border-white/20 animate-in slide-in-from-bottom-4 duration-500 min-h-[600px]">
                     {seccionActiva === 'clientes' && (
                         <div className="space-y-6">
                             <ClientManager
@@ -135,7 +142,6 @@ const AdminPanel = ({
                             )}
                         </div>
                     )}
-
                     {seccionActiva === 'tarifas' && (
                         <ConditionsForm
                             clientes={clientes}
@@ -212,11 +218,12 @@ const AdminPanel = ({
                     )}
                 </div>
 
-                <div className="mt-20 text-center">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.4.3 • CRM Cloud Enabled</p>
+                <div className="mt-24 text-center pb-10">
+                    <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-[0.5em] opacity-60">Televisa MID Admin Layer • Enterprise Deployment v2.0</p>
+                    <p className="text-[8px] font-bold text-enterprise-200 uppercase tracking-[0.3em] mt-2 italic italic-brand">High-Performance Media Budgeting Engine</p>
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 };
 

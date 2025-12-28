@@ -1,36 +1,80 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo-tvsa.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sistema de Cotizaciones TVSA</title>
-    
-    <!-- TAILWIND CSS VIA CDN (PARA DESARROLLO) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- ESTILOS DE EMERGENCIA: Asegura que el cuerpo ocupe toda la pantalla para centrar -->
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        width: 100%;
-        background-color: #f3f4f6; /* Fondo gris claro visible */
-      }
-      #root {
-        /* Asegura que el contenedor de React ocupe el 100% de la altura y ancho */
-        min-height: 100vh;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-      }
-    </style>
 
-  </head>
-  <body>
-    <!-- Este es el contenedor donde React renderiza tu componente -->
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/logo-tvsa.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Cotizaciones TVSA</title>
+
+  <!-- TAILWIND CSS VIA CDN con Configuración -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              orange: '#FF5900',
+              magenta: '#C83378',
+            },
+            enterprise: {
+              50: '#F8F9FA',
+              100: '#E9ECEF',
+              200: '#DEE2E6',
+              300: '#CED4DA',
+              400: '#ADB5BD',
+              500: '#6C757D',
+              600: '#495057',
+              700: '#343A40',
+              800: '#212529',
+              900: '#1A1D21',
+              950: '#111111',
+            },
+            error: {
+              DEFAULT: '#EF4444',
+              light: '#FEF2F2',
+            }
+          },
+          backgroundImage: {
+            'univision-gradient': 'linear-gradient(135deg, #FF5900 0%, #C83378 100%)',
+          },
+          boxShadow: {
+            'premium': '0 20px 40px -15px rgba(0,0,0,0.1)',
+            'premium-hover': '0 30px 60px -12px rgba(0,0,0,0.15)',
+            'brand': '0 10px 30px -5px rgba(255, 89, 0, 0.3)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- ESTILOS DE EMERGENCIA: Asegura que el cuerpo ocupe toda la pantalla para centrar -->
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      width: 100%;
+      background-color: #f3f4f6;
+      /* Fondo gris claro visible */
+    }
+
+    #root {
+      /* Asegura que el contenedor de React ocupe el 100% de la altura y ancho */
+      min-height: 100vh;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+
+</head>
+
+<body>
+  <!-- Este es el contenedor donde React renderiza tu componente -->
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>
