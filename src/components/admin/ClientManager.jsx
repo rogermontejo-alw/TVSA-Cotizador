@@ -1,146 +1,174 @@
 import React, { useState } from 'react';
-import { Trash2, Search, Users, ExternalLink, MapPin } from 'lucide-react';
+import { Trash2, Search, Users, MapPin, Phone, Mail, User, ShieldCheck, Edit3, Building2, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
 
-const ClientManager = ({ clientes, onEliminar, setMensaje }) => {
+const ClientManager = ({ clientes, onToggleEstatus, onEliminar, onEdit, setMensaje }) => {
     const [busqueda, setBusqueda] = useState('');
+    const [filtroEstatus, setFiltroEstatus] = useState('activo'); // activo, inactivo, todos
 
-    const clientesFiltrados = clientes.filter(c =>
-        c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-        c.plaza.toLowerCase().includes(busqueda.toLowerCase()) ||
-        c.segmento.toLowerCase().includes(busqueda.toLowerCase())
-    );
+    const clientesFiltrados = (clientes || []).filter(c => {
+        const matchBusqueda = (c.nombre_empresa || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+            (c.plaza || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+            (c.nombre_contacto || '').toLowerCase().includes(busqueda.toLowerCase());
 
-    const handleEliminar = (clienteId, nombre) => {
-        if (window.confirm(`¿Seguro que deseas eliminar al cliente "${nombre}"? \n\nESTO ELIMINARÁ TAMBIÉN TODAS SUS CONDICIONES ESPECIALES EN GOOGLE SHEETS.`)) {
-            onEliminar(clienteId);
+        const matchEstatus = filtroEstatus === 'todos' ? true : c.estatus === filtroEstatus;
+
+        return matchBusqueda && matchEstatus;
+    });
+
+    const handleInactivar = (cliente, currentStatus) => {
+        const nuevoEstatus = currentStatus === 'activo' ? 'inactivo' : 'activo';
+        const accion = nuevoEstatus === 'activo' ? 'reactivar' : 'inactivar';
+        if (window.confirm(`¿Seguro que deseas ${accion} al cliente "${cliente.nombre_empresa}"?`)) {
+            onToggleEstatus({ ...cliente, estatus: nuevoEstatus });
+        }
+    };
+
+    const handleEliminarPermanente = (cliente) => {
+        const confirmacion1 = window.confirm(`⚠️ ADVERTENCIA DE LIMPIEZA ⚠️\n\n¿Estás seguro de ELIMINAR PERMANENTEMENTE a "${cliente.nombre_empresa}"?\n\nEsta acción borrará:\n• El registro del cliente\n• TODAS sus cotizaciones y propuestas\n• Historial de cobranza y facturas\n\nEsta acción NO se puede deshacer. ¿Proceder?`);
+
+        if (confirmacion1) {
+            const confirmacion2 = window.confirm(`Confirma una última vez: Escribe "ELIMINAR" mentalmente y pulsa OK para borrar definitivamente.`);
+            if (confirmacion2) {
+                onEliminar(cliente.id);
+            }
         }
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-            <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                <h3 className="text-xl font-black text-white flex items-center gap-3">
-                    <Users size={24} className="text-blue-500" />
-                    Base de Clientes Activa
-                </h3>
+        <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-gray-100 mt-12 animate-in fade-in duration-500 mb-20">
+            {/* Header Operativo: Base de Datos */}
+            <div className="bg-slate-900 p-8">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                    <div>
+                        <h3 className="text-2xl font-black text-white flex items-center gap-3 tracking-tighter">
+                            <Building2 size={28} className="text-red-500" />
+                            BASE DE DATOS CLIENTES
+                        </h3>
+                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Directorio Maestro de Cuentas y Prospectos</p>
+                    </div>
 
-                <div className="relative w-full md:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Buscar cliente..."
-                        value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 bg-gray-700/50 border border-gray-600 rounded-xl text-white text-sm font-bold focus:ring-2 focus:ring-red-500 outline-none placeholder:text-gray-500"
-                    />
+                    <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+                        {/* Filtro de Estatus */}
+                        <div className="flex bg-slate-800 rounded-xl p-1">
+                            {['activo', 'inactivo', 'todos'].map(status => (
+                                <button
+                                    key={status}
+                                    onClick={() => setFiltroEstatus(status)}
+                                    className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all
+                                        ${filtroEstatus === status
+                                            ? 'bg-red-600 text-white shadow-lg'
+                                            : 'text-slate-500 hover:text-slate-300'}`}
+                                >
+                                    {status}s
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="relative flex-1">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Validar existencia de cliente..."
+                                value={busqueda}
+                                onChange={(e) => setBusqueda(e.target.value)}
+                                className="w-full lg:w-80 pl-12 pr-4 py-3.5 bg-slate-800/50 border border-slate-700 rounded-2xl text-white text-sm font-bold focus:ring-2 focus:ring-red-500 outline-none placeholder:text-slate-500 transition-all shadow-inner"
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Vista Responsiva: Tabla para tablets/desktop, Cards para móvil */}
-            <div className="p-0 overflow-x-auto">
-                {/* Desktop/Tablet Table */}
-                <table className="w-full text-left border-collapse hidden md:table">
-                    <thead>
-                        <tr className="bg-gray-50 text-gray-400 font-bold uppercase text-[10px] tracking-widest border-b border-gray-100">
-                            <th className="px-6 py-4">Nombre del Cliente</th>
-                            <th className="px-6 py-4">Plaza / Segmento</th>
-                            <th className="px-6 py-4">Acuerdo</th>
-                            <th className="px-6 py-4 text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {clientesFiltrados.length === 0 ? (
-                            <tr>
-                                <td colSpan="4" className="px-6 py-12 text-center text-gray-400 font-medium">
-                                    No se encontraron clientes que coincidan con la búsqueda.
-                                </td>
-                            </tr>
-                        ) : (
-                            clientesFiltrados.map(cliente => (
-                                <tr key={cliente.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="font-black text-gray-800">{cliente.nombre}</div>
-                                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">ID: {cliente.id}</div>
-                                    </td>
-                                    <td className="px-6 py-4 text-xs">
-                                        <div className="flex items-center gap-1 font-bold text-gray-600 mb-1">
-                                            <MapPin size={12} className="text-red-500" /> {cliente.plaza}
-                                        </div>
-                                        <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-black text-[9px] uppercase">
-                                            {cliente.segmento}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`text-[10px] font-black uppercase tracking-tight px-3 py-1 rounded-lg ${cliente.tipoAcuerdo === 'SIN_ACUERDO'
-                                            ? 'bg-gray-100 text-gray-500'
-                                            : 'bg-green-50 text-green-600 border border-green-100'
-                                            }`}>
-                                            {cliente.tipoAcuerdo.replace(/_/g, ' ')}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex justify-center">
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); handleEliminar(cliente.id, cliente.nombre); }}
-                                                className="p-3 bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all shadow-sm hover:shadow-red-200"
-                                                title="Eliminar Cliente y sus Condiciones"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-
-                {/* Mobile Cards View */}
-                <div className="md:hidden divide-y divide-gray-100">
-                    {clientesFiltrados.length === 0 ? (
-                        <div className="px-6 py-12 text-center text-gray-400 font-medium">
-                            No se encontraron clientes.
-                        </div>
-                    ) : (
-                        clientesFiltrados.map(cliente => (
-                            <div key={cliente.id} className="p-6 space-y-4 hover:bg-gray-50 transition-colors">
-                                <div className="flex justify-between items-start gap-4">
-                                    <div className="min-w-0">
-                                        <div className="font-black text-gray-800 text-lg leading-tight mb-1">{cliente.nombre}</div>
-                                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">ID: {cliente.id}</div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); handleEliminar(cliente.id, cliente.nombre); }}
-                                        className="p-3 bg-red-50 text-red-500 rounded-xl"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+            {/* Listado de Directorio */}
+            <div className="divide-y divide-gray-100">
+                {clientesFiltrados.length > 0 ? (
+                    clientesFiltrados.map(cliente => (
+                        <div
+                            key={cliente.id}
+                            className={`group grid grid-cols-1 md:grid-cols-12 gap-4 px-8 py-6 hover:bg-slate-50/80 transition-all items-center
+                                ${cliente.estatus === 'inactivo' ? 'opacity-60 bg-gray-50/30' : ''}`}
+                        >
+                            <div className="md:col-span-4 flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shadow-sm transition-all
+                                    ${cliente.estatus === 'inactivo' ? 'bg-gray-200 text-gray-400' : 'bg-slate-100 text-slate-400 group-hover:bg-red-600 group-hover:text-white'}`}>
+                                    {cliente.nombre_empresa.substring(0, 1).toUpperCase()}
                                 </div>
-                                <div className="flex flex-wrap gap-2 items-center">
-                                    <div className="flex items-center gap-1 font-bold text-gray-600 text-xs bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
-                                        <MapPin size={12} className="text-red-500" /> {cliente.plaza}
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <h4 className="font-black text-slate-900 text-base tracking-tight truncate">
+                                            {cliente.nombre_empresa}
+                                        </h4>
+                                        {cliente.estatus === 'inactivo' && (
+                                            <span className="bg-gray-200 text-[7px] font-black text-gray-500 px-1.5 py-0.5 rounded uppercase tracking-tighter">Baja</span>
+                                        )}
                                     </div>
-                                    <span className="bg-gray-100 text-gray-500 px-3 py-1.5 rounded-lg font-black text-[9px] uppercase border border-gray-200">
-                                        {cliente.segmento}
-                                    </span>
-                                    <span className={`text-[9px] font-black uppercase tracking-tight px-3 py-1.5 rounded-lg border ${cliente.tipoAcuerdo === 'SIN_ACUERDO'
-                                        ? 'bg-gray-50 text-gray-400 border-gray-100'
-                                        : 'bg-green-50 text-green-600 border-green-100'
-                                        }`}>
-                                        {cliente.tipoAcuerdo.replace(/_/g, ' ')}
-                                    </span>
+                                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                        <ShieldCheck size={10} className={cliente.estatus === 'inactivo' ? 'text-gray-300' : 'text-blue-500'} />
+                                        {cliente.tipo_acuerdo?.replace(/_/g, ' ') || 'GENERAL'}
+                                    </div>
                                 </div>
                             </div>
-                        ))
-                    )}
-                </div>
+
+                            <div className="md:col-span-3">
+                                <div className="flex items-center gap-2 text-xs font-bold text-slate-600 mb-1">
+                                    <User size={14} className="text-slate-300" />
+                                    <span className="truncate">{cliente.nombre_contacto || 'Sin contacto'}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
+                                    <MapPin size={12} className="text-red-500/30" />
+                                    <span className="truncate">{cliente.plaza}</span>
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-3">
+                                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Estatus Pipeline</div>
+                                <span className={`px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter text-white
+                                    ${cliente.estatus === 'inactivo' ? 'bg-gray-400' :
+                                        cliente.etapa === 'Cliente' ? 'bg-green-500' : 'bg-blue-500'}`}>
+                                    {cliente.etapa || 'Prospecto'}
+                                </span>
+                            </div>
+
+                            <div className="md:col-span-2 flex justify-end items-center gap-2 pt-4 md:pt-0">
+                                <button
+                                    onClick={() => onEdit(cliente)}
+                                    className="p-2.5 bg-gray-50 text-gray-400 hover:bg-slate-900 hover:text-white rounded-xl transition-all shadow-sm"
+                                    title="Editar Registro"
+                                >
+                                    <Edit3 size={16} />
+                                </button>
+                                <button
+                                    onClick={() => handleInactivar(cliente, cliente.estatus)}
+                                    className={`p-2.5 rounded-xl transition-all shadow-sm
+                                        ${cliente.estatus === 'inactivo'
+                                            ? 'bg-emerald-50 text-emerald-500 hover:bg-emerald-600 hover:text-white'
+                                            : 'bg-gray-50 text-gray-400 hover:bg-slate-900 hover:text-white'}`}
+                                    title={cliente.estatus === 'inactivo' ? 'Reactivar' : 'Archivar / Dar de Baja'}
+                                >
+                                    {cliente.estatus === 'inactivo' ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+                                </button>
+                                <button
+                                    onClick={() => handleEliminarPermanente(cliente)}
+                                    className="p-2.5 bg-red-50 text-red-400 hover:bg-red-600 hover:text-white rounded-xl transition-all shadow-sm"
+                                    title="Eliminar Permanente (Limpiar Pruebas)"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="py-24 text-center">
+                        <Users className="mx-auto text-gray-100 mb-4" size={48} />
+                        <p className="text-gray-400 font-black uppercase text-xs tracking-widest italic">No hay coincidencias con esos criterios en la base de datos</p>
+                    </div>
+                )}
             </div>
 
-            <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                <span>Total: {clientesFiltrados.length} Clientes</span>
-                <span className="flex items-center gap-1"><Users size={12} /> Sync Online</span>
+            <div className="bg-slate-50 p-4 flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] border-t border-gray-100">
+                <span className="flex items-center gap-1.5 italic">
+                    Central de Datos Maestros Televisa Mérida
+                </span>
+                <span>{clientesFiltrados.length} Registros Encontrados</span>
             </div>
         </div>
     );

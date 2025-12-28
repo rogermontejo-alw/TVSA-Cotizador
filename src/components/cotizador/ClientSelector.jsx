@@ -20,7 +20,7 @@ const ClientSelector = ({ clientes, clienteSeleccionado, setClienteSeleccionado 
                     <option value="">Buscar cliente...</option>
                     {clientes.map(c => (
                         <option key={c.id} value={c.id}>
-                            {c.nombre} {c.segmento ? `(${c.segmento})` : ''}
+                            {c.nombre_empresa} {c.segmento ? `(${c.segmento})` : ''}
                         </option>
                     ))}
                 </select>
@@ -35,7 +35,7 @@ const ClientSelector = ({ clientes, clienteSeleccionado, setClienteSeleccionado 
                         <div>
                             <p className="text-xs font-bold text-red-800 uppercase tracking-wider">Tipo de Acuerdo</p>
                             <p className="text-sm font-bold text-gray-800 mt-0.5">
-                                {selectedClient.tipoAcuerdo?.replace(/_/g, ' ') || 'SIN ACUERDO'}
+                                {selectedClient.tipo_acuerdo?.replace(/_/g, ' ') || 'SIN ACUERDO'}
                             </p>
                         </div>
                         <div className="text-right">

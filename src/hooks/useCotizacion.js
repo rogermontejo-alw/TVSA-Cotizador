@@ -1,7 +1,14 @@
 import { useState, useCallback, useMemo } from 'react';
 
-export const useCotizacion = (data) => {
-    const { productos, condicionesCliente, descuentosVolumen, paquetesVIX, configuracion, clientes } = data;
+export const useCotizacion = (data = {}) => {
+    const {
+        productos = [],
+        condicionesCliente = [],
+        descuentosVolumen = [],
+        paquetesVIX = [],
+        configuracion = {},
+        clientes = []
+    } = data;
 
     const [clienteSeleccionado, setClienteSeleccionado] = useState('');
     const [presupuesto, setPresupuesto] = useState('');
@@ -90,6 +97,8 @@ export const useCotizacion = (data) => {
 
         const items = productosSeleccionados.map(ps => {
             const producto = productos.find(p => p.id === ps.id);
+            if (!producto) return null;
+
             const precioBase = calcularPrecioUnitario(ps.id, clienteSeleccionado);
             const descVolumen = aplicarDescuentoVolumen(producto.categoria, ps.cantidad);
             const precioConDescuento = precioBase * (1 - descVolumen);
@@ -103,7 +112,7 @@ export const useCotizacion = (data) => {
                 precioUnitario: precioConDescuento,
                 subtotal
             };
-        });
+        }).filter(Boolean);
 
         const subtotalTV = items.reduce((sum, item) => sum + item.subtotal, 0);
         const paqueteVIXSeleccionado = paquetesVIX.find(p => p.id === paqueteVIX);

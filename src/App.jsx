@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useSheetsData } from './hooks/useSheetsData';
+import { useDatabase } from './hooks/useDatabase';
 import { useCotizacion } from './hooks/useCotizacion';
 import { generatePDF } from './utils/pdfGenerator';
 
@@ -9,60 +9,95 @@ import AdminPanel from './components/admin/AdminPanel';
 import PriceListView from './components/views/PriceListView';
 import HistoryView from './components/views/HistoryView';
 import ComparatorView from './components/views/ComparatorView';
+import DashboardView from './components/views/DashboardView';
+import LoginView from './components/views/LoginView';
+import CobranzaView from './components/admin/CobranzaView';
+import CRMView from './components/views/CRMView';
+import ClientFichaView from './components/views/ClientFichaView';
+import ReportsView from './components/views/ReportsView';
+import Navbar from './components/common/Navbar';
+import { supabase } from './lib/supabase';
 
 const App = () => {
-  const [vistaActual, setVistaActual] = useState('cotizador');
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [vistaActual, setVistaActual] = useState('dashboard');
+  const [selectedClient, setSelectedClient] = useState(null);
+
+  // Auth Listener
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Custom Hooks
-  const sheetsData = useSheetsData();
-  const cotizacionState = useCotizacion(sheetsData);
+  const dbData = useDatabase();
+  const cotizacionState = useCotizacion(dbData);
 
-  const { cargarDatos, guardarEnSheets, eliminarRegistro, mensajeAdmin, setMensajeAdmin, configuracion } = sheetsData;
+  const {
+    cargarDatos,
+    guardarRegistro,
+    eliminarRegistro,
+    mensajeAdmin,
+    setMensajeAdmin,
+    configuracion,
+    masterContracts,
+    historial: rawHistorial,
+    clientes,
+    productos,
+    condicionesCliente,
+    paquetesVIX,
+    metasComerciales
+  } = dbData;
+
+  const [historial, setHistorial] = useState([]);
+  const [comparar, setComparar] = useState([]);
+
   const {
     setCotizacionResult,
-    historial,
-    setHistorial,
-    comparar,
-    setComparar,
+    setHistorial: setHistorialState,
+    setComparar: setCompararState,
     iniciarNuevaCotizacion
   } = cotizacionState;
 
-  // Effects
-  // La carga inicial y sincronización ya las maneja el hook useSheetsData
-
-
-  // Sincronizar historial de Sheets con el estado local
+  // Sincronizar historial de DB con el estado local formateado
   useEffect(() => {
-    // Mapear el historial plano de Sheets (aunque esté vacío) a los objetos complejos
-    const historialFormateado = (sheetsData.historial || []).map(row => {
+    if (!session || !rawHistorial) return;
+
+    const historialFormateado = rawHistorial.map(row => {
       try {
-        if (!row.id) return null; // Solo requerimos ID para identificar la fila
+        if (!row.id) return null;
 
-        const detalles = JSON.parse(row.detalles_json || '{}');
-        const clienteNombre = (row.cliente || 'Desconocido').trim();
+        const detalles = typeof row.json_detalles === 'string'
+          ? JSON.parse(row.json_detalles)
+          : (row.json_detalles || {});
 
-        // Búsqueda de cliente más flexible
-        const clienteEncontrado = sheetsData.clientes.find(c =>
-          c.nombre?.toLowerCase().trim() === clienteNombre.toLowerCase()
-        );
-
-        // Búsqueda de paquete VIX para recuperar impresiones
-        const nombreVix = row.paquete_digital || 'Ninguno';
-        const vixCompleto = sheetsData.paquetesVIX.find(v => v.nombre === nombreVix) || { nombre: nombreVix, impresiones: 0 };
+        const clienteEncontrado = clientes.find(c => c.id === row.cliente_id);
+        const vixCompleto = paquetesVIX.find(v => v.id === row.paquete_vix_id) || { nombre: 'Ninguno', impresiones: 0 };
 
         return {
           id: row.id,
-          fecha: row.fecha ? new Date(row.fecha) : new Date(),
-          cliente: clienteEncontrado || { nombre: clienteNombre, plaza: 'Externa', id: 'EXT' },
-          total: parseFloat(row.inversion_total_neta) || 0,
-          subtotalTV: parseFloat(row.subtotal_tv) || 0,
-          costoVIX: parseFloat(row.costo_vix) || 0,
-          subtotalGeneral: (parseFloat(row.subtotal_tv) || 0) + (parseFloat(row.costo_vix) || 0),
-          presupuestoBase: parseFloat(row.inversion_inicial) || 0,
+          folio: row.folio,
+          fecha: row.created_at ? new Date(row.created_at) : new Date(),
+          cliente: clienteEncontrado || { nombre_empresa: 'Externo', plaza: 'Externa', id: 'EXT' },
+          total: parseFloat(row.monto_total) || 0,
+          estatus: row.estatus,
+          probabilidad: row.probabilidad_cierre,
           items: detalles.items || [],
           distribucion: detalles.distribucion || [],
-          diasCampana: detalles.diasCampana || 30,
-          paqueteVIX: vixCompleto
+          diasCampana: row.dias_campana || 30,
+          paqueteVIX: vixCompleto,
+          presupuestoBase: detalles.inversion_inicial || 0,
+          subtotalTV: detalles.subtotal_tv || 0,
+          costoVIX: detalles.costo_vix || 0
         };
       } catch (e) {
         console.error("Error parseando fila de historial:", row, e);
@@ -71,7 +106,7 @@ const App = () => {
     }).filter(Boolean);
 
     setHistorial(historialFormateado);
-  }, [sheetsData.historial, sheetsData.clientes, sheetsData.paquetesVIX, setHistorial]);
+  }, [rawHistorial, clientes, paquetesVIX, session]);
 
   // Actions
   const handleGuardarCotizacion = useCallback(async () => {
@@ -79,31 +114,29 @@ const App = () => {
 
     const cotz = cotizacionState.cotizacionResult;
 
-    // Preparar resumen de productos para una columna legible en Sheets
-    const resumenProductos = cotz.items.map(i => `${i.cantidad}x ${i.producto.tipo} (${i.producto.canal})`).join(' | ');
-
-    const datosParaSheet = {
-      id: cotz.id,
-      fecha: cotz.fecha.toISOString(),
-      cliente: cotz.cliente.nombre,
-      inversion_inicial: cotz.presupuestoBase,
-      inversion_total_neta: cotz.total,
-      subtotal_tv: cotz.subtotalTV,
-      costo_vix: cotz.costoVIX,
-      paquete_digital: cotz.paqueteVIX?.nombre || 'Ninguno',
-      productos_cotizados: resumenProductos,
-      detalles_json: JSON.stringify({
+    const datosParaDB = {
+      cliente_id: cotz.cliente.id,
+      mc_id: cotz.mc_id || null,
+      folio: `COT-${Date.now().toString().slice(-6)}`,
+      estatus: 'borrador',
+      monto_total: cotz.total,
+      dias_campana: cotz.diasCampana || 30,
+      paquete_vix: !!cotz.paqueteVIX?.id,
+      json_detalles: {
         items: cotz.items,
         distribucion: cotz.distribucion,
-        diasCampana: cotz.diasCampana
-      })
+        inversion_inicial: cotz.presupuestoBase,
+        subtotal_tv: cotz.subtotalTV,
+        costo_vix: cotz.costoVIX
+      }
     };
 
-    const exito = await guardarEnSheets(datosParaSheet, 'Cotizaciones');
-    if (exito) {
-      setHistorial(prev => [cotz, ...prev]);
+    const result = await guardarRegistro('cotizaciones', datosParaDB);
+    if (result) {
+      cargarDatos();
+      setMensajeAdmin({ tipo: 'exito', texto: 'Cotización guardada en el CRM.' });
     }
-  }, [cotizacionState.cotizacionResult, guardarEnSheets, setHistorial]);
+  }, [cotizacionState.cotizacionResult, guardarRegistro, cargarDatos, setMensajeAdmin]);
 
   const handleAgregarAComparador = useCallback((cotz) => {
     if (!comparar.some(c => c.id === cotz.id)) {
@@ -112,13 +145,18 @@ const App = () => {
     } else {
       setMensajeAdmin({ tipo: 'error', texto: 'Esta cotización ya está en el comparador.' });
     }
-  }, [comparar, setComparar, setMensajeAdmin]);
+  }, [comparar, setMensajeAdmin]);
 
   const handleMostrarPropuesta = useCallback((cotz) => {
-    generatePDF(cotz, configuracion);
-  }, [configuracion]);
+    generatePDF(cotz, configuracion, dbData.perfil);
+  }, [configuracion, dbData.perfil]);
 
-  // Router-ish rendering
+  const handleSelectClient = (clienteTarget) => {
+    setSelectedClient(clienteTarget);
+    setVistaActual('ficha-cliente');
+  };
+
+  // Router rendering
   const renderVista = () => {
     switch (vistaActual) {
       case 'administracion':
@@ -127,19 +165,24 @@ const App = () => {
             setVistaActual={setVistaActual}
             mensajeAdmin={mensajeAdmin}
             setMensajeAdmin={setMensajeAdmin}
-            guardarEnSheets={guardarEnSheets}
+            guardarEnSheets={guardarRegistro}
             eliminarRegistro={eliminarRegistro}
-            clientes={sheetsData.clientes}
-            productos={sheetsData.productos}
-            condicionesCliente={sheetsData.condicionesCliente}
+            clientes={clientes}
+            productos={productos}
+            condicionesCliente={condicionesCliente}
+            configuracion={configuracion}
+            cobranza={dbData.cobranza}
+            metasComerciales={metasComerciales}
+            perfil={dbData.perfil}
+            guardarRegistro={guardarRegistro}
           />
         );
       case 'lista-precios':
         return (
           <PriceListView
             setVistaActual={setVistaActual}
-            clientes={sheetsData.clientes}
-            productos={sheetsData.productos}
+            clientes={clientes}
+            productos={productos}
             calcularPrecioUnitario={cotizacionState.calcularPrecioUnitario}
           />
         );
@@ -149,17 +192,17 @@ const App = () => {
             setVistaActual={setVistaActual}
             historial={historial}
             setCotizacion={(cotz) => {
-              // Hydrate state from history
               cotizacionState.setClienteSeleccionado(cotz.cliente.id);
               cotizacionState.setPresupuesto(cotz.presupuestoBase);
               cotizacionState.setDuracionDias(cotz.diasCampana);
               cotizacionState.setPaqueteVIX(cotz.paqueteVIX?.id || '');
               cotizacionState.setProductosSeleccionados(cotz.items.map(i => ({ id: i.producto.id, cantidad: i.cantidad })));
               cotizacionState.setCotizacionResult(cotz);
+              setVistaActual('cotizador');
             }}
             agregarAComparador={handleAgregarAComparador}
             mostrarPropuesta={handleMostrarPropuesta}
-            eliminarCotizacion={(id) => eliminarRegistro('Cotizaciones', 'id', id)}
+            eliminarCotizacion={(id) => eliminarRegistro('cotizaciones', 'id', id)}
           />
         );
       case 'comparador':
@@ -171,10 +214,70 @@ const App = () => {
             mostrarPropuesta={handleMostrarPropuesta}
           />
         );
+      case 'dashboard':
+        return (
+          <DashboardView
+            historial={historial}
+            clientes={clientes}
+            metasComerciales={metasComerciales}
+            setVistaActual={setVistaActual}
+            actualizarDashboard={cargarDatos}
+            iniciarNuevaCotizacion={(clientId) => {
+              if (clientId) {
+                const target = clientes.find(c => c.id === clientId);
+                setSelectedClient(target);
+                iniciarNuevaCotizacion(clientId);
+                setVistaActual('cotizador');
+              } else {
+                setVistaActual('crm');
+              }
+            }}
+          />
+        );
+      case 'crm':
+        return (
+          <CRMView
+            clientes={clientes}
+            onSelectClient={handleSelectClient}
+            onAddNewClient={() => {
+              setSelectedClient(null);
+              setVistaActual('administracion'); // Go to admin to add client
+            }}
+          />
+        );
+      case 'ficha-cliente':
+        return selectedClient ? (
+          <ClientFichaView
+            cliente={selectedClient}
+            cotizaciones={historial}
+            onBack={() => setVistaActual('crm')}
+            onSaveClient={guardarRegistro}
+            onNewQuote={() => {
+              iniciarNuevaCotizacion(selectedClient.id);
+              setVistaActual('cotizador');
+            }}
+            onViewQuote={handleMostrarPropuesta}
+            setMensaje={setMensajeAdmin}
+          />
+        ) : <CRMView clientes={clientes} onSelectClient={handleSelectClient} />;
+      case 'reportes':
+        return (
+          <ReportsView
+            clientes={clientes}
+            cotizaciones={historial}
+          />
+        );
+      case 'cobranza':
+        return (
+          <CobranzaView
+            cobranza={dbData.cobranza}
+            setMensaje={setMensajeAdmin}
+          />
+        );
       default:
         return (
           <CotizadorView
-            data={sheetsData}
+            data={dbData}
             cotizacionState={cotizacionState}
             setVistaActual={setVistaActual}
             iniciarNuevaCotizacion={iniciarNuevaCotizacion}
@@ -189,9 +292,33 @@ const App = () => {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center">
+        <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-white font-black uppercase tracking-[0.3em] text-[10px]">Verificando Credenciales...</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <LoginView />;
+  }
+
   return (
-    <div className="font-sans antialiased text-gray-900">
-      {renderVista()}
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans antialiased text-gray-900">
+      <Navbar
+        vistaActual={vistaActual}
+        setVistaActual={setVistaActual}
+        session={session}
+        onLogout={() => supabase.auth.signOut()}
+      />
+
+      <main className="flex-1 mt-16 p-4 md:p-8">
+        <div className="max-w-7xl mx-auto">
+          {renderVista()}
+        </div>
+      </main>
     </div>
   );
 };

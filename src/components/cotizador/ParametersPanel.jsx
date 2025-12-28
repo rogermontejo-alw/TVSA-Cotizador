@@ -99,11 +99,11 @@ const ParametersPanel = ({
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Paquete VIX (Opcional)
                 </label>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                     <select
                         value={paqueteVIX}
                         onChange={(e) => setPaqueteVIX(e.target.value)}
-                        className="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white font-medium text-gray-700"
+                        className="flex-1 min-w-0 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white font-medium text-gray-700 text-sm"
                     >
                         <option value="">Sin paquete VIX</option>
                         {paquetesVIX.map(p => (
@@ -115,7 +115,7 @@ const ParametersPanel = ({
                     {paqueteVIX && (
                         <button
                             onClick={() => setPaqueteVIX('')}
-                            className="bg-red-50 text-red-600 p-3 rounded-lg hover:bg-red-100 transition-colors"
+                            className="flex-shrink-0 bg-red-50 text-red-600 p-3 rounded-lg hover:bg-red-100 transition-colors border border-red-100"
                             title="Quitar Paquete VIX"
                         >
                             <Trash2 size={18} />

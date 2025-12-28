@@ -89,7 +89,7 @@ const SelectedProducts = ({
                                             </p>
                                         </div>
                                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">
-                                            {producto.plaza} | {producto.horario} | {producto.duracion}
+                                            {producto.plaza} | {producto.horario}
                                         </p>
                                         {/* Costo Unitario Informativo */}
                                         <p className="text-[10px] font-black text-red-700 mt-1 uppercase tracking-widest">

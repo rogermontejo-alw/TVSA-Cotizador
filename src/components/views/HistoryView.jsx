@@ -15,7 +15,7 @@ const HistoryView = ({
 
     const historialFiltrado = useMemo(() => {
         return (historial || []).filter(cotz => {
-            const nombreCliente = (cotz.cliente?.nombre || '').toLowerCase();
+            const nombreCliente = (cotz.cliente?.nombre_empresa || '').toLowerCase();
             const idCotz = (cotz.id || '').toLowerCase();
             const plazaCliente = (cotz.cliente?.plaza || '').toLowerCase();
             const query = busqueda.toLowerCase();
@@ -53,8 +53,8 @@ const HistoryView = ({
                                 <ArrowLeft size={24} />
                             </button>
                             <div>
-                                <h1 className="text-3xl font-black text-gray-800 tracking-tight">Archivo Histórico</h1>
-                                <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest mt-1">Sincronizado con Google Sheets</p>
+                                <h1 className="text-3xl font-black text-gray-800 tracking-tight">Cotizaciones Enviadas</h1>
+                                <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest mt-1">Sincronizado con CRM Supabase</p>
                             </div>
                         </div>
 
@@ -135,8 +135,8 @@ const HistoryView = ({
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-black text-gray-800">{cotz.cliente?.nombre || 'Cliente Desconocido'}</span>
-                                                    <span className="text-[10px] font-bold text-red-600 tracking-tighter">{cotz.id}</span>
+                                                    <span className="text-sm font-black text-gray-800">{cotz.cliente?.nombre_empresa || 'Cliente Desconocido'}</span>
+                                                    <span className="text-[10px] font-bold text-red-600 tracking-tighter">{cotz.folio || cotz.id}</span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -208,8 +208,8 @@ const HistoryView = ({
                                                     ? cotz.fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
                                                     : 'Fecha no válida'}
                                             </div>
-                                            <div className="font-black text-gray-800 text-lg leading-tight">{cotz.cliente?.nombre}</div>
-                                            <div className="text-[10px] font-bold text-red-600 mt-1">{cotz.id}</div>
+                                            <div className="font-black text-gray-800 text-lg leading-tight">{cotz.cliente?.nombre_empresa}</div>
+                                            <div className="text-[10px] font-bold text-red-600 mt-1">{cotz.folio || cotz.id}</div>
                                         </div>
                                         <div className="text-right">
                                             <div className="text-lg font-black text-gray-900">{formatMXN(cotz.subtotalGeneral || cotz.total)}</div>

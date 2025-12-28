@@ -62,7 +62,7 @@ const ProductGrid = ({
                                         </span>
                                         <span className="text-xs font-bold text-red-700 uppercase">{p.tipo}</span>
                                     </div>
-                                    <h3 className="font-bold text-gray-800 truncate">{p.horario} - {p.duracion}</h3>
+                                    <h3 className="font-bold text-gray-800 truncate">{p.horario}</h3>
                                     <div className="flex items-center gap-3 mt-1.5">
                                         <span className="inline-flex items-center text-[11px] font-semibold text-gray-500">
                                             <MapPin className="mr-1" size={12} /> {p.plaza}

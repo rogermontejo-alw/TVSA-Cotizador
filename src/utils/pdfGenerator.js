@@ -1,6 +1,6 @@
 import { formatMXN } from './formatters';
 
-export const generatePDF = (cotz, configuracion) => {
+export const generatePDF = (cotz, configuracion, perfil = {}) => {
   const totalUnidadesGeneral = cotz.distribucion.reduce((acc, dist) => acc + dist.totalUnidades, 0);
   const totalSemanas = cotz.distribucion[0]?.distribucionSemanal.length || 0;
   const now = new Date();
@@ -334,9 +334,12 @@ export const generatePDF = (cotz, configuracion) => {
 
         <div class="signature-area">
           <div class="signature-block">
+            <div style="font-size: 10px; font-weight: 900; color: #111; margin-bottom: 2px;">${perfil?.nombre_completo || 'Asesor Comercial'}</div>
+            <div style="font-size: 8px; color: #666; margin-bottom: 5px;">${perfil?.telefono || 'Televisa Univisión MID'}</div>
             <div class="signature-line">Por Televisa Univisión</div>
           </div>
           <div class="signature-block">
+            <div style="height: 15px;"></div>
             <div class="signature-line">Nombre y Firma Aceptación Cliente</div>
           </div>
         </div>

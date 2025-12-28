@@ -57,7 +57,7 @@ const CotizadorView = ({
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
                 <div className="w-16 h-16 border-4 border-red-700 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Sincronizando con Google Sheets...</p>
+                <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Sincronizando con CRM Televisa MID...</p>
             </div>
         );
     }
