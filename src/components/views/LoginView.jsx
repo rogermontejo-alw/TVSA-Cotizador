@@ -47,7 +47,7 @@ const LoginView = () => {
                         TELEVISA<span className="text-red-500">MID</span>
                     </h1>
                     <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">
-                        Portal de Gestión de Ventas v2.0
+                        Portal de Gestión de Ventas v1.4.2
                     </p>
                 </div>
 

@@ -92,19 +92,20 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
             if (shouldLogout) {
                 setMensaje({
                     tipo: 'exito',
-                    texto: 'Credenciales actualizadas. Por seguridad, debes iniciar sesión de nuevo.'
+                    texto: 'Credenciales actualizadas correctamente. Redirigiendo...'
                 });
                 setTimeout(() => {
                     onLogout();
-                }, 2000);
+                }, 1500);
             } else {
                 setEditMode(false);
                 setMensaje({
                     tipo: 'exito',
-                    texto: selectedUser ? 'Datos guardados y vinculados correctamente' : 'Perfil creado en base de datos'
+                    texto: selectedUser ? 'Datos guardados correctamente' : 'Nuevo usuario creado'
                 });
             }
         } catch (err) {
+            console.error("❌ Error Admin Sync:", err);
             setMensaje({ tipo: 'error', texto: err.message });
         } finally {
             setIsUpdating(false);

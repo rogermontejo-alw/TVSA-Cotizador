@@ -196,7 +196,7 @@ const AdminPanel = ({
                 </div>
 
                 <div className="mt-20 text-center">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.4.1 • CRM Cloud Enabled</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.4.2 • CRM Cloud Enabled</p>
                 </div>
             </div>
         </div>
