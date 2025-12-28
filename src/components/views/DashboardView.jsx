@@ -347,16 +347,19 @@ const DashboardView = ({
                     <ArrowRight size={18} className="text-slate-300 group-hover:text-red-600 transition-colors" />
                 </button>
 
-                <div className="p-5 bg-emerald-600 text-white rounded-3xl flex items-center justify-between shadow-xl">
-                    <div className="flex items-center gap-4">
+                <button
+                    onClick={iniciarNuevaCotizacion}
+                    className="p-5 bg-emerald-600 text-white rounded-3xl flex items-center justify-between group hover:bg-emerald-700 transition-all shadow-xl active:scale-95"
+                >
+                    <div className="flex items-center gap-4 text-left">
                         <div className="bg-white/20 p-2.5 rounded-xl"><PlusCircle size={18} /></div>
                         <div>
                             <span className="text-[11px] font-black uppercase tracking-widest block">Nueva Inversión</span>
-                            <button onClick={() => setVistaActual('cotizador')} className="text-[9px] font-bold text-white/80 uppercase underline decoration-white/20 hover:text-white transition-colors mt-1">Lanzar Cotización</button>
+                            <span className="text-[9px] font-bold text-white/70 uppercase tracking-tighter mt-1 block">Lanzar Cotizador</span>
                         </div>
                     </div>
-                    <Zap size={18} className="fill-white" />
-                </div>
+                    <Zap size={18} className="fill-white group-hover:animate-pulse" />
+                </button>
             </div>
 
         </div>

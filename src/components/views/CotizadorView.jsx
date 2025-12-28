@@ -1,5 +1,4 @@
 import React from 'react';
-import Header from '../cotizador/Header';
 import ClientSelector from '../cotizador/ClientSelector';
 import ParametersPanel from '../cotizador/ParametersPanel';
 import ProductGrid from '../cotizador/ProductGrid';
@@ -66,15 +65,7 @@ const CotizadorView = ({
     return (
         <div className="animate-in fade-in duration-500">
             <div>
-                <Header
-                    historialLength={historial.length}
-                    compararLength={comparar.length}
-                    ultimaActualizacion={ultimaActualizacion}
-                    productosCount={productos.length}
-                    clientesCount={clientes.length}
-                    setVistaActual={setVistaActual}
-                    iniciarNuevaCotizacion={iniciarNuevaCotizacion}
-                />
+                {/* Eliminamos el Header antiguo ya que ahora tenemos un Navbar global */}
 
                 {!cotizacionResult ? (
                     <>

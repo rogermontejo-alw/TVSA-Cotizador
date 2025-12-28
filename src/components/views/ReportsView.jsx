@@ -21,7 +21,7 @@ import { formatMXN } from '../../utils/formatters';
 
 const MISSING_DATA_CHAR = '-';
 
-const ReportsView = ({ clientes = [], cotizaciones = [] }) => {
+const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterContracts = [] }) => {
     const [seccionReporte, setSeccionReporte] = useState('ventas-mes');
 
     // 📅 Periodo
@@ -162,8 +162,187 @@ const ReportsView = ({ clientes = [], cotizaciones = [] }) => {
         return { plazas, filas, totalesPorPlaza, granTotal };
     }, [ganadas, clientes]);
 
-    const handleExportCSV = () => {
-        alert('Generando exportación consolidada...');
+    const getReportData = (id) => {
+        let headers = [];
+        let rows = [];
+        let title = "";
+
+        if (id === 'ventas-mes') {
+            title = "VENTAS POR MES (MATRIZ POR CLIENTE)";
+            headers = ['Cliente', ...matrizMensual.mesesColumnas.map(m => matrizMensual.mesesNombres[m]), 'Total'];
+            rows = matrizMensual.filas.map(f => [
+                f.nombre,
+                ...matrizMensual.mesesColumnas.map(m => f.importes[m] || 0),
+                f.total
+            ]);
+            rows.push(['TOTAL MENSUAL', ...matrizMensual.mesesColumnas.map(m => matrizMensual.totalesPorMes[m] || 0), matrizMensual.granTotal]);
+        } else if (id === 'ventas-canal') {
+            title = "VENTAS POR CANAL / PRODUCTO";
+            headers = ['Canal/Producto', ...matrizCanales.plazas, 'Total Canal'];
+            rows = matrizCanales.filas.map(f => [
+                f.canal,
+                ...matrizCanales.plazas.map(p => f.importes[p] || 0),
+                f.total
+            ]);
+            rows.push(['TOTAL CIUDAD', ...matrizCanales.plazas.map(p => matrizCanales.totalesPorPlaza[p] || 0), matrizCanales.granTotal]);
+        } else if (id === 'ventas-ciudad') {
+            title = "VENTAS POR CIUDAD (MATRIZ TERRITORIAL)";
+            headers = ['Cliente', ...matrizCiudad.plazas, 'Total Cliente'];
+            rows = matrizCiudad.filas.map(f => [
+                f.nombre,
+                ...matrizCiudad.plazas.map(p => f.importes[p] || 0),
+                f.total
+            ]);
+            rows.push(['TOTAL CIUDAD', ...matrizCiudad.plazas.map(p => matrizCiudad.totalesPorPlaza[p] || 0), matrizCiudad.granTotal]);
+        } else if (id === 'control-cierres') {
+            title = "CONTROL ADMINISTRATIVO DE CIERRES";
+            headers = ['Fecha Cierre', 'Cliente', 'Folio', 'Master Contract', 'Orden', 'Factura', 'Inversion Neta'];
+            rows = ganadas.map(q => {
+                const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
+                const registroCobranza = (cobranza || []).find(cob => String(cob.cotizacion_id) === String(q.id));
+                const mc = (masterContracts || []).find(m => String(m.id) === String(q.mc_id));
+                return [
+                    new Date(q.fecha_cierre_real || q.created_at).toLocaleDateString('es-MX'),
+                    cliente?.nombre_empresa || 'S/N',
+                    q.folio || q.id,
+                    mc ? (mc.numero_mc || mc.numero_contrato || mc.folio || 'VINCULADO') : 'FALTA',
+                    q.numero_contrato || 'FALTA',
+                    registroCobranza?.numero_factura || 'FALTA',
+                    parseFloat(q.subtotalGeneral || q.total / 1.16) || 0
+                ];
+            });
+        } else if (id === 'resumen-clientes') {
+            title = "PIPELINE Y EFECTIVIDAD POR CUENTA ($)";
+            headers = ['Cuenta', 'Plaza', 'Valor Abiertas', 'Valor Ganadas', 'Valor Perdidas', 'Venta Acumulada'];
+            rows = (clientes || []).map(c => {
+                const cCotz = (cotizaciones || []).filter(q => String(q.cliente_id) === String(c.id));
+
+                const valAbiertas = cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada')
+                    .reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+
+                const valGanadas = cCotz.filter(q => q.estatus === 'ganada')
+                    .reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+
+                const valPerdidas = cCotz.filter(q => q.estatus === 'perdida')
+                    .reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+
+                if (valAbiertas === 0 && valGanadas === 0 && valPerdidas === 0) return null;
+
+                return [c.nombre_empresa, c.plaza, valAbiertas, valGanadas, valPerdidas, valGanadas];
+            }).filter(Boolean);
+        }
+
+        return { title, headers, rows };
+    };
+
+    const handleExportExcel = (mode = 'current') => {
+        const reportIds = mode === 'all'
+            ? ['ventas-mes', 'ventas-canal', 'ventas-ciudad', 'control-cierres', 'resumen-clientes']
+            : [seccionReporte];
+
+        const template = `
+            <?xml version="1.0"?>
+            <?mso-application progid="Excel.Sheet"?>
+            <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+             xmlns:o="urn:schemas-microsoft-com:office:office"
+             xmlns:x="urn:schemas-microsoft-com:office:excel"
+             xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+             xmlns:html="http://www.w3.org/TR/REC-html40">
+             <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+              <Author>Televisa MID Cotizador</Author>
+              <Created>${new Date().toISOString()}</Created>
+             </DocumentProperties>
+             <Styles>
+              <Style ss:ID="Default" ss:Name="Normal">
+               <Alignment ss:Vertical="Bottom"/>
+               <Borders/>
+               <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+               <Interior/>
+               <NumberFormat/>
+               <Protection/>
+              </Style>
+              <Style ss:ID="Header">
+               <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="12" ss:Color="#FFFFFF" ss:Bold="1"/>
+               <Interior ss:Color="#0F172A" ss:Pattern="Solid"/>
+              </Style>
+              <Style ss:ID="Title">
+               <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="14" ss:Color="#DC2626" ss:Bold="1"/>
+              </Style>
+              <Style ss:ID="Currency">
+               <NumberFormat ss:Format="&quot;$&quot;#,##0.00"/>
+              </Style>
+             </Styles>
+             {SHEETS}
+            </Workbook>`;
+
+        let sheetsXml = "";
+
+        reportIds.forEach(id => {
+            const { title, headers, rows } = getReportData(id);
+            const sheetName = id === 'ventas-mes' ? 'Mensual' :
+                id === 'ventas-canal' ? 'Canal' :
+                    id === 'ventas-ciudad' ? 'Ciudad' :
+                        id === 'control-cierres' ? 'Cierres' : 'Pipeline';
+
+            let rowXml = "";
+
+            // Title and Metadata
+            rowXml += `<Row><Cell ss:StyleID="Title"><Data ss:Type="String">${title}</Data></Cell></Row>`;
+            rowXml += `<Row><Cell><Data ss:Type="String">Periodo: ${fechaInicio} al ${fechaFin}</Data></Cell></Row>`;
+            rowXml += `<Row><Cell><Data ss:Type="String">Generado: ${new Date().toLocaleString()}</Data></Cell></Row>`;
+            rowXml += `<Row></Row>`;
+
+            // Headers
+            rowXml += `<Row>`;
+            headers.forEach(h => {
+                rowXml += `<Cell ss:StyleID="Header"><Data ss:Type="String">${h}</Data></Cell>`;
+            });
+            rowXml += `</Row>`;
+
+            // Data Rows
+            rows.forEach(row => {
+                rowXml += `<Row>`;
+                row.forEach((cell, cellIdx) => {
+                    const header = headers[cellIdx];
+                    // Identificamos columnas que NO deben ser moneda aunque sean números
+                    const isTextCol = ["Orden", "Factura", "Folio", "Folio Cotz", "Master Contract"].includes(header);
+
+                    const isNum = !isNaN(cell) && typeof cell !== 'boolean' && cell !== '' && !isTextCol;
+                    const type = isNum ? 'Number' : 'String';
+                    const style = isNum ? ' ss:StyleID="Currency"' : '';
+
+                    // Limpieza de caracteres especiales para XML
+                    const cleanVal = String(cell)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&apos;');
+
+                    rowXml += `<Cell${style}><Data ss:Type="${type}">${isNum ? cell : cleanVal}</Data></Cell>`;
+                });
+                rowXml += `</Row>`;
+            });
+
+            sheetsXml += `
+                <Worksheet ss:Name="${sheetName}">
+                 <Table>
+                  ${rowXml}
+                 </Table>
+                </Worksheet>`;
+        });
+
+        const finalXml = template.replace("{SHEETS}", sheetsXml);
+        const filename = mode === 'all'
+            ? `Reporte_Consolidado_${fechaInicio}_al_${fechaFin}.xls`
+            : `Reporte_${seccionReporte}_${fechaInicio}_al_${fechaFin}.xls`;
+
+        const blob = new Blob([finalXml], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.click();
     };
 
     return (
@@ -179,9 +358,20 @@ const ReportsView = ({ clientes = [], cotizaciones = [] }) => {
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Control de Resultados con Totales y Matrices</p>
                     </div>
                 </div>
-                <div className="flex gap-2 w-full lg:w-auto">
-                    <button onClick={handleExportCSV} className="flex-1 bg-white border border-gray-100 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm">
-                        <Download size={12} /> EXCEL
+                <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+                    <button
+                        onClick={() => handleExportExcel('current')}
+                        className="flex-1 bg-white border border-gray-100 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm"
+                        title="Exportar solo la vista actual"
+                    >
+                        <Download size={12} /> EXCEL (ACTUAL)
+                    </button>
+                    <button
+                        onClick={() => handleExportExcel('all')}
+                        className="flex-1 bg-white border border-red-100 text-red-600 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-50 transition-all shadow-sm"
+                        title="Exportar todos los reportes en pestañas separadas"
+                    >
+                        <Globe size={12} /> EXCEL (TODO)
                     </button>
                     <button onClick={() => window.print()} className="flex-1 bg-slate-900 text-white px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-600 transition-all shadow-xl active:scale-95">
                         <Printer size={12} /> IMPRIMIR
@@ -234,8 +424,8 @@ const ReportsView = ({ clientes = [], cotizaciones = [] }) => {
 
                 {/* 1. VENTAS POR MES (Matriz Clientes x Meses) */}
                 {seccionReporte === 'ventas-mes' && (
-                    <div className="overflow-x-auto">
-                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
+                    <>
+                        <div className="p-6 md:p-8 border-b border-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 text-white">
                             <div>
                                 <h3 className="text-lg font-black tracking-tighter uppercase">Ventas por Mes (Detallado)</h3>
                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Consolidado mensual por cliente</p>
@@ -245,141 +435,147 @@ const ReportsView = ({ clientes = [], cotizaciones = [] }) => {
                                 <p className="text-2xl font-black">{formatMXN(matrizMensual.granTotal)}</p>
                             </div>
                         </div>
-                        <table className="w-full text-left border-collapse min-w-[800px]">
-                            <thead>
-                                <tr className="bg-slate-50 border-b border-gray-200">
-                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sticky left-0 bg-slate-50 z-10">Cuenta / Cliente</th>
-                                    {matrizMensual.mesesColumnas.map(m => (
-                                        <th key={m} className="py-4 px-4 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{matrizMensual.mesesNombres[m]}</th>
-                                    ))}
-                                    <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Total Cliente</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {matrizMensual.filas.map((f, i) => (
-                                    <tr key={i} className="hover:bg-slate-50/50">
-                                        <td className="py-4 px-6 border-r border-gray-100 sticky left-0 bg-white group-hover:bg-slate-50 z-10">
-                                            <span className="text-[10px] font-black text-slate-900 uppercase truncate block max-w-[150px]">{f.nombre}</span>
-                                        </td>
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-left border-collapse min-w-[800px]">
+                                <thead>
+                                    <tr className="bg-slate-50 border-b border-gray-200">
+                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sticky left-0 bg-slate-50 z-10">Cuenta / Cliente</th>
                                         {matrizMensual.mesesColumnas.map(m => (
-                                            <td key={m} className="py-4 px-4 text-center text-[10px] font-bold text-slate-500 border-r border-gray-100">
-                                                {f.importes[m] ? formatMXN(f.importes[m]) : MISSING_DATA_CHAR}
-                                            </td>
+                                            <th key={m} className="py-4 px-4 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{matrizMensual.mesesNombres[m]}</th>
                                         ))}
-                                        <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900 bg-slate-50/20">{formatMXN(f.total)}</td>
+                                        <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Total Cliente</th>
                                     </tr>
-                                ))}
-                                {/* Fila de Totales Columnas */}
-                                <tr className="bg-slate-900 text-white font-black">
-                                    <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sticky left-0 bg-slate-900 z-10">Total Mensual</td>
-                                    {matrizMensual.mesesColumnas.map(m => (
-                                        <td key={m} className="py-4 px-4 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizMensual.totalesPorMes[m])}</td>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {matrizMensual.filas.map((f, i) => (
+                                        <tr key={i} className="hover:bg-slate-50/50">
+                                            <td className="py-4 px-6 border-r border-gray-100 sticky left-0 bg-white group-hover:bg-slate-50 z-10">
+                                                <span className="text-[10px] font-black text-slate-900 uppercase truncate block max-w-[150px]">{f.nombre}</span>
+                                            </td>
+                                            {matrizMensual.mesesColumnas.map(m => (
+                                                <td key={m} className="py-4 px-4 text-center text-[10px] font-bold text-slate-500 border-r border-gray-100">
+                                                    {f.importes[m] ? formatMXN(f.importes[m]) : MISSING_DATA_CHAR}
+                                                </td>
+                                            ))}
+                                            <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900 bg-slate-50/20">{formatMXN(f.total)}</td>
+                                        </tr>
                                     ))}
-                                    <td className="py-4 px-6 text-right text-[11px] text-red-500">{formatMXN(matrizMensual.granTotal)}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                                    {/* Fila de Totales Columnas */}
+                                    <tr className="bg-slate-900 text-white font-black">
+                                        <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sticky left-0 bg-slate-900 z-10">Total Mensual</td>
+                                        {matrizMensual.mesesColumnas.map(m => (
+                                            <td key={m} className="py-4 px-4 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizMensual.totalesPorMes[m])}</td>
+                                        ))}
+                                        <td className="py-4 px-6 text-right text-[11px] text-red-500">{formatMXN(matrizMensual.granTotal)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
 
                 {/* 2. VENTAS POR CANAL (Matriz Canales x Plazas) */}
                 {seccionReporte === 'ventas-canal' && (
-                    <div className="overflow-x-auto sm:overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
+                    <>
+                        <div className="p-6 md:p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
                             <div>
-                                <h3 className="text-lg font-black tracking-tighter uppercase">Análisis por Canal y Señal</h3>
+                                <h3 className="text-lg font-black tracking-tighter uppercase">Análisis por Canal</h3>
                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Distribución territorial de inversión</p>
                             </div>
-                            <Tv className="text-red-500" size={30} />
+                            <Tv className="text-red-500 flex-shrink-0" size={30} />
                         </div>
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50 border-b border-gray-200">
-                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sticky left-0 bg-slate-50 z-10">Canal / Producto</th>
-                                    {matrizCanales.plazas.map(p => (
-                                        <th key={p} className="py-4 px-6 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{p}</th>
-                                    ))}
-                                    <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Inversión Canal</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {matrizCanales.filas.map((f, i) => (
-                                    <tr key={i} className="hover:bg-slate-50/50">
-                                        <td className="py-4 px-6 border-r border-gray-100 sticky left-0 bg-white z-10">
-                                            <span className="text-[10px] font-black text-slate-900 uppercase">{f.canal}</span>
-                                        </td>
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-left border-collapse min-w-[600px]">
+                                <thead>
+                                    <tr className="bg-slate-50 border-b border-gray-200">
+                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sticky left-0 bg-slate-50 z-10">Canal / Producto</th>
                                         {matrizCanales.plazas.map(p => (
-                                            <td key={p} className="py-4 px-6 text-center text-[10px] font-bold text-slate-500 border-r border-gray-100">
-                                                {f.importes[p] ? formatMXN(f.importes[p]) : MISSING_DATA_CHAR}
-                                            </td>
+                                            <th key={p} className="py-4 px-6 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{p}</th>
                                         ))}
-                                        <td className="py-4 px-6 text-right text-[10px] font-black text-red-600 bg-slate-50/20">{formatMXN(f.total)}</td>
+                                        <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Inversión Canal</th>
                                     </tr>
-                                ))}
-                                {/* Totales por Plaza */}
-                                <tr className="bg-slate-900 text-white font-black">
-                                    <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sticky left-0 bg-slate-900 z-10">Total Ciudad</td>
-                                    {matrizCanales.plazas.map(p => (
-                                        <td key={p} className="py-4 px-6 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizCanales.totalesPorPlaza[p])}</td>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {matrizCanales.filas.map((f, i) => (
+                                        <tr key={i} className="hover:bg-slate-50/50">
+                                            <td className="py-4 px-6 border-r border-gray-100 sticky left-0 bg-white z-10">
+                                                <span className="text-[10px] font-black text-slate-900 uppercase">{f.canal}</span>
+                                            </td>
+                                            {matrizCanales.plazas.map(p => (
+                                                <td key={p} className="py-4 px-6 text-center text-[10px] font-bold text-slate-500 border-r border-gray-100">
+                                                    {f.importes[p] ? formatMXN(f.importes[p]) : MISSING_DATA_CHAR}
+                                                </td>
+                                            ))}
+                                            <td className="py-4 px-6 text-right text-[10px] font-black text-red-600 bg-slate-50/20">{formatMXN(f.total)}</td>
+                                        </tr>
                                     ))}
-                                    <td className="py-4 px-6 text-right text-[11px] text-red-500">{formatMXN(matrizCanales.granTotal)}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                                    {/* Totales por Plaza */}
+                                    <tr className="bg-slate-900 text-white font-black">
+                                        <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sticky left-0 bg-slate-900 z-10">Total Ciudad</td>
+                                        {matrizCanales.plazas.map(p => (
+                                            <td key={p} className="py-4 px-6 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizCanales.totalesPorPlaza[p])}</td>
+                                        ))}
+                                        <td className="py-4 px-6 text-right text-[11px] text-red-500">{formatMXN(matrizCanales.granTotal)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
 
                 {/* 3. VENTAS POR CIUDAD (Matriz Clientes x Plazas) */}
                 {seccionReporte === 'ventas-ciudad' && (
-                    <div className="overflow-x-auto sm:overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
+                    <>
+                        <div className="p-6 md:p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
                             <div>
-                                <h3 className="text-lg font-black tracking-tighter uppercase">Matriz Territorial de Clientes</h3>
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Consolidado de inversión por plaza</p>
+                                <h3 className="text-lg font-black tracking-tighter uppercase">Matriz Territorial</h3>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Consolidado por plaza</p>
                             </div>
-                            <Globe className="text-red-500" size={30} />
+                            <Globe className="text-red-500 flex-shrink-0" size={30} />
                         </div>
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50 border-b border-gray-200">
-                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sticky left-0 bg-slate-50 z-10">Cuenta / Empresa</th>
-                                    {matrizCiudad.plazas.map(p => (
-                                        <th key={p} className="py-4 px-6 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{p}</th>
-                                    ))}
-                                    <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Consolidado</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {matrizCiudad.filas.map((f, i) => (
-                                    <tr key={i} className="hover:bg-slate-50/50">
-                                        <td className="py-4 px-6 border-r border-gray-100 sticky left-0 bg-white z-10">
-                                            <span className="text-[10px] font-black text-slate-900 uppercase block truncate max-w-[120px]">{f.nombre}</span>
-                                        </td>
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-left border-collapse min-w-[800px]">
+                                <thead>
+                                    <tr className="bg-slate-50 border-b border-gray-200">
+                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sticky left-0 bg-slate-50 z-10">Cuenta / Empresa</th>
                                         {matrizCiudad.plazas.map(p => (
-                                            <td key={p} className="py-4 px-6 text-center text-[10px] font-bold text-slate-500 border-r border-gray-100">
-                                                {f.importes[p] ? formatMXN(f.importes[p]) : MISSING_DATA_CHAR}
-                                            </td>
+                                            <th key={p} className="py-4 px-6 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{p}</th>
                                         ))}
-                                        <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900 bg-slate-50/20">{formatMXN(f.total)}</td>
+                                        <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Consolidado</th>
                                     </tr>
-                                ))}
-                                {/* Totales por Plaza */}
-                                <tr className="bg-slate-900 text-white font-black">
-                                    <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sticky left-0 bg-slate-900 z-10">Total Ciudad</td>
-                                    {matrizCiudad.plazas.map(p => (
-                                        <td key={p} className="py-4 px-6 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizCiudad.totalesPorPlaza[p])}</td>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {matrizCiudad.filas.map((f, i) => (
+                                        <tr key={i} className="hover:bg-slate-50/50">
+                                            <td className="py-4 px-6 border-r border-gray-100 sticky left-0 bg-white z-10">
+                                                <span className="text-[10px] font-black text-slate-900 uppercase block truncate max-w-[120px]">{f.nombre}</span>
+                                            </td>
+                                            {matrizCiudad.plazas.map(p => (
+                                                <td key={p} className="py-4 px-6 text-center text-[10px] font-bold text-slate-500 border-r border-gray-100">
+                                                    {f.importes[p] ? formatMXN(f.importes[p]) : MISSING_DATA_CHAR}
+                                                </td>
+                                            ))}
+                                            <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900 bg-slate-50/20">{formatMXN(f.total)}</td>
+                                        </tr>
                                     ))}
-                                    <td className="py-4 px-6 text-right text-[11px] text-red-500">{formatMXN(matrizCiudad.granTotal)}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                                    {/* Totales por Plaza */}
+                                    <tr className="bg-slate-900 text-white font-black">
+                                        <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sticky left-0 bg-slate-900 z-10">Total Ciudad</td>
+                                        {matrizCiudad.plazas.map(p => (
+                                            <td key={p} className="py-4 px-6 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizCiudad.totalesPorPlaza[p])}</td>
+                                        ))}
+                                        <td className="py-4 px-6 text-right text-[11px] text-red-500">{formatMXN(matrizCiudad.granTotal)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
 
                 {/* 5. CONTROL DE CIERRES (Listado de Contratos y MC) */}
                 {seccionReporte === 'control-cierres' && (
-                    <div className="overflow-x-auto">
-                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
+                    <>
+                        <div className="p-6 md:p-8 border-b border-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 text-white">
                             <div>
                                 <h3 className="text-lg font-black tracking-tighter uppercase">Control Administrativo de Cierres</h3>
                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Folios, Contratos y Master Contracts</p>
@@ -389,55 +585,73 @@ const ReportsView = ({ clientes = [], cotizaciones = [] }) => {
                                 <p className="text-2xl font-black">{ganadas.length}</p>
                             </div>
                         </div>
-                        <table className="w-full text-left border-collapse min-w-[900px]">
-                            <thead>
-                                <tr className="bg-slate-50 border-b border-gray-200">
-                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Fecha Cierre</th>
-                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Cliente / Empresa</th>
-                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Folio Cotz</th>
-                                    <th className="py-4 px-6 text-[9px] font-black text-emerald-600 uppercase tracking-widest border-r border-gray-200">No. Contrato</th>
-                                    <th className="py-4 px-6 text-[9px] font-black text-blue-600 uppercase tracking-widest border-r border-gray-200">Master Contract</th>
-                                    <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Inversión Neta</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {ganadas.sort((a, b) => new Date(b.fecha_cierre_real) - new Date(a.fecha_cierre_real)).map((q, i) => {
-                                    const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
-                                    return (
-                                        <tr key={i} className="hover:bg-slate-50/50">
-                                            <td className="py-4 px-6 text-[10px] font-bold text-gray-400 border-r border-gray-100">
-                                                {new Date(q.fecha_cierre_real || q.created_at).toLocaleDateString('es-MX')}
-                                            </td>
-                                            <td className="py-4 px-6 border-r border-gray-100 font-black text-[10px] text-slate-900 uppercase">
-                                                {cliente?.nombre_empresa || 'S/N'}
-                                            </td>
-                                            <td className="py-4 px-6 border-r border-gray-100 text-[10px] font-bold text-red-500 uppercase tracking-tighter">
-                                                {q.folio || q.id}
-                                            </td>
-                                            <td className="py-4 px-6 border-r border-gray-100 text-center">
-                                                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${q.numero_contrato ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-400'}`}>
-                                                    {q.numero_contrato || 'FALTA'}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6 border-r border-gray-100 text-center">
-                                                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${q.mc_id ? 'bg-blue-50 text-blue-600' : 'text-gray-300'}`}>
-                                                    {q.mc_id ? 'VINCULADO' : 'ÚNICA'}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900">
-                                                {formatMXN(q.subtotalGeneral || q.total / 1.16)}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                                {ganadas.length === 0 && (
-                                    <tr>
-                                        <td colSpan="6" className="py-20 text-center text-[10px] font-black text-gray-300 uppercase italic tracking-widest">Sin ventas ganadas en este periodo</td>
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-left border-collapse min-w-[900px]">
+                                <thead>
+                                    <tr className="bg-slate-50 border-b border-gray-200">
+                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Fecha Cierre</th>
+                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Cliente / Empresa</th>
+                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Folio Cotz</th>
+                                        <th className="py-4 px-6 text-[9px] font-black text-slate-500 uppercase tracking-widest border-r border-gray-200">Master Contract</th>
+                                        <th className="py-4 px-6 text-[9px] font-black text-emerald-600 uppercase tracking-widest border-r border-gray-200">Orden</th>
+                                        <th className="py-4 px-6 text-[9px] font-black text-blue-600 uppercase tracking-widest border-r border-gray-200">Factura</th>
+                                        <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Inversión Neta</th>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {ganadas.sort((a, b) => new Date(b.fecha_cierre_real) - new Date(a.fecha_cierre_real)).map((q, i) => {
+                                        const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
+                                        return (
+                                            <tr key={i} className="hover:bg-slate-50/50">
+                                                <td className="py-4 px-6 text-[10px] font-bold text-gray-400 border-r border-gray-100">
+                                                    {new Date(q.fecha_cierre_real || q.created_at).toLocaleDateString('es-MX')}
+                                                </td>
+                                                <td className="py-4 px-6 border-r border-gray-100 font-black text-[10px] text-slate-900 uppercase">
+                                                    {cliente?.nombre_empresa || 'S/N'}
+                                                </td>
+                                                <td className="py-4 px-6 border-r border-gray-100 text-[10px] font-bold text-red-500 uppercase tracking-tighter">
+                                                    {q.folio || q.id}
+                                                </td>
+                                                <td className="py-4 px-6 border-r border-gray-100 text-center">
+                                                    {(() => {
+                                                        const mc = (masterContracts || []).find(m => String(m.id) === String(q.mc_id));
+                                                        return (
+                                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${mc ? 'bg-slate-100 text-slate-600' : 'bg-red-50 text-red-400'}`}>
+                                                                {mc ? (mc.numero_mc || mc.numero_contrato || mc.folio || 'VINCULADO') : 'FALTA'}
+                                                            </span>
+                                                        );
+                                                    })()}
+                                                </td>
+                                                <td className="py-4 px-6 border-r border-gray-100 text-center">
+                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${q.numero_contrato ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-400'}`}>
+                                                        {q.numero_contrato || 'FALTA'}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 px-6 border-r border-gray-100 text-center">
+                                                    {(() => {
+                                                        const regCob = (cobranza || []).find(cob => String(cob.cotizacion_id) === String(q.id));
+                                                        return (
+                                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${regCob?.numero_factura ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-400'}`}>
+                                                                {regCob?.numero_factura || 'FALTA'}
+                                                            </span>
+                                                        );
+                                                    })()}
+                                                </td>
+                                                <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900">
+                                                    {formatMXN(q.subtotalGeneral || q.total / 1.16)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {ganadas.length === 0 && (
+                                        <tr>
+                                            <td colSpan="6" className="py-20 text-center text-[10px] font-black text-gray-300 uppercase italic tracking-widest">Sin ventas ganadas en este periodo</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
                 {seccionReporte === 'resumen-clientes' && (
                     <div className="overflow-x-auto sm:overflow-hidden">
@@ -452,9 +666,9 @@ const ReportsView = ({ clientes = [], cotizaciones = [] }) => {
                             <thead>
                                 <tr className="bg-slate-50">
                                     <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest sticky left-0 bg-slate-50 z-10">Cuenta</th>
-                                    <th className="py-4 px-6 text-center text-[9px] font-black text-blue-500 uppercase tracking-widest">Abiertas</th>
-                                    <th className="py-4 px-6 text-center text-[9px] font-black text-emerald-500 uppercase tracking-widest">Ganadas</th>
-                                    <th className="py-4 px-6 text-center text-[9px] font-black text-red-500 uppercase tracking-widest">Perdidas</th>
+                                    <th className="py-4 px-6 text-center text-[9px] font-black text-blue-500 uppercase tracking-widest">Valor Abiertas</th>
+                                    <th className="py-4 px-6 text-center text-[9px] font-black text-emerald-500 uppercase tracking-widest">Valor Ganadas</th>
+                                    <th className="py-4 px-6 text-center text-[9px] font-black text-red-500 uppercase tracking-widest">Valor Perdidas</th>
                                     <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Venta Acumulada</th>
                                 </tr>
                             </thead>
@@ -474,9 +688,15 @@ const ReportsView = ({ clientes = [], cotizaciones = [] }) => {
                                                 <p className="text-[10px] font-black text-slate-900 uppercase">{c.nombre_empresa}</p>
                                                 <p className="text-[8px] font-bold text-gray-300 uppercase tracking-widest italic">{c.plaza}</p>
                                             </td>
-                                            <td className="py-4 px-6 text-center font-bold text-[10px] text-blue-600">{abiertas}</td>
-                                            <td className="py-4 px-6 text-center font-bold text-[10px] text-emerald-600">{cGanadas}</td>
-                                            <td className="py-4 px-6 text-center font-bold text-[10px] text-red-600">{perdidas}</td>
+                                            <td className="py-4 px-6 text-center font-bold text-[10px] text-blue-600">
+                                                {formatMXN(cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0))}
+                                            </td>
+                                            <td className="py-4 px-6 text-center font-bold text-[10px] text-emerald-600">
+                                                {formatMXN(cCotz.filter(q => q.estatus === 'ganada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0))}
+                                            </td>
+                                            <td className="py-4 px-6 text-center font-bold text-[10px] text-red-600">
+                                                {formatMXN(cCotz.filter(q => q.estatus === 'perdida').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0))}
+                                            </td>
                                             <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900">{formatMXN(monto)}</td>
                                         </tr>
                                     );

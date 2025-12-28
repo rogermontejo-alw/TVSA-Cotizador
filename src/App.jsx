@@ -252,6 +252,14 @@ const App = () => {
             }}
           />
         );
+      case 'cobranza':
+        return (
+          <CobranzaView
+            cobranza={dbData.cobranza}
+            onSave={guardarRegistro}
+            setMensaje={setMensajeAdmin}
+          />
+        );
       case 'crm':
         return (
           <CRMView
@@ -281,7 +289,7 @@ const App = () => {
             setMensaje={setMensajeAdmin}
           />
         );
-      case 'contratos-maestros':
+      case 'master-contracts':
         return (
           <MasterContractsView
             masterContracts={masterContracts}
@@ -298,6 +306,8 @@ const App = () => {
             cotizaciones={historial}
             metas={metasComerciales}
             clientes={clientes}
+            cobranza={dbData.cobranza}
+            masterContracts={masterContracts}
           />
         );
       default:
@@ -337,7 +347,7 @@ const App = () => {
             </p>
             <div className="h-4 w-px bg-slate-100"></div>
             <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-              V1.3.6 • 28 DEC 2025
+              V1.3.7 • 28 DEC 2025
             </p>
           </div>
         </div>
