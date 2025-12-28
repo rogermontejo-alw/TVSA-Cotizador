@@ -80,7 +80,7 @@ const App = () => {
           ? JSON.parse(row.json_detalles)
           : (row.json_detalles || {});
 
-        const clienteEncontrado = clientes.find(c => c.id === row.cliente_id);
+        const clienteEncontrado = (clientes || []).find(c => String(c.id) === String(row.cliente_id));
         const vixCompleto = paquetesVIX.find(v => v.id === row.paquete_vix_id) || { nombre: 'Ninguno', impresiones: 0 };
 
         return {
@@ -89,6 +89,11 @@ const App = () => {
           fecha: row.created_at ? new Date(row.created_at) : new Date(),
           cliente: clienteEncontrado || { nombre_empresa: 'Externo', plaza: 'Externa', id: 'EXT' },
           total: parseFloat(row.monto_total) || 0,
+          monto_total: parseFloat(row.monto_total) || 0,
+          cliente_id: row.cliente_id,
+          subtotalGeneral: detalles.subtotalGeneral ||
+            ((parseFloat(detalles.subtotal_tv) || 0) + (parseFloat(detalles.costo_vix) || 0)) ||
+            (parseFloat(row.monto_total) / 1.16),
           estatus: row.estatus,
           probabilidad: row.probabilidad_cierre,
           items: detalles.items || [],
@@ -105,6 +110,7 @@ const App = () => {
       }
     }).filter(Boolean);
 
+    console.log(`✅ Historial procesado en App: ${historialFormateado.length} registros`);
     setHistorial(historialFormateado);
   }, [rawHistorial, clientes, paquetesVIX, session]);
 
@@ -113,12 +119,14 @@ const App = () => {
     if (!cotizacionState.cotizacionResult) return;
 
     const cotz = cotizacionState.cotizacionResult;
+    // Detectar si es un UUID de Supabase (36 caracteres) o un ID temporal
+    const isUpdate = cotz.id && cotz.id.length > 20 && !cotz.id.startsWith('COT-');
 
     const datosParaDB = {
       cliente_id: cotz.cliente.id,
       mc_id: cotz.mc_id || null,
-      folio: `COT-${Date.now().toString().slice(-6)}`,
-      estatus: 'borrador',
+      folio: cotz.folio || `COT-${Date.now().toString().slice(-6)}`,
+      estatus: cotz.estatus || 'borrador',
       monto_total: cotz.total,
       dias_campana: cotz.diasCampana || 30,
       paquete_vix: !!cotz.paqueteVIX?.id,
@@ -131,10 +139,23 @@ const App = () => {
       }
     };
 
-    const result = await guardarRegistro('cotizaciones', datosParaDB);
+    let result;
+    if (isUpdate) {
+      result = await guardarRegistro('cotizaciones', datosParaDB, 'id', cotz.id);
+    } else {
+      result = await guardarRegistro('cotizaciones', datosParaDB);
+    }
+
     if (result) {
       cargarDatos();
-      setMensajeAdmin({ tipo: 'exito', texto: 'Cotización guardada en el CRM.' });
+      setMensajeAdmin({
+        tipo: 'exito',
+        texto: isUpdate ? 'Cotización actualizada correctamente.' : 'Cotización guardada exitosamente.'
+      });
+      // Si era nueva, actualizar el estado local con el ID real
+      if (!isUpdate && result[0]?.id) {
+        cotizacionState.setCotizacionResult({ ...cotz, id: result[0].id, folio: result[0].folio });
+      }
     }
   }, [cotizacionState.cotizacionResult, guardarRegistro, cargarDatos, setMensajeAdmin]);
 
@@ -150,6 +171,21 @@ const App = () => {
   const handleMostrarPropuesta = useCallback((cotz) => {
     generatePDF(cotz, configuracion, dbData.perfil);
   }, [configuracion, dbData.perfil]);
+
+  const handleSelectQuote = useCallback((cotz) => {
+    if (!cotz) return;
+    // Restaurar estado del cotizador con los datos de esta cotización
+    cotizacionState.setClienteSeleccionado(cotz.cliente.id);
+    cotizacionState.setPresupuesto(cotz.presupuestoBase);
+    cotizacionState.setDuracionDias(cotz.diasCampana);
+    cotizacionState.setPaqueteVIX(cotz.paqueteVIX?.id || '');
+    cotizacionState.setProductosSeleccionados((cotz.items || []).map(i => ({
+      id: i.producto.id,
+      cantidad: i.cantidad || i.totalUnidades
+    })));
+    cotizacionState.setCotizacionResult(cotz);
+    setVistaActual('cotizador');
+  }, [cotizacionState, setVistaActual]);
 
   const handleSelectClient = (clienteTarget) => {
     setSelectedClient(clienteTarget);
@@ -203,6 +239,8 @@ const App = () => {
             agregarAComparador={handleAgregarAComparador}
             mostrarPropuesta={handleMostrarPropuesta}
             eliminarCotizacion={(id) => eliminarRegistro('cotizaciones', 'id', id)}
+            onSaveQuote={guardarRegistro}
+            setMensaje={setMensajeAdmin}
           />
         );
       case 'comparador':
@@ -256,7 +294,8 @@ const App = () => {
               iniciarNuevaCotizacion(selectedClient.id);
               setVistaActual('cotizador');
             }}
-            onViewQuote={handleMostrarPropuesta}
+            onViewQuote={handleSelectQuote}
+            onPrintQuote={handleMostrarPropuesta}
             setMensaje={setMensajeAdmin}
           />
         ) : <CRMView clientes={clientes} onSelectClient={handleSelectClient} />;
@@ -287,6 +326,7 @@ const App = () => {
             agregarAComparador={handleAgregarAComparador}
             mensajeAdmin={mensajeAdmin}
             setMensajeAdmin={setMensajeAdmin}
+            onSaveClient={guardarRegistro}
           />
         );
     }

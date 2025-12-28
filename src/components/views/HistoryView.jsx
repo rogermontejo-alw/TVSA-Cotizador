@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, FileText, Printer, Eye, Trash2, Calendar, Search, CopyPlus, Filter } from 'lucide-react';
+import { ArrowLeft, FileText, Printer, Eye, Trash2, Calendar, Search, CopyPlus, Filter, CheckCircle, Clock, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
 const HistoryView = ({
@@ -8,10 +8,14 @@ const HistoryView = ({
     setCotizacion,
     agregarAComparador,
     mostrarPropuesta,
-    eliminarCotizacion
+    eliminarCotizacion,
+    onSaveQuote,
+    setMensaje
 }) => {
     const [busqueda, setBusqueda] = useState('');
     const [filtroVix, setFiltroVix] = useState('todos');
+    const [confirmingStatus, setConfirmingStatus] = useState(null); // { quote, status }
+    const [isUpdating, setIsUpdating] = useState(false);
 
     const historialFiltrado = useMemo(() => {
         return (historial || []).filter(cotz => {
@@ -37,6 +41,21 @@ const HistoryView = ({
     const handleEliminar = (id) => {
         if (window.confirm('¿Seguro que deseas eliminar esta cotización? Esta acción no se puede deshacer.')) {
             eliminarCotizacion(id);
+        }
+    };
+
+    const handleUpdateStatus = async (quote, newStatus) => {
+        setIsUpdating(true);
+        try {
+            const success = await onSaveQuote('cotizaciones', { id: quote.id, estatus: newStatus });
+            if (success) {
+                setMensaje({ tipo: 'exito', texto: `Estatus actualizado: ${newStatus.toUpperCase()}` });
+                setConfirmingStatus(null);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsUpdating(false);
         }
     };
 
@@ -108,86 +127,101 @@ const HistoryView = ({
                         <div className="hidden md:block overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-gray-800 text-white font-black uppercase text-[10px] tracking-widest">
-                                        <th className="px-6 py-4">Fecha y Hora</th>
-                                        <th className="px-6 py-4">Cliente / ID</th>
-                                        <th className="px-6 py-4">Detalle</th>
-                                        <th className="px-6 py-4 text-right">Inversión</th>
-                                        <th className="px-6 py-4 text-center">Acciones</th>
+                                    <tr className="bg-slate-900 text-white font-black uppercase text-[9px] tracking-widest">
+                                        <th className="px-4 py-3 text-left">Fecha y Hora</th>
+                                        <th className="px-4 py-3 text-left">Cliente / ID</th>
+                                        <th className="px-4 py-3 text-left">Estatus</th>
+                                        <th className="px-4 py-3 text-left">Detalle</th>
+                                        <th className="px-4 py-3 text-right">Inversión</th>
+                                        <th className="px-4 py-3 text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {historialFiltrado.map(cotz => (
                                         <tr key={cotz.id} className="hover:bg-gray-50 transition-colors group">
-                                            <td className="px-6 py-4">
+                                            <td className="px-4 py-4">
                                                 <div className="flex flex-col">
-                                                    <span className="text-xs font-black text-gray-800">
+                                                    <span className="text-[11px] font-black text-gray-800">
                                                         {cotz.fecha instanceof Date && !isNaN(cotz.fecha)
                                                             ? cotz.fecha.toLocaleDateString('es-MX')
                                                             : 'Fecha no válida'}
                                                     </span>
-                                                    <span className="text-[10px] font-bold text-gray-400">
+                                                    <span className="text-[9px] font-bold text-gray-400">
                                                         {cotz.fecha instanceof Date && !isNaN(cotz.fecha)
                                                             ? cotz.fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                                                             : ''}
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-black text-gray-800">{cotz.cliente?.nombre_empresa || 'Cliente Desconocido'}</span>
-                                                    <span className="text-[10px] font-bold text-red-600 tracking-tighter">{cotz.folio || cotz.id}</span>
+                                            <td className="px-4 py-4">
+                                                <div className="flex flex-col max-w-[150px]">
+                                                    <span className="text-[12px] font-black text-gray-800 truncate">{cotz.cliente?.nombre_empresa || 'Cliente Desconocido'}</span>
+                                                    <span className="text-[9px] font-bold text-red-600 tracking-tighter truncate">{cotz.folio || cotz.id}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-wrap gap-1">
-                                                    <span className="text-[9px] font-black bg-gray-100 px-2 py-0.5 rounded text-gray-600 uppercase">
-                                                        {cotz.items.length} Prod.
+                                            <td className="px-4 py-4">
+                                                <div className="flex gap-1">
+                                                    {['enviada', 'ganada', 'perdida'].map(st => (
+                                                        <button
+                                                            key={st}
+                                                            onClick={() => setConfirmingStatus({ quote: cotz, status: st })}
+                                                            disabled={isUpdating}
+                                                            className={`text-[8px] px-1.5 py-0.5 rounded font-black uppercase tracking-tighter transition-all relative overflow-hidden
+                                                                ${cotz.estatus === st
+                                                                    ? st === 'ganada' ? 'bg-emerald-500 text-white shadow-lg' : st === 'perdida' ? 'bg-red-500 text-white shadow-lg' : 'bg-blue-500 text-white shadow-lg'
+                                                                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                                                        >
+                                                            {st}
+                                                            {isUpdating && cotz.estatus === st && (
+                                                                <div className="absolute inset-0 bg-black/10 flex items-center justify-center animate-spin">
+                                                                    <RefreshCw size={8} />
+                                                                </div>
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <div className="flex flex-wrap gap-1 max-w-[120px]">
+                                                    <span className="text-[8px] font-black bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 uppercase">
+                                                        {cotz.items.length}P
                                                     </span>
                                                     {cotz.paqueteVIX && (
-                                                        <span className="text-[9px] font-black bg-blue-50 px-2 py-0.5 rounded text-blue-600 uppercase border border-blue-100">
+                                                        <span className="text-[8px] font-black bg-blue-50 px-1.5 py-0.5 rounded text-blue-600 uppercase border border-blue-100">
                                                             VIX
                                                         </span>
                                                     )}
-                                                    <span className="text-[9px] font-black bg-red-50 px-2 py-0.5 rounded text-red-600 uppercase border border-red-100">
-                                                        {cotz.diasCampana} DÍAS
+                                                    <span className="text-[8px] font-black bg-red-50 px-1.5 py-0.5 rounded text-red-600 uppercase border border-red-100">
+                                                        {cotz.diasCampana}D
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-right whitespace-nowrap">
-                                                <span className="text-sm font-black text-gray-800">{formatMXN(cotz.subtotalGeneral || cotz.total)}</span>
-                                                <span className="block text-[9px] font-bold text-gray-400 mt-0.5">SUBTOTAL (SIN IVA)</span>
+                                            <td className="px-4 py-4 text-right whitespace-nowrap">
+                                                <span className="text-[12px] font-black text-gray-800">{formatMXN(cotz.subtotalGeneral || (cotz.monto_total || cotz.total) / 1.16)}</span>
+                                                <span className="block text-[8px] font-bold text-gray-400 mt-0.5 uppercase tracking-widest">Neta</span>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center justify-center gap-2">
+                                            <td className="px-4 py-4">
+                                                <div className="flex items-center justify-center gap-1">
                                                     <button
                                                         onClick={() => { setCotizacion(cotz); setVistaActual('cotizador'); }}
-                                                        className="p-2 bg-gray-100 hover:bg-gray-800 hover:text-white rounded-lg transition-all text-gray-600"
+                                                        className="p-1.5 bg-gray-100 hover:bg-gray-800 hover:text-white rounded-lg transition-all text-gray-600"
                                                         title="Editar"
                                                     >
-                                                        <Eye size={18} />
+                                                        <Eye size={16} />
                                                     </button>
                                                     <button
                                                         onClick={() => mostrarPropuesta(cotz)}
-                                                        className="p-2 bg-gray-100 hover:bg-red-600 hover:text-white rounded-lg transition-all text-gray-600"
+                                                        className="p-1.5 bg-gray-100 hover:bg-red-600 hover:text-white rounded-lg transition-all text-gray-600"
                                                         title="Imprimir"
                                                     >
-                                                        <Printer size={18} />
+                                                        <Printer size={16} />
                                                     </button>
-                                                    <button
-                                                        onClick={() => agregarAComparador(cotz)}
-                                                        className="p-2 bg-gray-100 hover:bg-slate-900 hover:text-white rounded-lg transition-all text-gray-600"
-                                                        title="Comparar"
-                                                    >
-                                                        <CopyPlus size={18} />
-                                                    </button>
-                                                    <div className="w-px h-4 bg-gray-200 mx-1"></div>
                                                     <button
                                                         onClick={() => handleEliminar(cotz.id)}
-                                                        className="p-2 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition-all"
-                                                        title="Eliminar permanentemente"
+                                                        className="p-1.5 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition-all"
+                                                        title="Eliminar"
                                                     >
-                                                        <Trash2 size={18} />
+                                                        <Trash2 size={16} />
                                                     </button>
                                                 </div>
                                             </td>
@@ -212,7 +246,7 @@ const HistoryView = ({
                                             <div className="text-[10px] font-bold text-red-600 mt-1">{cotz.folio || cotz.id}</div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-lg font-black text-gray-900">{formatMXN(cotz.subtotalGeneral || cotz.total)}</div>
+                                            <div className="text-lg font-black text-gray-900">{formatMXN(cotz.subtotalGeneral || (cotz.monto_total || cotz.total) / 1.16)}</div>
                                             <div className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">SUBTOTAL</div>
                                         </div>
                                     </div>
@@ -267,7 +301,49 @@ const HistoryView = ({
                     </div>
                 )}
             </div>
-        </div>
+
+            {/* Modal de Confirmación de Estatus */}
+            {
+                confirmingStatus && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
+                            <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 ${confirmingStatus.status === 'ganada' ? 'bg-emerald-50 text-emerald-600' :
+                                confirmingStatus.status === 'perdida' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
+                                }`}>
+                                <AlertCircle size={32} />
+                            </div>
+
+                            <h3 className="text-center text-lg font-black text-slate-900 leading-tight mb-2 uppercase">
+                                ¿Cambiar a {confirmingStatus.status.toUpperCase()}?
+                            </h3>
+                            <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">
+                                {confirmingStatus.status === 'ganada' ? 'Este monto se reflejará como VENTA REAL en el Dashboard y Reportes.' :
+                                    confirmingStatus.status === 'perdida' ? 'La cotización se marcará como rechazada.' : 'Estatus informativo.'}
+                            </p>
+
+                            <div className="flex flex-col gap-2">
+                                <button
+                                    disabled={isUpdating}
+                                    onClick={() => handleUpdateStatus(confirmingStatus.quote, confirmingStatus.status)}
+                                    className={`w-full py-4 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all active:scale-95 shadow-xl flex items-center justify-center gap-2 ${confirmingStatus.status === 'ganada' ? 'bg-emerald-600' :
+                                        confirmingStatus.status === 'perdida' ? 'bg-red-600' : 'bg-slate-900'
+                                        }`}
+                                >
+                                    {isUpdating && <RefreshCw size={14} className="animate-spin" />}
+                                    Confirmar Cambio
+                                </button>
+                                <button
+                                    onClick={() => setConfirmingStatus(null)}
+                                    className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

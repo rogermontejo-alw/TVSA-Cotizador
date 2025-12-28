@@ -78,22 +78,27 @@ const ConditionsForm = ({ clientes, productos, condicionesCliente, onSave, setMe
 
             if (hayError) return;
 
+            const condicionPrevia = condicionesCliente.find(
+                c => c.clienteId === clienteIdSeleccionado && c.productoId === p.id
+            );
+
             condicionesEnviadas.push({
+                ...(condicionPrevia?.id ? { id: condicionPrevia.id } : {}),
                 cliente_id: clienteIdSeleccionado,
                 producto_id: p.id,
                 tipo_ajuste: tipoAjuste,
-                factor_descuento: tipoAjuste === 'FACTOR' ? valor : '',
-                costo_fijo: tipoAjuste === 'FIJO' ? valor : '',
-                vigencia_inicio: '',
-                vigencia_fin: '',
-                notas: ''
+                factor_descuento: tipoAjuste === 'FACTOR' ? valor : null,
+                costo_fijo: tipoAjuste === 'FIJO' ? valor : null
             });
         });
 
         if (hayError) return;
 
-        const exito = await onSave(condicionesEnviadas, 'condiciones_cliente');
-        if (exito) {
+        // El hook guardarRegistro ahora soporta arreglos directamente para guardado masivo
+        const result = await onSave('condiciones_cliente', condicionesEnviadas);
+
+        if (result) {
+            setMensaje({ tipo: 'exito', texto: `¡Se actualizaron las tarifas con éxito!` });
             setProductosParaCondicion([]);
         }
     };

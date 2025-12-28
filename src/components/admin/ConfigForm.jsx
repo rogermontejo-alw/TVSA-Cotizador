@@ -33,7 +33,7 @@ const ConfigForm = ({ configuracion, onSave, setMensaje }) => {
             tipo: c.tipo
         }));
 
-        const result = await onSave('configuracion', payload);
+        const result = await onSave('configuracion', payload, 'parametro');
         if (result) {
             setMensaje({ tipo: 'exito', texto: 'Configuración global actualizada.' });
         }

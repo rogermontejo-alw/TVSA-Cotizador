@@ -17,7 +17,8 @@ const CotizadorView = ({
     guardarCotizacion,
     agregarAComparador,
     mensajeAdmin,
-    setMensajeAdmin
+    setMensajeAdmin,
+    onSaveClient
 }) => {
     const {
         productos,
@@ -149,6 +150,8 @@ const CotizadorView = ({
                         agregarAComparador={agregarAComparador}
                         mostrarPropuesta={() => mostrarPropuesta(cotizacionResult)}
                         configuracion={configuracion}
+                        onSaveClient={onSaveClient}
+                        setMensaje={setMensajeAdmin}
                     />
                 )}
             </div>

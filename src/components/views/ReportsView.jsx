@@ -15,7 +15,7 @@ import {
 import { formatMXN } from '../../utils/formatters';
 
 const ReportsView = ({ clientes, cotizaciones }) => {
-    const [etapaSeleccionada, setEtapaSeleccionada] = useState('Prospecto');
+    const [etapaSeleccionada, setEtapaSeleccionada] = useState('Cliente');
     const [busqueda, setBusqueda] = useState('');
 
     // 📅 Manejo de fechas
@@ -79,12 +79,12 @@ const ReportsView = ({ clientes, cotizaciones }) => {
             const fechaFinAjustada = fechaFin ? new Date(new Date(fechaFin).setHours(23, 59, 59, 999)) : null;
             const matchFechaFin = fechaFinAjustada ? fechaQ <= fechaFinAjustada : true;
 
-            if (matchFechaInicio && matchFechaFin) {
+            if (matchFechaInicio && matchFechaFin && q.estatus === 'ganada') {
                 const cliente = (clientes || []).find(c => c.id === q.cliente_id);
                 if (cliente) {
                     const plaza = cliente.plaza || 'Mérida';
                     const canal = q.canal || 'Digital';
-                    const monto = parseFloat(q.monto_total || q.total) || 0;
+                    const monto = parseFloat(q.subtotalGeneral || (q.monto_total || q.total) / 1.16) || 0;
 
                     result.porPlaza[plaza] = (result.porPlaza[plaza] || 0) + monto;
                     result.porCanal[canal] = (result.porCanal[canal] || 0) + monto;
@@ -280,8 +280,8 @@ const ReportsView = ({ clientes, cotizaciones }) => {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {clientesFiltrados.length > 0 ? clientesFiltrados.map(cliente => {
-                                const valor = (cotizaciones || []).filter(q => q.cliente_id === cliente.id)
-                                    .reduce((acc, q) => acc + (parseFloat(q.monto_total || q.total) || 0), 0);
+                                const valor = (cotizaciones || []).filter(q => q.cliente_id === cliente.id && q.estatus === 'ganada')
+                                    .reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || (q.monto_total || q.total) / 1.16) || 0), 0);
                                 return (
                                     <tr key={cliente.id} className="hover:bg-slate-50/50">
                                         <td className="py-4">

@@ -1,5 +1,8 @@
-import React from 'react';
-import { Save, Printer, Eye, Smartphone, Monitor, ChevronDown, CheckCircle, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+    Save, Printer, Eye, Smartphone, Monitor, ChevronDown,
+    CheckCircle, RefreshCw, Briefcase, AlertCircle, ArrowRight, FileText as FileTextIcon
+} from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
 const CotizacionResult = ({
@@ -8,9 +11,64 @@ const CotizacionResult = ({
     guardarCotizacion,
     agregarAComparador,
     mostrarPropuesta,
-    configuracion
+    configuracion,
+    onSaveClient,
+    setMensaje
 }) => {
+    const [confirmingStage, setConfirmingStage] = useState(null);
+    const [confirmingQuoteStatus, setConfirmingQuoteStatus] = useState(null); // { quote, status }
+    const [isUpdating, setIsUpdating] = useState(false);
+
     if (!cotizacion) return null;
+
+    const cliente = cotizacion.cliente;
+    const stages = ['Prospecto', 'Contactado', 'Interesado', 'No Interesado', 'Cliente'];
+    const currentStageIdx = stages.indexOf(cliente?.etapa);
+
+    const handleUpdateStage = async (targetStage) => {
+        setIsUpdating(true);
+        try {
+            const updated = { ...cliente, etapa: targetStage };
+            const success = await onSaveClient('clientes', updated);
+            if (success) {
+                setMensaje({ tipo: 'exito', texto: `¡Venta Cerrada! El cliente ahora está en etapa: ${targetStage}` });
+                setConfirmingStage(null);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleUpdateQuoteStatus = async (newStatus) => {
+        setIsUpdating(true);
+        try {
+            // Solo si la cotización ya existe en DB (tiene ID UUID)
+            if (!cotizacion.id || cotizacion.id.startsWith('COT-')) {
+                setMensaje({ tipo: 'info', texto: 'Primero debes guardar la cotización para cambiar su estatus oficial.' });
+                setConfirmingQuoteStatus(null);
+                return;
+            }
+
+            const success = await onSaveClient('cotizaciones', { id: cotizacion.id, estatus: newStatus });
+            if (success) {
+                setMensaje({ tipo: 'exito', texto: `Cotización marcada como ${newStatus.toUpperCase()}` });
+
+                // Si la cotización es GANADA y el cliente no es etapa "Cliente", preguntar por cambio de etapa
+                if (newStatus === 'ganada' && cliente.etapa !== 'Cliente') {
+                    setConfirmingQuoteStatus(null);
+                    setConfirmingStage('Cliente');
+                } else {
+                    setConfirmingQuoteStatus(null);
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsUpdating(false);
+        }
+    };
 
     const presupuestoBase = cotizacion.presupuestoBase || 0;
     const inversionDigital = cotizacion.costoVIX || 0;
@@ -155,11 +213,125 @@ const CotizacionResult = ({
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Estatus de la Propuesta (NUEVO) */}
+                                <div className="pt-6 border-t border-white/10 space-y-3">
+                                    <div className="flex items-center justify-between gap-2 mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <FileTextIcon size={12} className="text-gray-500" />
+                                            <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Estatus de Propuesta</span>
+                                        </div>
+                                        <span className={`text-[8px] font-black px-2 py-0.5 rounded uppercase ${cotizacion.estatus === 'ganada' ? 'bg-emerald-500 text-white' :
+                                            cotizacion.estatus === 'perdida' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
+                                            }`}>
+                                            {cotizacion.estatus || 'borrador'}
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {['enviada', 'ganada', 'perdida'].map(st => (
+                                            <button
+                                                key={st}
+                                                onClick={() => setConfirmingQuoteStatus({ status: st })}
+                                                className={`py-2 rounded-lg font-black text-[8px] uppercase tracking-widest transition-all
+                                                    ${cotizacion.estatus === st
+                                                        ? st === 'ganada' ? 'bg-emerald-500 text-white' : st === 'perdida' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
+                                                        : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                                            >
+                                                {st}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {cliente && (
+                                    <div className="pt-6 border-t border-white/10 space-y-3">
+                                        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl">
+                                            <p className="text-[10px] font-black text-red-500 uppercase tracking-widest text-center">
+                                                Propuesta para: {cliente.nombre_empresa}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Confirmación de Cambio de Etapa */}
+            {confirmingStage && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
+                        <div className="w-16 h-16 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                            <AlertCircle size={32} />
+                        </div>
+
+                        <h3 className="text-center text-lg font-black text-slate-900 leading-tight mb-2">
+                            {confirmingStage === 'Cliente' ? '¡FELICIDADES POR LA VENTA!' : `¿CAMBIAR A ${confirmingStage.toUpperCase()}?`}
+                        </h3>
+                        <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">
+                            {confirmingStage === 'Cliente'
+                                ? 'Esto marcará al cliente como GANADO en el Pipeline'
+                                : 'Esta acción actualizará el estado comercial del cliente'}
+                        </p>
+
+                        <div className="flex flex-col gap-2">
+                            <button
+                                disabled={isUpdating}
+                                onClick={() => handleUpdateStage(confirmingStage)}
+                                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-emerald-600 transition-all active:scale-95 shadow-xl shadow-slate-200 flex items-center justify-center gap-2"
+                            >
+                                {isUpdating && <RefreshCw size={14} className="animate-spin" />}
+                                {confirmingStage === 'Cliente' ? 'Cerrar Venta Ahora' : 'Confirmar Cambio'}
+                            </button>
+                            <button
+                                onClick={() => setConfirmingStage(null)}
+                                className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Confirmación de Estatus de Cotización */}
+            {confirmingQuoteStatus && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
+                        <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 ${confirmingQuoteStatus.status === 'ganada' ? 'bg-emerald-50 text-emerald-600' :
+                            confirmingQuoteStatus.status === 'perdida' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
+                            }`}>
+                            <AlertCircle size={32} />
+                        </div>
+
+                        <h3 className="text-center text-lg font-black text-slate-900 leading-tight mb-2 uppercase">
+                            ¿Marcar como {confirmingQuoteStatus.status.toUpperCase()}?
+                        </h3>
+                        <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">
+                            {confirmingQuoteStatus.status === 'ganada' ? 'Esta acción sumará el monto a los reportes de Venta Real' :
+                                confirmingQuoteStatus.status === 'perdida' ? 'Esta cotización se marcará como no aceptada' : 'Estatus informativo'}
+                        </p>
+
+                        <div className="flex flex-col gap-2">
+                            <button
+                                onClick={() => handleUpdateQuoteStatus(confirmingQuoteStatus.status)}
+                                className={`w-full py-4 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all active:scale-95 shadow-xl ${confirmingQuoteStatus.status === 'ganada' ? 'bg-emerald-600' :
+                                    confirmingQuoteStatus.status === 'perdida' ? 'bg-red-600' : 'bg-slate-900'
+                                    }`}
+                            >
+                                Confirmar Cambio
+                            </button>
+                            <button
+                                onClick={() => setConfirmingQuoteStatus(null)}
+                                className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

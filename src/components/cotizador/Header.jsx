@@ -31,7 +31,7 @@ const Header = ({
                         className="w-full sm:w-auto bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center justify-center transition-colors font-semibold"
                     >
                         <FileText className="mr-2" size={18} />
-                        Cotizaciones Enviadas ({historialLength})
+                        Cotizaciones ({historialLength})
                     </button>
                     <button
                         onClick={() => setVistaActual('comparador')}

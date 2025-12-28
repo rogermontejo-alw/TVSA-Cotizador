@@ -51,7 +51,7 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
     <html lang="es">
     <head>
       <meta charset="UTF-8">
-      <title>Orden de Pauta - ${cotz.cliente.nombre}</title>
+      <title>Orden de Pauta - ${cotz.cliente.nombre_empresa || cotz.cliente.nombre || 'Cliente'}</title>
       <script src="https://cdn.tailwindcss.com"></script>
       <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
       <style>
@@ -270,7 +270,7 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
         <div class="client-info-box">
           <div>
             <div class="label">Razon Social / Cliente</div>
-            <div class="value" style="font-size: 13px;">${cotz.cliente.nombre}</div>
+            <div class="value" style="font-size: 13px;">${cotz.cliente.nombre_empresa || cotz.cliente.nombre || 'Cliente'}</div>
             <div class="label" style="margin-top:8px">ID de Propuesta</div>
             <div class="value" style="font-size: 9px">${cotz.id}</div>
           </div>

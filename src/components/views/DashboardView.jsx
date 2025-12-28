@@ -109,11 +109,11 @@ const DashboardView = ({
 
         const ventaCerrada = historialFiltrado
             .filter(q => q.estatus === 'ganada')
-            .reduce((acc, q) => acc + (parseFloat(q.monto_total || q.total) || 0), 0);
+            .reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
 
         const pipelineValor = historialFiltrado
             .filter(q => q.estatus !== 'ganada' && q.estatus !== 'perdida')
-            .reduce((acc, q) => acc + (parseFloat(q.monto_total || q.total) || 0), 0);
+            .reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
 
         const porcentajeMeta = metaActual > 0 ? Math.min((ventaCerrada / metaActual) * 100, 100).toFixed(1) : 0;
 
@@ -132,20 +132,21 @@ const DashboardView = ({
         const plazas = {};
         datosFiltrados.historialFiltrado.filter(q => q.estatus === 'ganada').forEach(q => {
             const plaza = q.cliente?.plaza || 'Sin Plaza';
-            plazas[plaza] = (plazas[plaza] || 0) + (parseFloat(q.monto_total || q.total) || 0);
+            plazas[plaza] = (plazas[plaza] || 0) + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0);
         });
         return Object.entries(plazas).sort((a, b) => b[1] - a[1]);
     }, [datosFiltrados]);
 
     // Pipeline Visual
     const pipelineStages = useMemo(() => {
-        const stages = { 'Prospecto': 0, 'Contactado': 0, 'Interesado': 0, 'Cierre': 0 };
-        clientes.forEach(c => {
-            if (stages[c.etapa] !== undefined) stages[c.etapa]++;
-            else if (c.etapa === 'Cliente') stages['Cierre']++;
+        const { historialFiltrado } = datosFiltrados;
+        const stages = { 'Borrador': 0, 'Enviada': 0, 'Ganada': 0, 'Perdida': 0 };
+        historialFiltrado.forEach(q => {
+            const statusKey = q.estatus ? q.estatus.charAt(0).toUpperCase() + q.estatus.slice(1) : 'Borrador';
+            if (stages[statusKey] !== undefined) stages[statusKey]++;
         });
         return Object.entries(stages);
-    }, [clientes]);
+    }, [datosFiltrados]);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
@@ -249,7 +250,7 @@ const DashboardView = ({
                     {/* Pipeline Visual Moderno */}
                     <div className="bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl text-white">
                         <h3 className="text-[10px] font-black text-red-500 uppercase tracking-[0.4em] mb-8 flex items-center gap-2">
-                            Inventario de Pipeline (Total)
+                            Propuestas por Estatus (Oportunidades)
                             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse ml-2"></div>
                         </h3>
                         <div className="grid grid-cols-4 gap-4">

@@ -40,7 +40,10 @@ export const useDatabase = () => {
                 supabase.from('configuracion').select('*'),
                 supabase.from('master_contracts').select('*, clientes(nombre_empresa)'),
                 supabase.from('condiciones_cliente').select('*'),
-                supabase.from('cotizaciones').select('*').order('created_at', { ascending: false }),
+                supabase.from('cotizaciones').select('*').order('created_at', { ascending: false }).then(r => {
+                    if (r.error) console.error("❌ Error cargando cotizaciones:", r.error);
+                    return r;
+                }),
                 supabase.from('descuentos_volumen').select('*').then(r => r.error ? { data: [] } : r),
                 supabase.from('cobranza').select('*, cotizaciones(folio, monto_total, clientes(nombre_empresa))'),
                 supabase.from('metas_comerciales').select('*').order('anio', { ascending: false }).order('mes', { ascending: false }).then(r => {
@@ -49,7 +52,7 @@ export const useDatabase = () => {
                 }),
                 supabase.auth.getUser().then(async ({ data: { user } }) => {
                     if (!user) return { data: null };
-                    return supabase.from('perfiles').select('*').eq('id', user.id).single();
+                    return supabase.from('perfiles').select('*').eq('id', user.id).maybeSingle();
                 })
             ]);
 
@@ -80,7 +83,21 @@ export const useDatabase = () => {
                     factorDescuento: c.factor_descuento,
                     costoFijo: c.costo_fijo
                 })),
-                historial: historial || [],
+                historial: (historial || []).map(h => ({
+                    ...h,
+                    fecha: new Date(h.created_at),
+                    cliente: (clientes || []).find(c => String(c.id) === String(h.cliente_id)) || { nombre_empresa: 'Cargando...', id: h.cliente_id },
+                    items: h.json_detalles?.items || [],
+                    distribucion: h.json_detalles?.distribucion || [],
+                    paqueteVIX: h.json_detalles?.paqueteVIX || (h.paquete_vix ? { nombre: 'VIX' } : null),
+                    costoVIX: h.json_detalles?.costoVIX || 0,
+                    presupuestoBase: h.json_detalles?.presupuestoBase || h.monto_total,
+                    subtotalTV: h.json_detalles?.subtotalTV || h.json_detalles?.subtotal_tv || h.monto_total,
+                    total: h.monto_total,
+                    subtotalGeneral: h.json_detalles?.subtotalGeneral ||
+                        ((h.json_detalles?.subtotal_tv || 0) + (h.json_detalles?.costo_vix || 0)) ||
+                        (h.monto_total / 1.16)
+                })),
                 descuentosVolumen: descuentos || [],
                 metasComerciales: metas || [],
                 cobranza: cobranza || [],
@@ -90,8 +107,13 @@ export const useDatabase = () => {
             console.log("📊 Datos cargados:", {
                 clientes: clientes?.length,
                 cotizaciones: historial?.length,
-                metas: metas?.length
+                metas: metas?.length,
+                timestamp: new Date().toLocaleTimeString()
             });
+
+            if (!historial || historial.length === 0) {
+                console.warn("⚠️ Advertencia: No se recuperaron cotizaciones de la base de datos.");
+            }
 
         } catch (err) {
             console.error('Error al cargar base de datos:', err);
@@ -102,38 +124,54 @@ export const useDatabase = () => {
     }, []);
 
     // Placeholder para guardar (PRÓXIMO PASO: Implementar lógica completa de guardado en Supabase)
-    const guardarRegistro = async (tabla, payload) => {
+    /**
+     * Guarda uno o varios registros en una tabla.
+     * @param {string} tabla - Nombre de la tabla
+     * @param {Object|Object[]} payload - Datos a guardar
+     * @param {string} onConflict - (Opcional) Columnas para manejar conflictos en upsert (ej: 'id' o 'parametro')
+     */
+    const guardarRegistro = async (tabla, payload, onConflict = 'id') => {
         setMensajeAdmin({ tipo: 'cargando', texto: 'Guardando datos...' });
 
-        const { id, ...dataRest } = payload;
-        const isUpdate = !!id && id !== '';
-
-        // Limpiar campos vacíos para no sobreescribir con basura
-        const cleanData = Object.fromEntries(
-            Object.entries(dataRest).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+        // Función interna para limpiar objetos de campos vacíos/nulos
+        const cleanObject = (obj) => Object.fromEntries(
+            Object.entries(obj).filter(([_, v]) => v !== undefined && v !== null && v !== '')
         );
 
         try {
-            let result;
-            if (isUpdate) {
-                result = await supabase.from(tabla).update(cleanData).eq('id', id).select();
+            let resData, error;
+
+            if (Array.isArray(payload)) {
+                // Limpiar cada objeto del arreglo
+                const cleanedPayload = payload.map(item => cleanObject(item));
+                const result = await supabase.from(tabla).upsert(cleanedPayload, { onConflict }).select();
+                resData = result.data;
+                error = result.error;
             } else {
-                result = await supabase.from(tabla).insert(cleanData).select();
+                const { id, ...dataRest } = payload;
+                const cleanedData = cleanObject(dataRest);
+
+                if (id && id !== '') {
+                    const result = await supabase.from(tabla).update(cleanedData).eq('id', id).select();
+                    resData = result.data;
+                    error = result.error;
+                } else {
+                    const result = await supabase.from(tabla).insert(cleanedData).select();
+                    resData = result.data;
+                    error = result.error;
+                }
             }
 
-            const { data, error } = result;
-
             if (error) {
-                console.error(`Error en ${isUpdate ? 'UPDATE' : 'INSERT'} (${tabla}):`, error);
-                const errorStr = `${error.message}${error.details ? ' - ' + error.details : ''}${error.hint ? ' - ' + error.hint : ''}`;
-                throw new Error(errorStr);
+                console.error(`Error en persistencia (${tabla}):`, error);
+                throw new Error(`${error.message} (${error.code})`);
             }
 
             setMensajeAdmin({ tipo: 'exito', texto: '¡Guardado correctamente!' });
             cargarDatos();
-            return data;
+            return resData;
         } catch (err) {
-            console.error('Error en persistencia:', err);
+            console.error('Error detallado en persistencia:', err);
             setMensajeAdmin({ tipo: 'error', texto: `Error: ${err.message}` });
             return null;
         }

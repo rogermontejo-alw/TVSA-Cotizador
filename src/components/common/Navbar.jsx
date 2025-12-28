@@ -21,7 +21,7 @@ const Navbar = ({ vistaActual, setVistaActual, session, onLogout }) => {
         { id: 'crm', label: 'Clientes', icon: Briefcase },
         { id: 'reportes', label: 'Reportes', icon: BarChart3 },
         { id: 'cobranza', label: 'Cobranza', icon: DollarSign },
-        { id: 'historial', label: 'Historial', icon: History },
+        { id: 'historial', label: 'Cotizaciones', icon: History },
         { id: 'administracion', label: 'Admin', icon: Settings },
     ];
 
