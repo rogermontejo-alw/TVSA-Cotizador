@@ -190,6 +190,7 @@ const App = () => {
             limpiarTabla={limpiarTabla}
             masterContracts={masterContracts}
             calcularPrecioUnitario={cotizacionState.calcularPrecioUnitario}
+            onLogout={handleLogout}
           />
         );
       case 'lista-precios':
@@ -351,7 +352,7 @@ const App = () => {
             </p>
             <div className="h-4 w-px bg-slate-100"></div>
             <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-              V1.4.0 • 28 DEC 2025
+              V1.4.1 • 28 DEC 2025
             </p>
           </div>
         </div>

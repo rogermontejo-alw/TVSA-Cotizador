@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User, Phone, Briefcase, Save, Mail, Lock, ShieldCheck, AlertCircle, RefreshCw, Trash2, Edit, UserPlus, X, ChevronRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
-const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje }) => {
+const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, onLogout }) => {
     // Estado para gestión de usuarios (Lista y Edición)
     const [editMode, setEditMode] = useState(false); // false = list, true = form
     const [selectedUser, setSelectedUser] = useState(null); // null = nuevo usuario
@@ -60,10 +60,17 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje }) 
             }
 
             // 2. Sincronización con Supabase Auth (Solo si es mi propio usuario)
+            let shouldLogout = false;
             if (selectedUser?.id === perfil?.id) {
                 const authUpdate = {};
-                if (userFormData.email !== perfil.email) authUpdate.email = userFormData.email;
-                if (userFormData.newPassword) authUpdate.password = userFormData.newPassword;
+                if (userFormData.email !== perfil.email) {
+                    authUpdate.email = userFormData.email;
+                    shouldLogout = true;
+                }
+                if (userFormData.newPassword) {
+                    authUpdate.password = userFormData.newPassword;
+                    shouldLogout = true;
+                }
 
                 if (Object.keys(authUpdate).length > 0) {
                     const { error: authError } = await supabase.auth.updateUser(authUpdate);
@@ -82,11 +89,21 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje }) 
 
             await onSave('perfiles', payload);
 
-            setEditMode(false);
-            setMensaje({
-                tipo: 'exito',
-                texto: selectedUser ? 'Datos guardados y vinculados correctamente' : 'Perfil creado en base de datos'
-            });
+            if (shouldLogout) {
+                setMensaje({
+                    tipo: 'exito',
+                    texto: 'Credenciales actualizadas. Por seguridad, debes iniciar sesión de nuevo.'
+                });
+                setTimeout(() => {
+                    onLogout();
+                }, 2000);
+            } else {
+                setEditMode(false);
+                setMensaje({
+                    tipo: 'exito',
+                    texto: selectedUser ? 'Datos guardados y vinculados correctamente' : 'Perfil creado en base de datos'
+                });
+            }
         } catch (err) {
             setMensaje({ tipo: 'error', texto: err.message });
         } finally {

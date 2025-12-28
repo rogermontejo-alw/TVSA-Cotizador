@@ -29,7 +29,8 @@ const AdminPanel = ({
     limpiarTabla,
     historial,
     masterContracts,
-    calcularPrecioUnitario
+    calcularPrecioUnitario,
+    onLogout
 }) => {
     const [seccionActiva, setSeccionActiva] = useState('clientes');
     const [clienteEdicion, setClienteEdicion] = useState(null);
@@ -189,12 +190,13 @@ const AdminPanel = ({
                             onSave={guardarRegistro}
                             onEliminar={(id) => eliminarRegistro('perfiles', 'id', id)}
                             setMensaje={setMensajeAdmin}
+                            onLogout={onLogout}
                         />
                     )}
                 </div>
 
                 <div className="mt-20 text-center">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.4.0 • CRM Cloud Enabled</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Televisa MID Admin Layer v1.4.1 • CRM Cloud Enabled</p>
                 </div>
             </div>
         </div>
