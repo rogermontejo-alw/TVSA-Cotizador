@@ -31,7 +31,7 @@ const SelectedProducts = ({
 
                 {/* Panel de Resumen de Presupuesto - Sticky on desktop, top on mobile */}
                 <div className="lg:col-span-4 order-first lg:order-none">
-                    <div className="bg-white rounded-xl shadow-lg p-5 border-t-4 border-red-700 sticky top-4">
+                    <div className="bg-white rounded-xl shadow-lg p-5 border-t-4 border-red-700 sticky top-20">
                         <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
                             <DollarSign className="mr-2 text-red-700" size={20} />
                             Resumen Financiero

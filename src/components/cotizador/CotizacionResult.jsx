@@ -120,6 +120,58 @@ const CotizacionResult = ({
         }
     };
 
+    const handleSaveQuote = async () => {
+        setIsUpdating(true);
+        try {
+            // Validar existencia de cliente
+            if (!cliente?.id) {
+                setMensaje({ tipo: 'error', texto: 'No hay un cliente seleccionado para guardar.' });
+                return;
+            }
+
+            // Preparar el payload para Supabase
+            // Si el ID empieza con COT- es un ID temporal del frontend, lo mandamos como null para que Supabase genere el UUID
+            const isNew = !cotizacion.id || String(cotizacion.id).startsWith('COT-');
+
+            const payload = {
+                id: isNew ? undefined : cotizacion.id,
+                cliente_id: cliente.id,
+                // Generar un folio amigable si es nueva
+                folio: cotizacion.folio || (isNew ? `FOL-${Math.floor(100000 + Math.random() * 900000)}` : cotizacion.id),
+                monto_total: cotizacion.total || 0,
+                dias_campana: cotizacion.diasCampana || 30,
+                paquete_vix: !!cotizacion.paqueteVIX,
+                estatus: cotizacion.estatus || 'borrador',
+                json_detalles: {
+                    items: cotizacion.items || [],
+                    distribucion: cotizacion.distribucion || [],
+                    paqueteVIX: cotizacion.paqueteVIX || null,
+                    costoVIX: cotizacion.costoVIX || 0,
+                    presupuestoBase: cotizacion.presupuestoBase || 0,
+                    subtotalTV: cotizacion.subtotalTV || 0,
+                    subtotalGeneral: cotizacion.subtotalGeneral || 0,
+                    iva: cotizacion.iva || 0
+                }
+            };
+
+            console.log("💾 Guardando cotización con payload:", payload);
+            const result = await guardarCotizacion('cotizaciones', payload);
+
+            if (result && result.length > 0) {
+                // Actualizar el objeto local para permitir cambios de estatus sin recargar
+                // Nota: Mutamos el objeto de la prop temporalmente para UX inmediata
+                cotizacion.id = result[0].id;
+                cotizacion.folio = result[0].folio;
+                setMensaje({ tipo: 'exito', texto: '¡Cotización guardada exitosamente en la base de datos!' });
+            }
+        } catch (err) {
+            console.error('❌ Error al guardar:', err);
+            setMensaje({ tipo: 'error', texto: `Error al guardar: ${err.message}` });
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
     const presupuestoBase = cotizacion.presupuestoBase || 0;
     const inversionDigital = cotizacion.costoVIX || 0;
     const subtotalParaTV = presupuestoBase - inversionDigital;
@@ -194,7 +246,7 @@ const CotizacionResult = ({
 
                 {/* LADO DERECHO: RESUMEN FINANCIERO */}
                 <div className="md:col-span-12 lg:col-span-4 order-1 lg:order-2">
-                    <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl lg:sticky lg:top-6 w-full max-w-sm mx-auto">
+                    <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl lg:sticky lg:top-20 w-full max-w-sm mx-auto">
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 mb-6 border-b border-white/10 pb-2">
                             Resumen Financiero
                         </h3>
@@ -246,10 +298,12 @@ const CotizacionResult = ({
                                     </button>
                                     <div className="grid grid-cols-2 gap-2">
                                         <button
-                                            onClick={guardarCotizacion}
-                                            className="h-8 bg-green-500/10 hover:bg-green-500 text-green-400 hover:text-white border border-green-500/20 rounded-lg font-black text-[9px] flex items-center justify-center transition-all uppercase"
+                                            disabled={isUpdating}
+                                            onClick={handleSaveQuote}
+                                            className="h-8 bg-green-500/10 hover:bg-green-500 text-green-400 hover:text-white border border-green-500/20 rounded-lg font-black text-[9px] flex items-center justify-center transition-all uppercase gap-2"
                                         >
-                                            Guardar
+                                            {isUpdating && <RefreshCw size={10} className="animate-spin" />}
+                                            {isUpdating ? 'Salvando...' : 'Guardar'}
                                         </button>
                                         <button
                                             onClick={() => agregarAComparador(cotizacion)}

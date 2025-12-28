@@ -337,7 +337,7 @@ const App = () => {
             </p>
             <div className="h-4 w-px bg-slate-100"></div>
             <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-              V1.3.4 • 28 DEC 2025
+              V1.3.5 • 28 DEC 2025
             </p>
           </div>
         </div>
