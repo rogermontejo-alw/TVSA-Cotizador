@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Lock, Mail, Loader2, Play, ShieldCheck, Zap, Globe } from 'lucide-react';
 import FloatingInput from '../ui/FloatingInput';
+import { APP_CONFIG } from '../../appConfig';
 
 const LoginView = () => {
     const [email, setEmail] = useState('');
@@ -77,7 +78,7 @@ const LoginView = () => {
                 <div className="absolute bottom-12 left-20 flex items-center gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-brand-orange animate-pulse shadow-[0_0_8px_rgba(255,89,0,0.6)]" />
                     <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">
-                        Corporate Infrastructure • MX-NODE 4.0
+                        Corporate Infrastructure • v{APP_CONFIG.VERSION}
                     </p>
                 </div>
             </div>
@@ -175,7 +176,7 @@ const LoginView = () => {
                 {/* Footer Disclaimer (Mobile) */}
                 <div className="lg:hidden absolute bottom-8 left-0 right-0 text-center px-8">
                     <p className="text-[8px] font-black uppercase tracking-[0.4em] text-enterprise-300">
-                        TU INTELLIGENCE NODE © 2025
+                        TU INTELLIGENCE NODE © 2025 • v{APP_CONFIG.VERSION}
                     </p>
                 </div>
             </div>
