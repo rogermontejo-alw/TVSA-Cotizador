@@ -37,7 +37,7 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
         <td class="data-cell text-center font-bold" style="font-size: 8.5px; padding: 4px 2px;">${dist.totalUnidades}</td>
         <td class="data-cell text-right" style="font-size: 7.5px; padding: 4px 6px;">${formatMXN(precioUnitario)}</td>
         ${weeklyCells}
-        <td class="data-cell text-right font-bold text-red-700" style="font-size: 8.5px; padding: 4px 6px;">${formatMXN(totalInversionProducto)}</td>
+        <td class="data-cell text-right font-bold" style="font-size: 8.5px; padding: 4px 6px; color: #FF5900;">${formatMXN(totalInversionProducto)}</td>
       </tr>
     `;
   }).join('');
@@ -50,7 +50,7 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
     <!DOCTYPE html>
     <html lang="es">
     <head>
-      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Orden de Pauta - ${cotz.cliente.nombre_empresa || cotz.cliente.nombre || 'Cliente'}</title>
       <script src="https://cdn.tailwindcss.com"></script>
       <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -60,50 +60,119 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           margin: 0;
         }
         :root {
-          --tvsa-red: #cc0000;
-          --tvsa-dark: #1a1a1a;
+          --brand-orange: #FF5900;
+          --brand-magenta: #C83378;
+          --enterprise-dark: #111111;
         }
         body { 
           font-family: 'Inter', sans-serif; 
-          background-color: #eee;
+          background-color: #f0f2f5;
           color: #333;
           margin: 0;
-          padding: 0;
+          padding: 100px 20px 40px 20px;
           -webkit-print-color-adjust: exact;
+          display: flex;
+          justify-content: center;
+          min-height: 100vh;
+          overflow-x: auto;
+        }
+        .no-print-bar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 70px;
+          background: rgba(17, 17, 17, 0.9);
+          backdrop-filter: blur(10px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 20px;
+          z-index: 9999;
+          border-bottom: 2px solid var(--brand-orange);
+          box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .btn-premium {
+          height: 40px;
+          padding: 0 25px;
+          border-radius: 12px;
+          font-weight: 900;
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          transition: all 0.3s;
+          cursor: pointer;
+          border: none;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .btn-orange {
+          background: var(--brand-orange);
+          color: white;
+          box-shadow: 0 4px 15px rgba(255, 89, 0, 0.3);
+        }
+        .btn-orange:hover {
+          background: #e65000;
+          transform: translateY(-2px);
+        }
+        .btn-outline {
+          background: transparent;
+          color: white;
+          border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-outline:hover {
+          background: rgba(255,255,255,0.1);
+          border-color: white;
         }
         .order-container {
           width: 215.9mm;
-          margin: 0 auto;
+          min-width: 215.9mm;
+          flex-shrink: 0;
+          min-height: 279.4mm;
           background: white;
-          padding: 5mm 15mm;
+          padding: 15mm 20mm;
           box-sizing: border-box;
           position: relative;
-          overflow: hidden;
+          box-shadow: 0 0 50px rgba(0,0,0,0.1);
+          margin: 0 auto;
         }
         .header {
-          border-bottom: 2px solid var(--tvsa-red);
-          padding-bottom: 6px;
-          margin-bottom: 15px;
+          border-bottom: 2px solid var(--brand-orange);
+          padding-bottom: 12px;
+          margin-bottom: 20px;
           display: flex;
           justify-content: space-between;
           align-items: center;
         }
+        .brand-section {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .logo-img {
+          height: 38px;
+          width: 38px;
+          object-fit: contain;
+        }
         .logo-text {
           font-family: 'Montserrat', sans-serif;
           font-weight: 900;
-          font-size: 20px;
-          color: var(--tvsa-red);
+          font-size: 18px;
+          color: var(--enterprise-dark);
           letter-spacing: -1px;
+          text-transform: uppercase;
         }
         .doc-title {
           font-family: 'Montserrat', sans-serif;
           font-weight: 900;
           text-transform: uppercase;
           font-size: 9px;
-          background: var(--tvsa-dark);
+          background: var(--enterprise-dark);
           color: white;
-          padding: 2px 8px;
-          border-radius: 2px;
+          padding: 4px 12px;
+          border-radius: 4px;
+          letter-spacing: 1px;
         }
         .client-info-box {
           background: #f9f9f9;
@@ -122,7 +191,7 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
         }
         .value {
           font-weight: 700;
-          color: var(--tvsa-dark);
+          color: var(--enterprise-dark);
           font-size: 11px;
         }
         .pauta-table {
@@ -171,15 +240,15 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           text-align: right;
         }
         .total-box {
-          background: var(--tvsa-red);
+          background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-magenta) 100%);
           color: white;
-          border-radius: 4px;
-          padding: 10px 15px;
+          border-radius: 6px;
+          padding: 12px 15px;
           display: inline-block;
           text-align: right;
           width: 100%;
           box-sizing: border-box;
-          box-shadow: 0 2px 4px rgba(204,0,0,0.1);
+          box-shadow: 0 4px 12px rgba(255,89,0,0.15);
         }
         .total-label {
           font-weight: 800;
@@ -230,7 +299,7 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           font-size: 9px;
           font-weight: 800;
           text-transform: uppercase;
-          color: var(--tvsa-dark);
+          color: var(--enterprise-dark);
         }
         .page-footer {
           text-align: center;
@@ -245,25 +314,37 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
         }
         
         @media print {
-          body { background: white; }
-          .order-container { box-shadow: none; margin: 0; border: none; min-height: auto; }
+          body { 
+            background: white; 
+            padding: 0;
+          }
+          .order-container { 
+            box-shadow: none; 
+            margin: 0; 
+            border: none; 
+            min-height: auto;
+            width: 100%;
+          }
           .no-print { display: none !important; }
         }
       </style>
     </head>
     <body>
-      <div class="no-print p-4 flex justify-center gap-4 bg-gray-800">
-        <button onclick="window.print()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-all">
+      <div class="no-print-bar no-print">
+        <button onclick="window.print()" class="btn-premium btn-orange">
           Imprimir / Descargar PDF
         </button>
-        <button onclick="window.close()" class="bg-white hover:bg-gray-100 text-gray-800 font-bold py-2 px-6 rounded-full shadow-lg transition-all">
+        <button onclick="window.close()" class="btn-premium btn-outline">
           Cerrar Vista
         </button>
       </div>
 
       <div class="order-container">
         <div class="header">
-          <div class="logo-text">televisa<span style="color:#333">univision</span></div>
+          <div class="brand-section">
+            <img src="/logo-tvsa.png" class="logo-img" />
+            <div class="logo-text">televisa<span style="color:var(--brand-orange)">univision</span> <span style="font-weight:400; font-size: 12px; margin-left: 5px; color: #999;">MID</span></div>
+          </div>
           <div class="doc-title">Propuesta Comercial de Pauta</div>
         </div>
 
@@ -311,7 +392,7 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
         <div class="summary-section">
           ${cotz.paqueteVIX ? `
             <div class="vix-box">
-              <div class="label" style="color: var(--tvsa-red)">Inversión Digital</div>
+              <div class="label" style="color: var(--brand-magenta)">Inversión Digital</div>
               <div style="font-weight: 900; font-size: 13px; color: #111;">${formatMXN(cotz.costoVIX)}</div>
               <div style="font-size: 8px; color: #555; margin-top: 3px">
                 ${cotz.paqueteVIX.nombre} | ${(cotz.paqueteVIX.impresiones || 0).toLocaleString()} Impresiones
@@ -335,6 +416,7 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
         <div class="signature-area">
           <div class="signature-block">
             <div style="font-size: 10px; font-weight: 900; color: #111; margin-bottom: 2px;">${perfil?.nombre_completo || 'Asesor Comercial'}</div>
+            <div style="font-size: 7.5px; font-weight: 700; color: var(--brand-orange); text-transform: uppercase; margin-bottom: 4px;">${perfil?.cargo || 'Ejecutivo de Ventas'}</div>
             <div style="font-size: 8px; color: #666; margin-bottom: 5px;">${perfil?.telefono || 'Televisa Univisión MID'}</div>
             <div class="signature-line">Por Televisa Univisión</div>
           </div>

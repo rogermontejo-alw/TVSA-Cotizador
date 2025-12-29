@@ -107,11 +107,11 @@ const DashboardView = ({
                         <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest leading-none">Global Sync Active</span>
                     </div>
                     <div className="space-y-1">
-                        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-enterprise-950 tracking-tighter leading-none uppercase italic">
-                            Commercial <span className="text-[#FF5900] not-italic">Intelligence</span>
+                        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-enterprise-950 tracking-tighter leading-none uppercase italic italic-brand">
+                            Media <span className="text-[#FF5900] not-italic">Intelligence</span>
                         </h1>
                         <p className="text-[10px] sm:text-[11px] font-bold text-enterprise-600 max-w-xl">
-                            Performance control panel for TelevisaUnivision México.
+                            Estrategia y control de rendimiento comercial • TelevisaUnivision México.
                         </p>
                     </div>
                 </div>
@@ -238,13 +238,16 @@ const DashboardView = ({
                         className="w-full group bg-univision-gradient p-[2px] rounded-[2.5rem] shadow-2xl shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
                     >
                         <div className="bg-[#111111] p-10 rounded-[2.4rem] flex items-center justify-between text-white overflow-hidden relative">
+                            {/* Circle decoration reflecting new logo */}
+                            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-univision-gradient rounded-full opacity-10 blur-3xl group-hover:opacity-30 transition-opacity"></div>
+
                             <div className="relative z-10 flex flex-col items-start gap-6">
                                 <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center group-hover:bg-[#FF5900] group-hover:text-white transition-all shadow-md">
                                     <Zap size={24} className="fill-current" />
                                 </div>
                                 <div className="text-left">
-                                    <span className="block text-[11px] font-black uppercase tracking-widest opacity-50 mb-1 leading-none">Commercial Engine</span>
-                                    <span className="text-xl font-black uppercase leading-tight">Generar Nueva<br />Cotización</span>
+                                    <span className="block text-[11px] font-black uppercase tracking-widest opacity-50 mb-1 leading-none">Intelligence Engine</span>
+                                    <span className="text-xl font-black uppercase leading-tight italic italic-brand">Generar Nueva<br />Cotización</span>
                                 </div>
                             </div>
                             <div className="absolute right-[-30px] top-[-30px] opacity-10 group-hover:opacity-20 transition-opacity">

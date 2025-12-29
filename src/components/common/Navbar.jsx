@@ -72,17 +72,17 @@ const Navbar = ({ session, vistaActual, setVistaActual, onLogout }) => {
                 <div className="max-w-[1600px] mx-auto w-full flex items-center gap-2 sm:gap-6">
                     {/* LOGO DE MARCA (Izquierda) */}
                     <div
-                        className="flex items-center gap-2 sm:gap-3 cursor-pointer group flex-shrink-0"
+                        className="flex items-center gap-2 sm:gap-4 cursor-pointer group flex-shrink-0"
                         onClick={() => setVistaActual('dashboard')}
                     >
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 bg-enterprise-950 rounded-xl flex items-center justify-center p-1.5 shadow-lg group-hover:scale-105 transition-transform">
-                            <img src="/logo-tvsa.png" alt="TU" className="w-full h-full object-contain brightness-0 invert" />
+                        <div className="w-10 h-10 sm:w-11 sm:h-11 bg-white rounded-full flex items-center justify-center p-1.5 shadow-lg group-hover:scale-105 transition-transform border border-enterprise-100">
+                            <img src="/logo-tvsa.png" alt="TU" className="w-full h-full object-contain" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-enterprise-950 font-black text-[14px] sm:text-[16px] tracking-tighter leading-none uppercase italic">
-                                Commercial <span className="text-brand-orange not-italic">Suite</span>
+                            <span className="text-enterprise-950 font-black text-[14px] sm:text-[16px] tracking-tighter leading-none uppercase italic italic-brand">
+                                Media <span className="text-brand-orange not-italic">Intelligence</span>
                             </span>
-                            <span className="text-enterprise-500 text-[8px] font-black uppercase tracking-widest hidden lg:block">{APP_CONFIG.ORGANIZATION}</span>
+                            <span className="text-enterprise-500 text-[8px] font-black uppercase tracking-widest hidden lg:block">TelevisaUnivision MID</span>
                         </div>
                     </div>
 

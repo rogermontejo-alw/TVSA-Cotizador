@@ -1,0 +1,18 @@
+{
+    "short_name": "CotizaTV",
+    "name": "Televisa Univision: Cotizaciones Premium",
+    "description": "Sistema de Cotizaciones Institucionales Televisa Univision",
+    "icons": [
+        {
+            "src": "/logo-tvsa.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "start_url": "/",
+    "display": "standalone",
+    "theme_color": "#FF5900",
+    "background_color": "#111111",
+    "orientation": "portrait"
+}

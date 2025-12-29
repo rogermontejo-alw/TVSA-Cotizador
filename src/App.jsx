@@ -145,7 +145,7 @@ const App = () => {
 
   // Handlers para acciones comunes
   const handlePrint = (cotz) => {
-    generatePDF(cotz, dbData.configuracion);
+    generatePDF(cotz, dbData.configuracion, dbData.perfil);
   };
 
   const handleAddToComparator = (cotz) => {
@@ -344,16 +344,16 @@ const App = () => {
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-brand-orange rounded-xl flex items-center justify-center text-[12px] font-black text-white uppercase italic shadow-lg shadow-brand-orange/20 rotate-3 transition-transform hover:rotate-0">
-                TU
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2 shadow-lg hover:scale-110 transition-transform">
+                <img src="/logo-tvsa.png" alt="TU" className="w-full h-full object-contain" />
               </div>
-              <p className="text-sm font-black text-white uppercase tracking-tighter">
-                TELEVISA UNIVISION <span className="text-brand-orange">MID</span>
+              <p className="text-sm font-black text-white uppercase tracking-tighter italic italic-brand">
+                Televisa <span className="text-brand-orange">Univision</span> MID
               </p>
             </div>
             <div className="hidden md:block h-6 w-px bg-white/10"></div>
             <p className="text-[10px] font-bold text-white/50 uppercase tracking-[0.4em]">
-              Executive Platform <span className="text-white/70">© 2025</span>
+              Enterprise Deployment <span className="text-white/70">© 2025</span>
             </p>
           </div>
 
