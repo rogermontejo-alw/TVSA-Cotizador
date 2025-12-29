@@ -145,8 +145,9 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
                                                 <Edit3 size={16} />
                                             </button>
                                             <button
-                                                onClick={() => onToggleEstatus(c)}
-                                                className="w-10 h-10 flex items-center justify-center bg-enterprise-50 text-enterprise-500 hover:bg-brand-orange hover:text-white rounded-xl transition-all shadow-sm"
+                                                onClick={() => onToggleEstatus({ ...c, estatus: c.estatus === 'activo' ? 'inactivo' : 'activo' })}
+                                                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm ${c.estatus === 'activo' ? 'bg-enterprise-50 text-enterprise-500 hover:bg-brand-orange hover:text-white' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white'}`}
+                                                title={c.estatus === 'activo' ? 'Desactivar Cliente' : 'Activar Cliente'}
                                             >
                                                 <Activity size={16} />
                                             </button>
@@ -193,8 +194,8 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
                                         <Edit3 size={14} />
                                     </button>
                                     <button
-                                        onClick={() => onToggleEstatus(c)}
-                                        className="w-9 h-9 flex items-center justify-center bg-enterprise-50 text-enterprise-500 rounded-lg active:bg-brand-orange active:text-white transition-all shadow-sm"
+                                        onClick={() => onToggleEstatus({ ...c, estatus: c.estatus === 'activo' ? 'inactivo' : 'activo' })}
+                                        className={`w-9 h-9 flex items-center justify-center rounded-lg active:scale-95 transition-all shadow-sm ${c.estatus === 'activo' ? 'bg-enterprise-50 text-enterprise-500 active:bg-brand-orange active:text-white' : 'bg-emerald-50 text-emerald-600 active:bg-emerald-600 active:text-white'}`}
                                     >
                                         <Activity size={14} />
                                     </button>

@@ -24,11 +24,14 @@ const ClientSelector = ({ clientes = [], clienteSeleccionado, setClienteSeleccio
                     icon={Search}
                 >
                     <option value="" disabled>Buscar Partner o Razón Social...</option>
-                    {clientes.sort((a, b) => a.nombre_empresa.localeCompare(b.nombre_empresa)).map(c => (
-                        <option key={c.id} value={c.id}>
-                            {c.nombre_empresa?.toUpperCase()} {c.segmento ? `[${c.segmento}]` : ''}
-                        </option>
-                    ))}
+                    {clientes
+                        .filter(c => c.estatus !== 'inactivo')
+                        .sort((a, b) => a.nombre_empresa.localeCompare(b.nombre_empresa))
+                        .map(c => (
+                            <option key={c.id} value={c.id}>
+                                {c.nombre_empresa?.toUpperCase()} {c.segmento ? `[${c.segmento}]` : ''}
+                            </option>
+                        ))}
                 </FloatingSelect>
 
                 {selectedClient && (
