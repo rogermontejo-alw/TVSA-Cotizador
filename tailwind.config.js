@@ -5,6 +5,13 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    screens: {
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px',
+    },
     extend: {
       colors: {
         brand: {
@@ -48,7 +55,7 @@ export default {
       backgroundImage: {
         'univision-gradient': 'linear-gradient(135deg, #FF5900 0%, #EF0C7F 100%)',
         'univision-gradient-soft': 'linear-gradient(135deg, #F8F9FA 0%, #CCCCCC 100%)',
-      }
+      },
     },
   },
   plugins: [],

@@ -100,14 +100,14 @@ const DashboardView = ({
     return (
         <div className="space-y-12 animate-premium-fade pb-20">
             {/* Executive Masthead */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 sm:gap-10 border-b border-enterprise-100 pb-8 sm:pb-12 text-balance">
+            <div className="flex flex-col min-[1190px]:flex-row justify-between items-start min-[1190px]:items-end gap-6 sm:gap-10 border-b border-enterprise-100 pb-8 sm:pb-12 text-balance">
                 <div className="space-y-3 sm:space-y-4">
                     <div className="inline-flex items-center gap-2.5 px-3 py-1.5 bg-[#111111] text-white rounded-full shadow-lg">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                         <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest leading-none">Global Sync Active</span>
                     </div>
                     <div className="space-y-1">
-                        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-enterprise-950 tracking-tighter leading-none uppercase italic italic-brand">
+                        <h1 className="text-xl sm:text-2xl md:text-3xl min-[1190px]:text-4xl font-black text-enterprise-950 tracking-tighter leading-none uppercase italic italic-brand">
                             Media <span className="text-[#FF5900] not-italic">Intelligence</span>
                         </h1>
                         <p className="text-[10px] sm:text-[11px] font-bold text-enterprise-600 max-w-xl">
@@ -141,7 +141,7 @@ const DashboardView = ({
             </div>
 
             {/* Core Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 min-[1190px]:grid-cols-4 gap-8">
                 <StatCard
                     title="Venta Realizada"
                     value={statistics.totalVenta}
@@ -173,28 +173,27 @@ const DashboardView = ({
             </div>
 
             {/* Performance Analysis & Strategic Actions */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-
+            <div className="grid grid-cols-1 min-[1190px]:grid-cols-12 gap-10">
                 {/* Fulfillment Status */}
-                <div className="lg:col-span-8">
+                <div className="min-[1190px]:col-span-8">
                     <div className="bg-[#111111] p-6 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] text-white relative overflow-hidden shadow-2xl">
                         {/* Brand Decorative Corner */}
                         <div className="absolute top-0 right-0 w-80 h-80 bg-[#FF5900] opacity-10 blur-[100px] -mr-40 -mt-40" />
 
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 sm:gap-12 relative z-10">
+                        <div className="flex flex-col desktop:flex-row justify-between items-start desktop:items-end gap-8 sm:gap-12 relative z-10">
                             <div className="space-y-4 sm:space-y-6">
                                 <span className="text-[10px] sm:text-[11px] font-black text-[#FF5900] uppercase tracking-widest flex items-center gap-3">
                                     <Target size={16} /> KPI Status: High Performance
                                 </span>
                                 <div className="space-y-1 sm:space-y-2">
-                                    <h2 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter leading-none">{statistics.cumplimiento}%</h2>
+                                    <h2 className="text-5xl sm:text-6xl min-[1190px]:text-7xl font-black tracking-tighter leading-none">{statistics.cumplimiento}%</h2>
                                     <p className="text-[9px] sm:text-[10px] font-bold text-white/70 uppercase tracking-widest italic leading-none">Operational Goal Fulfillment</p>
                                 </div>
                             </div>
-                            <div className="bg-white/5 border border-white/10 p-5 sm:p-8 rounded-3xl sm:rounded-[2.5rem] backdrop-blur-md w-full md:w-auto">
-                                <span className="block text-[9px] sm:text-[10px] font-black text-white/50 uppercase tracking-widest mb-1 sm:mb-2 text-left md:text-right">Target Amount</span>
+                            <div className="bg-white/5 border border-white/10 p-5 sm:p-8 rounded-3xl sm:rounded-[2.5rem] backdrop-blur-md w-full min-[1190px]:w-auto">
+                                <span className="block text-[9px] sm:text-[10px] font-black text-white/50 uppercase tracking-widest mb-1 sm:mb-2 text-left min-[1190px]:text-right">Target Amount</span>
                                 <span className="text-2xl sm:text-4xl font-black tracking-tight">{formatMXN(statistics.meta, 0)}</span>
-                                <div className="flex items-center justify-start md:justify-end gap-2 mt-2 sm:mt-3 text-[#34d399]">
+                                <div className="flex items-center justify-start min-[1190px]:justify-end gap-2 mt-2 sm:mt-3 text-[#34d399]">
                                     <TrendingUp size={14} sm:size={16} />
                                     <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Optimized Track</span>
                                 </div>
@@ -232,7 +231,7 @@ const DashboardView = ({
                 </div>
 
                 {/* Vertical Strategic Actions */}
-                <div className="lg:col-span-4 space-y-6">
+                <div className="min-[1190px]:col-span-4 space-y-6">
                     <button
                         onClick={iniciarNuevaCotizacion}
                         className="w-full group bg-univision-gradient p-[2px] rounded-[2.5rem] shadow-2xl shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
