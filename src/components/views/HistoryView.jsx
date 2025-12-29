@@ -119,17 +119,11 @@ const HistoryView = ({
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <div className="flex items-center gap-3 sm:gap-4 mb-2">
-                        <button
-                            onClick={() => setVistaActual('cotizador')}
-                            className="p-2 sm:p-2.5 bg-white rounded-2xl shadow-premium border border-enterprise-100 text-enterprise-400 hover:text-brand-orange transition-all active:scale-90"
-                        >
-                            <ArrowLeft size={window.innerWidth < 640 ? 16 : 20} />
-                        </button>
                         <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-enterprise-950 tracking-tight leading-none uppercase italic italic-brand">
                             Historical <span className="text-brand-orange not-italic">Records</span>
                         </h1>
                     </div>
-                    <p className="text-[9px] sm:text-[10px] font-bold text-enterprise-500 uppercase tracking-widest ml-12 sm:ml-14">
+                    <p className="text-[9px] sm:text-[10px] font-bold text-enterprise-500 uppercase tracking-widest">
                         Master Database / Commercial Activity
                     </p>
                 </div>
