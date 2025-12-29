@@ -91,18 +91,19 @@ const ClientForm = ({ onSave, setMensaje, clienteEdicion = null, onCancel = null
     };
 
     return (
-        <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-gray-100 flex flex-col lg:flex-row">
+        <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-gray-100 flex flex-col lg:flex-row relative">
+            {/* Botón de Cerrar (X) - Posicionado para máxima visibilidad en el modal */}
+            <button
+                type="button"
+                onClick={onCancel}
+                className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center bg-gray-100 text-gray-900 rounded-full hover:bg-brand-orange hover:text-white transition-all z-50 shadow-xl border-4 border-white group"
+                title="Cerrar y descartar"
+            >
+                <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+            </button>
+
             {/* Sidebar Decorativo */}
-            <div className="lg:w-1/4 bg-gray-900 p-8 text-white flex flex-col justify-between relative">
-                {/* Botón de Cerrar (X) arriba a la derecha */}
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-white/10 rounded-full text-white hover:bg-white/20 transition-all z-20 group"
-                    title="Cerrar y descartar"
-                >
-                    <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
-                </button>
+            <div className="lg:w-1/4 bg-gray-900 p-8 text-white flex flex-col justify-between">
 
                 <div>
                     <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-900/40 mb-6">

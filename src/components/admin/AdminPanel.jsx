@@ -121,12 +121,12 @@ const AdminPanel = ({
 
                             {/* Modal de Cliente */}
                             {showClientModal && (
-                                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8">
+                                <div className="fixed inset-0 z-[60] flex items-start justify-center p-4 md:p-8 pt-10 md:pt-24 overflow-y-auto">
                                     <div
-                                        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
                                         onClick={() => setShowClientModal(false)}
                                     ></div>
-                                    <div className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+                                    <div className="relative w-full max-w-5xl mx-auto animate-in zoom-in-95 duration-200 z-10 mb-20">
                                         <ClientForm
                                             onSave={async (tabla, payload) => {
                                                 const res = await guardarRegistro(tabla, payload);

@@ -75,7 +75,7 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
                         className="h-12 bg-brand-orange text-white px-6 rounded-2xl flex items-center gap-2 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-brand-orange/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                     >
                         <UserCircle size={16} />
-                        Añadir Partner
+                        + Cliente
                     </button>
                 </div>
             </div>
