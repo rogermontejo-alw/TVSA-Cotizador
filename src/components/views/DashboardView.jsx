@@ -151,7 +151,7 @@ const DashboardView = ({
             </div>
 
             {/* Financial Ribbon - 6 Metrics */}
-            <div className="grid grid-cols-2 md:grid-cols-3 min-[1190px]:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 min-[1190px]:grid-cols-6 gap-4">
                 <StatCard
                     title="Venta Bruta"
                     value={statistics.totalVenta}
@@ -233,7 +233,7 @@ const DashboardView = ({
                                 />
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4 py-2 border-t border-white/5">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-2 border-t border-white/5">
                                 <div>
                                     <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Formalización</p>
                                     <p className="text-sm font-black text-blue-400">
@@ -310,7 +310,7 @@ const DashboardView = ({
                         </div>
                     </button>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <button
                             onClick={() => setVistaActual('reportes')}
                             className="bg-white p-6 rounded-2xl border border-enterprise-100 flex flex-col gap-4 text-left shadow-sm hover:border-brand-orange transition-all group"
