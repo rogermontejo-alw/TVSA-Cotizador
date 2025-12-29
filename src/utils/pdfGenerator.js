@@ -69,12 +69,12 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           background-color: #f0f2f5;
           color: #333;
           margin: 0;
-          padding: 100px 20px 40px 20px;
+          padding: 100px 0 40px 0;
           -webkit-print-color-adjust: exact;
-          display: flex;
-          justify-content: center;
           min-height: 100vh;
           overflow-x: auto;
+          width: 100%;
+          -webkit-overflow-scrolling: touch;
         }
         .no-print-bar {
           position: fixed;
@@ -128,14 +128,15 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
         .order-container {
           width: 215.9mm;
           min-width: 215.9mm;
-          flex-shrink: 0;
           min-height: 279.4mm;
           background: white;
           padding: 15mm 20mm;
           box-sizing: border-box;
           position: relative;
           box-shadow: 0 0 50px rgba(0,0,0,0.1);
-          margin: 0 auto;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
         }
         .header {
           border-bottom: 2px solid var(--brand-orange);
