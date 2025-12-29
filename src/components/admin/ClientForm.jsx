@@ -93,7 +93,17 @@ const ClientForm = ({ onSave, setMensaje, clienteEdicion = null, onCancel = null
     return (
         <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-gray-100 flex flex-col lg:flex-row">
             {/* Sidebar Decorativo */}
-            <div className="lg:w-1/4 bg-gray-900 p-8 text-white flex flex-col justify-between">
+            <div className="lg:w-1/4 bg-gray-900 p-8 text-white flex flex-col justify-between relative">
+                {/* Botón de Cerrar (X) arriba a la derecha */}
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-white/10 rounded-full text-white hover:bg-white/20 transition-all z-20 group"
+                    title="Cerrar y descartar"
+                >
+                    <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                </button>
+
                 <div>
                     <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-900/40 mb-6">
                         <UserPlus size={24} />
@@ -106,14 +116,6 @@ const ClientForm = ({ onSave, setMensaje, clienteEdicion = null, onCancel = null
                     </p>
                 </div>
 
-                {clienteEdicion && (
-                    <button
-                        onClick={onCancel}
-                        className="mt-4 text-xs font-bold text-red-500 uppercase tracking-widest hover:text-red-400 transition-colors flex items-center gap-2"
-                    >
-                        <X size={14} /> Cancelar Edición
-                    </button>
-                )}
 
                 <div className="space-y-4 pt-8 border-t border-gray-800">
                     <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-gray-500">
@@ -312,13 +314,25 @@ const ClientForm = ({ onSave, setMensaje, clienteEdicion = null, onCancel = null
                     </div>
                 </div>
 
-                <button
-                    type="submit"
-                    className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-red-700 transition-all flex items-center justify-center shadow-xl shadow-red-200 active:scale-[0.98]"
-                >
-                    <Save className="mr-3" size={24} />
-                    {clienteEdicion ? 'Actualizar Datos del Cliente' : 'Guardar Cliente en CRM'}
-                </button>
+                <div className="flex flex-col sm:flex-row gap-4">
+                    {onCancel && (
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            className="flex-1 bg-gray-100 text-gray-900 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-200 transition-all flex items-center justify-center active:scale-[0.98]"
+                        >
+                            <X className="mr-3" size={24} />
+                            Descartar
+                        </button>
+                    )}
+                    <button
+                        type="submit"
+                        className="flex-[2] bg-red-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-red-700 transition-all flex items-center justify-center shadow-xl shadow-red-200 active:scale-[0.98]"
+                    >
+                        <Save className="mr-3" size={24} />
+                        {clienteEdicion ? 'Actualizar Cliente' : 'Guardar en CRM'}
+                    </button>
+                </div>
             </form>
         </div>
     );

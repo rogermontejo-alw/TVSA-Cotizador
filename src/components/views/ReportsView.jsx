@@ -388,7 +388,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     </button>
                     <button
                         onClick={() => handleExportExcel('all')}
-                        className="flex-1 bg-white border border-red-100 text-red-600 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-50 transition-all shadow-sm"
+                        className="flex-1 bg-white border border-red-100 text-brand-orange px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-50 transition-all shadow-sm"
                         title="Exportar todos los reportes en pestañas separadas"
                     >
                         <Globe size={12} /> EXCEL (TODO)
@@ -400,7 +400,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             </div>
 
             {/* Menu de Nav de Reportes */}
-            <div className="flex flex-wrap gap-2 print:hidden bg-white p-2 rounded-2xl shadow-xl border border-gray-100">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:flex lg:flex-wrap gap-2 print:hidden bg-white p-3 rounded-[2rem] shadow-xl border border-gray-100">
                 {[
                     { id: 'ventas-mes', label: 'Ventas por Mes', icon: Calendar },
                     { id: 'ventas-canal', label: 'Ventas por Canal', icon: Tv },
@@ -412,12 +412,12 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     <button
                         key={tab.id}
                         onClick={() => setSeccionReporte(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all
+                        className={`flex items-center justify-center lg:justify-start gap-2 px-3 py-3 rounded-xl text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all w-full lg:w-auto
                             ${seccionReporte === tab.id
-                                ? 'bg-[#FF5900] text-white shadow-lg shadow-orange-500/20'
-                                : 'text-enterprise-400 hover:text-enterprise-950 hover:bg-enterprise-50'}`}
+                                ? 'bg-brand-orange text-white shadow-lg shadow-orange-500/20'
+                                : 'text-enterprise-400 hover:text-enterprise-950 hover:bg-enterprise-50 border border-transparent hover:border-enterprise-100'}`}
                     >
-                        <tab.icon size={14} />
+                        <tab.icon size={14} className={seccionReporte === tab.id ? 'text-white' : 'text-brand-orange'} />
                         {tab.label}
                     </button>
                 ))}
@@ -527,7 +527,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                                     {f.importes[p] ? formatMXN(f.importes[p]) : MISSING_DATA_CHAR}
                                                 </td>
                                             ))}
-                                            <td className="py-4 px-6 text-right text-[10px] font-black text-red-600 bg-slate-50/20">{formatMXN(f.total)}</td>
+                                            <td className="py-4 px-6 text-right text-[10px] font-black text-brand-orange bg-slate-50/20">{formatMXN(f.total)}</td>
                                         </tr>
                                     ))}
                                     {/* Totales por Plaza */}
@@ -555,37 +555,37 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                             <Globe className="text-brand-orange flex-shrink-0" size={30} />
                         </div>
                         <div className="overflow-x-auto custom-scrollbar">
-                            <table className="w-full text-left border-collapse min-w-[800px]">
+                            <table className="w-full text-left border-collapse min-w-[500px] md:min-w-[800px]">
                                 <thead>
                                     <tr className="bg-slate-50 border-b border-gray-200">
-                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sm:sticky sm:left-0 bg-slate-50 z-10">Cuenta / Empresa</th>
+                                        <th className="py-4 px-3 sm:px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 sm:sticky sm:left-0 bg-slate-50 z-10">Cuenta / Empresa</th>
                                         {matrizCiudad.plazas.map(p => (
-                                            <th key={p} className="py-4 px-6 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{p}</th>
+                                            <th key={p} className="py-4 px-3 sm:px-6 text-center text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">{p}</th>
                                         ))}
-                                        <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Consolidado</th>
+                                        <th className="py-4 px-3 sm:px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Consolidado</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {matrizCiudad.filas.map((f, i) => (
                                         <tr key={i} className="hover:bg-slate-50/50">
-                                            <td className="py-4 px-6 border-r border-gray-100 sm:sticky sm:left-0 bg-white z-10">
-                                                <span className="text-[10px] font-black text-slate-900 uppercase block truncate max-w-[120px]">{f.nombre}</span>
+                                            <td className="py-4 px-3 sm:px-6 border-r border-gray-100 sm:sticky sm:left-0 bg-white z-10">
+                                                <span className="text-[10px] font-black text-slate-900 uppercase block truncate max-w-[100px] sm:max-w-[120px]">{f.nombre}</span>
                                             </td>
                                             {matrizCiudad.plazas.map(p => (
-                                                <td key={p} className="py-4 px-6 text-center text-[10px] font-bold text-slate-500 border-r border-gray-100">
+                                                <td key={p} className="py-4 px-3 sm:px-6 text-center text-[10px] font-bold text-slate-500 border-r border-gray-100">
                                                     {f.importes[p] ? formatMXN(f.importes[p]) : MISSING_DATA_CHAR}
                                                 </td>
                                             ))}
-                                            <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900 bg-slate-50/20">{formatMXN(f.total)}</td>
+                                            <td className="py-4 px-3 sm:px-6 text-right text-[10px] font-black text-slate-900 bg-slate-50/20">{formatMXN(f.total)}</td>
                                         </tr>
                                     ))}
                                     {/* Totales por Plaza */}
                                     <tr className="bg-slate-900 text-white font-black">
-                                        <td className="py-4 px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sm:sticky sm:left-0 bg-slate-900 z-10">Total Ciudad</td>
+                                        <td className="py-4 px-3 sm:px-6 uppercase text-[9px] tracking-widest border-r border-slate-800 sm:sticky sm:left-0 bg-slate-900 z-10">Total Ciudad</td>
                                         {matrizCiudad.plazas.map(p => (
-                                            <td key={p} className="py-4 px-6 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizCiudad.totalesPorPlaza[p])}</td>
+                                            <td key={p} className="py-4 px-3 sm:px-6 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizCiudad.totalesPorPlaza[p])}</td>
                                         ))}
-                                        <td className="py-4 px-6 text-right text-[11px] text-brand-orange">{formatMXN(matrizCiudad.granTotal)}</td>
+                                        <td className="py-4 px-3 sm:px-6 text-right text-[11px] text-brand-orange">{formatMXN(matrizCiudad.granTotal)}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -675,7 +675,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     </>
                 )}
                 {seccionReporte === 'resumen-clientes' && (
-                    <div className="overflow-x-auto sm:overflow-hidden">
+                    <div>
                         <div className="p-8 border-b border-enterprise-700 flex justify-between items-center bg-enterprise-950 text-white">
                             <div>
                                 <h3 className="text-lg font-black tracking-tighter uppercase italic italic-brand">Pipeline de Ventas y Efectividad</h3>
@@ -683,47 +683,49 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                             </div>
                             <Layout className="text-brand-orange" size={30} />
                         </div>
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="bg-slate-50">
-                                    <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest sticky left-0 bg-slate-50 z-10">Cuenta</th>
-                                    <th className="py-4 px-6 text-center text-[9px] font-black text-blue-500 uppercase tracking-widest">Valor Abiertas</th>
-                                    <th className="py-4 px-6 text-center text-[9px] font-black text-emerald-500 uppercase tracking-widest">Valor Ganadas</th>
-                                    <th className="py-4 px-6 text-center text-[9px] font-black text-brand-orange uppercase tracking-widest">Valor Perdidas</th>
-                                    <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Venta Acumulada</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {(clientes || []).map(c => {
-                                    const cCotz = (cotizaciones || []).filter(q => String(q.cliente_id) === String(c.id));
-                                    const abiertas = cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada').length;
-                                    const cGanadas = cCotz.filter(q => q.estatus === 'ganada').length;
-                                    const perdidas = cCotz.filter(q => q.estatus === 'perdida').length;
-                                    const monto = cCotz.filter(q => q.estatus === 'ganada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-left min-w-[700px]">
+                                <thead>
+                                    <tr className="bg-slate-50">
+                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest sticky left-0 bg-slate-50 z-10">Cuenta</th>
+                                        <th className="py-4 px-6 text-center text-[9px] font-black text-blue-500 uppercase tracking-widest">Valor Abiertas</th>
+                                        <th className="py-4 px-6 text-center text-[9px] font-black text-emerald-500 uppercase tracking-widest">Valor Ganadas</th>
+                                        <th className="py-4 px-6 text-center text-[9px] font-black text-brand-orange uppercase tracking-widest">Valor Perdidas</th>
+                                        <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Venta Acumulada</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {(clientes || []).map(c => {
+                                        const cCotz = (cotizaciones || []).filter(q => String(q.cliente_id) === String(c.id));
+                                        const abiertas = cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada').length;
+                                        const cGanadas = cCotz.filter(q => q.estatus === 'ganada').length;
+                                        const perdidas = cCotz.filter(q => q.estatus === 'perdida').length;
+                                        const monto = cCotz.filter(q => q.estatus === 'ganada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
 
-                                    if (abiertas === 0 && cGanadas === 0 && perdidas === 0) return null;
+                                        if (abiertas === 0 && cGanadas === 0 && perdidas === 0) return null;
 
-                                    return (
-                                        <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="py-4 px-6 sticky left-0 bg-white z-10">
-                                                <p className="text-[10px] font-black text-slate-900 uppercase">{c.nombre_empresa}</p>
-                                                <p className="text-[8px] font-bold text-gray-300 uppercase tracking-widest italic">{c.plaza}</p>
-                                            </td>
-                                            <td className="py-4 px-6 text-center font-bold text-[10px] text-blue-600">
-                                                {formatMXN(cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0))}
-                                            </td>
-                                            <td className="py-4 px-6 text-center font-bold text-[10px] text-emerald-600">
-                                                {formatMXN(cCotz.filter(q => q.estatus === 'ganada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0))}
-                                            </td>
-                                            <td className="py-4 px-6 text-center font-bold text-[10px] text-red-600">
-                                                {formatMXN(cCotz.filter(q => q.estatus === 'perdida').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0))}
-                                            </td>
-                                            <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900">{formatMXN(monto)}</td>
-                                        </tr>
-                                    );
-                                }).filter(Boolean)}
-                            </tbody>
-                        </table>
+                                        return (
+                                            <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="py-4 px-6 sticky left-0 bg-white z-10">
+                                                    <p className="text-[10px] font-black text-slate-900 uppercase">{c.nombre_empresa}</p>
+                                                    <p className="text-[8px] font-bold text-gray-300 uppercase tracking-widest italic">{c.plaza}</p>
+                                                </td>
+                                                <td className="py-4 px-6 text-center font-bold text-[10px] text-blue-600">
+                                                    {formatMXN(cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0))}
+                                                </td>
+                                                <td className="py-4 px-6 text-center font-bold text-[10px] text-emerald-600">
+                                                    {formatMXN(cCotz.filter(q => q.estatus === 'ganada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0))}
+                                                </td>
+                                                <td className="py-4 px-6 text-center font-bold text-[10px] text-brand-orange">
+                                                    {formatMXN(cCotz.filter(q => q.estatus === 'perdida').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0))}
+                                                </td>
+                                                <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900">{formatMXN(monto)}</td>
+                                            </tr>
+                                        );
+                                    }).filter(Boolean)}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
 
@@ -754,18 +756,22 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                                 <p className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Corte periódico de ingresos</p>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8 w-full lg:w-auto">
-                                            <div className="text-left sm:text-right border-l-2 sm:border-l-0 border-white/10 pl-3 sm:pl-0">
-                                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-0.5 italic">Total Facturado</p>
-                                                <p className="text-lg sm:text-xl font-black">{formatMXN(totalFacturado, 0)}</p>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 w-full lg:w-auto mt-4 lg:mt-0">
+                                            <div className="text-left md:text-right border-l-2 md:border-l-0 border-white/10 pl-3 md:pl-0">
+                                                <p className="text-[7px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest mb-0.5 italic">Facturación Emitida</p>
+                                                <p className="text-base md:text-xl font-black">{formatMXN(filtrados.filter(c => c.numero_factura).reduce((acc, c) => acc + (parseFloat(c.monto_facturado) || 0), 0), 0)}</p>
                                             </div>
-                                            <div className="text-left sm:text-right border-l-2 sm:border-l-0 border-emerald-500/30 pl-3 sm:pl-0">
-                                                <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-0.5 italic">Total Cobrado</p>
-                                                <p className="text-lg sm:text-xl font-black text-emerald-500">{formatMXN(totalCobrado, 0)}</p>
+                                            <div className="text-left md:text-right border-l-2 md:border-l-0 border-blue-500/30 pl-3 md:pl-0">
+                                                <p className="text-[7px] md:text-[8px] font-black text-blue-500 uppercase tracking-widest mb-0.5 italic">Pendiente Factura</p>
+                                                <p className="text-base md:text-xl font-black text-blue-400">{formatMXN(filtrados.filter(c => !c.numero_factura).reduce((acc, c) => acc + (parseFloat(c.monto_facturado) || 0), 0), 0)}</p>
                                             </div>
-                                            <div className="text-left sm:text-right border-l-2 sm:border-l-0 border-brand-orange/30 pl-3 sm:pl-0">
-                                                <p className="text-[8px] font-black text-brand-orange uppercase tracking-widest mb-0.5 italic">Pendiente Pago</p>
-                                                <p className="text-lg sm:text-xl font-black text-brand-orange">{formatMXN(pendiente, 0)}</p>
+                                            <div className="text-left md:text-right border-l-2 md:border-l-0 border-emerald-500/30 pl-3 md:pl-0">
+                                                <p className="text-[7px] md:text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-0.5 italic">Total Cobrado</p>
+                                                <p className="text-base md:text-xl font-black text-emerald-500">{formatMXN(totalCobrado, 0)}</p>
+                                            </div>
+                                            <div className="text-left md:text-right border-l-2 md:border-l-0 border-brand-orange/30 pl-3 md:pl-0">
+                                                <p className="text-[7px] md:text-[8px] font-black text-brand-orange uppercase tracking-widest mb-0.5 italic">Por Recuperar</p>
+                                                <p className="text-base md:text-xl font-black text-brand-orange">{formatMXN(totalFacturado - totalCobrado, 0)}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -789,7 +795,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                                         </td>
                                                         <td className="px-8 py-5">
                                                             <p className="text-xs font-black text-slate-900 uppercase">{c.cotizaciones?.clientes?.nombre_empresa || 'S/N'}</p>
-                                                            <p className="text-[9px] font-bold text-red-600 uppercase tracking-tight">Folio Q: {c.cotizaciones?.folio || 'S/N'}</p>
+                                                            <p className="text-[9px] font-bold text-brand-orange uppercase tracking-tight">Folio Q: {c.cotizaciones?.folio || 'S/N'}</p>
                                                         </td>
                                                         <td className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                                             {c.numero_factura || 'PENDIENTE'}
@@ -800,7 +806,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                                         <td className="px-8 py-5 text-center">
                                                             <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest
                                                                 ${c.estatus_pago === 'cobrado' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
-                                                                    c.estatus_pago === 'vencido' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                                                    c.estatus_pago === 'vencido' ? 'bg-red-50 text-brand-orange border border-red-100' :
                                                                         'bg-orange-50 text-orange-600 border border-orange-100'}`}>
                                                                 {c.estatus_pago}
                                                             </span>
