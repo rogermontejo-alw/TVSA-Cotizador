@@ -94,18 +94,18 @@ const GoalManager = ({ metas, onSaveGoal, onRemoveGoal }) => {
                 </div>
                 <div className="divide-y divide-enterprise-50">
                     {metas && metas.length > 0 ? metas.map(m => (
-                        <div key={m.id} className="p-6 flex items-center justify-between hover:bg-enterprise-50/50 transition-colors">
-                            <div className="flex items-center gap-6">
-                                <div className="w-12 h-12 rounded-2xl bg-enterprise-950 text-white flex items-center justify-center font-black text-[11px] uppercase shadow-lg">
+                        <div key={m.id} className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-enterprise-50/50 transition-all gap-4">
+                            <div className="flex items-center gap-4 sm:gap-6">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-enterprise-950 text-white flex items-center justify-center font-black text-[9px] sm:text-[11px] uppercase shadow-lg flex-shrink-0">
                                     {MESES[m.mes - 1]?.substring(0, 3)}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-black text-enterprise-950 uppercase italic italic-brand leading-tight">{MESES[m.mes - 1]} {m.anio}</p>
-                                    <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-0.5">Vigente</p>
+                                    <p className="text-xs sm:text-sm font-black text-enterprise-950 uppercase italic italic-brand leading-tight">{MESES[m.mes - 1]} {m.anio}</p>
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-0.5">Vigente</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-8">
-                                <span className="text-lg font-black text-enterprise-950 tabular-nums">{formatMXN(m.monto_meta)}</span>
+                            <div className="flex items-center justify-between w-full sm:w-auto gap-4 sm:gap-8">
+                                <span className="text-sm sm:text-lg font-black text-enterprise-950 tabular-nums">{formatMXN(m.monto_meta, 0)}</span>
                                 <button
                                     onClick={() => {
                                         if (window.confirm('¿Eliminar esta meta?')) onRemoveGoal(m.id);

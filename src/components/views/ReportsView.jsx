@@ -370,12 +370,12 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             {/* Header Pro */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 print:hidden">
                 <div className="flex items-center gap-4">
-                    <div className="bg-[#111111] p-3 rounded-xl shadow-xl shadow-slate-200">
+                    <div className="bg-enterprise-950 p-3 rounded-xl shadow-xl shadow-enterprise-900/10">
                         <BarChart3 className="text-white" size={24} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase">Reportería Corporativa</h2>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Control de Resultados con Totales y Matrices</p>
+                        <h2 className="text-xl font-black text-enterprise-950 tracking-tighter uppercase italic italic-brand">Reportería Corporativa</h2>
+                        <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5">Control de Resultados con Totales y Matrices</p>
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2 w-full lg:w-auto">
@@ -434,9 +434,9 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     <button onClick={() => establecerRango('año')} className="flex-1 md:flex-none px-3 py-1.5 bg-slate-50 rounded-lg text-[7px] sm:text-[8px] font-black uppercase hover:bg-black hover:text-white transition-all border border-slate-100">Año Completo</button>
                 </div>
                 <div className="flex items-center gap-2 md:ml-auto">
-                    <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-red-500 min-w-0" />
+                    <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-brand-orange min-w-0" />
                     <span className="text-gray-300 font-bold text-[10px]">A</span>
-                    <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-red-500 min-w-0" />
+                    <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-brand-orange min-w-0" />
                 </div>
             </div>
 
@@ -446,13 +446,13 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 {/* 1. VENTAS POR MES (Matriz Clientes x Meses) */}
                 {seccionReporte === 'ventas-mes' && (
                     <>
-                        <div className="p-5 sm:p-8 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 bg-slate-900 text-white">
+                        <div className="p-5 sm:p-8 border-b border-enterprise-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 bg-enterprise-950 text-white">
                             <div>
-                                <h3 className="text-base sm:text-lg font-black tracking-tighter uppercase">Ventas por Mes (Detallado)</h3>
-                                <p className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Consolidado mensual por cliente</p>
+                                <h3 className="text-base sm:text-lg font-black tracking-tighter uppercase italic italic-brand">Ventas por Mes (Detallado)</h3>
+                                <p className="text-[8px] sm:text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5">Consolidado mensual por cliente</p>
                             </div>
                             <div className="w-full sm:w-auto text-left sm:text-right">
-                                <p className="text-[8px] sm:text-[9px] font-black uppercase text-red-500 tracking-widest leading-none mb-1">Total Gran Acumulado</p>
+                                <p className="text-[8px] sm:text-[9px] font-black uppercase text-brand-orange tracking-widest leading-none mb-1">Total Gran Acumulado</p>
                                 <p className="text-xl sm:text-2xl font-black">{formatMXN(matrizMensual.granTotal)}</p>
                             </div>
                         </div>
@@ -487,7 +487,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                         {matrizMensual.mesesColumnas.map(m => (
                                             <td key={m} className="py-3 px-3 sm:py-4 sm:px-4 text-center text-[9px] sm:text-[10px] border-r border-slate-800">{formatMXN(matrizMensual.totalesPorMes[m], 0)}</td>
                                         ))}
-                                        <td className="py-3 px-4 sm:py-4 sm:px-6 text-right text-[10px] sm:text-[11px] text-red-500">{formatMXN(matrizMensual.granTotal, 0)}</td>
+                                        <td className="py-3 px-4 sm:py-4 sm:px-6 text-right text-[10px] sm:text-[11px] text-brand-orange">{formatMXN(matrizMensual.granTotal, 0)}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -498,12 +498,12 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 {/* 2. VENTAS POR CANAL (Matriz Canales x Plazas) */}
                 {seccionReporte === 'ventas-canal' && (
                     <>
-                        <div className="p-6 md:p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
+                        <div className="p-6 md:p-8 border-b border-enterprise-700 flex justify-between items-center bg-enterprise-950 text-white">
                             <div>
-                                <h3 className="text-lg font-black tracking-tighter uppercase">Análisis por Canal</h3>
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Distribución territorial de inversión</p>
+                                <h3 className="text-lg font-black tracking-tighter uppercase italic italic-brand">Análisis por Canal</h3>
+                                <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5 italic">Distribución territorial de inversión</p>
                             </div>
-                            <Tv className="text-red-500 flex-shrink-0" size={30} />
+                            <Tv className="text-brand-orange flex-shrink-0" size={30} />
                         </div>
                         <div className="overflow-x-auto custom-scrollbar">
                             <table className="w-full text-left border-collapse min-w-[600px]">
@@ -536,7 +536,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                         {matrizCanales.plazas.map(p => (
                                             <td key={p} className="py-4 px-6 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizCanales.totalesPorPlaza[p])}</td>
                                         ))}
-                                        <td className="py-4 px-6 text-right text-[11px] text-red-500">{formatMXN(matrizCanales.granTotal)}</td>
+                                        <td className="py-4 px-6 text-right text-[11px] text-brand-orange">{formatMXN(matrizCanales.granTotal)}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -552,7 +552,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                 <h3 className="text-lg font-black tracking-tighter uppercase">Matriz Territorial</h3>
                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Consolidado por plaza</p>
                             </div>
-                            <Globe className="text-red-500 flex-shrink-0" size={30} />
+                            <Globe className="text-brand-orange flex-shrink-0" size={30} />
                         </div>
                         <div className="overflow-x-auto custom-scrollbar">
                             <table className="w-full text-left border-collapse min-w-[800px]">
@@ -585,7 +585,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                         {matrizCiudad.plazas.map(p => (
                                             <td key={p} className="py-4 px-6 text-center text-[10px] border-r border-slate-800">{formatMXN(matrizCiudad.totalesPorPlaza[p])}</td>
                                         ))}
-                                        <td className="py-4 px-6 text-right text-[11px] text-red-500">{formatMXN(matrizCiudad.granTotal)}</td>
+                                        <td className="py-4 px-6 text-right text-[11px] text-brand-orange">{formatMXN(matrizCiudad.granTotal)}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -596,13 +596,13 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 {/* 5. CONTROL DE CIERRES (Listado de Contratos y MC) */}
                 {seccionReporte === 'control-cierres' && (
                     <>
-                        <div className="p-6 md:p-8 border-b border-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 text-white">
+                        <div className="p-6 md:p-8 border-b border-enterprise-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-enterprise-950 text-white">
                             <div>
-                                <h3 className="text-lg font-black tracking-tighter uppercase">Control Administrativo de Cierres</h3>
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Folios, Contratos y Master Contracts</p>
+                                <h3 className="text-lg font-black tracking-tighter uppercase italic italic-brand">Control Administrativo de Cierres</h3>
+                                <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5 italic">Folios, Contratos y Master Contracts</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-[9px] font-black uppercase text-red-500 tracking-widest">Cierres en Periodo</p>
+                                <p className="text-[9px] font-black uppercase text-brand-orange tracking-widest">Cierres en Periodo</p>
                                 <p className="text-2xl font-black">{ganadas.length}</p>
                             </div>
                         </div>
@@ -630,7 +630,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                                 <td className="py-4 px-6 border-r border-gray-100 font-black text-[10px] text-slate-900 uppercase">
                                                     {cliente?.nombre_empresa || 'S/N'}
                                                 </td>
-                                                <td className="py-4 px-6 border-r border-gray-100 text-[10px] font-bold text-red-500 uppercase tracking-tighter">
+                                                <td className="py-4 px-6 border-r border-gray-100 text-[10px] font-bold text-brand-orange uppercase tracking-tighter">
                                                     {q.folio || q.id}
                                                 </td>
                                                 <td className="py-4 px-6 border-r border-gray-100 text-center">
@@ -676,12 +676,12 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 )}
                 {seccionReporte === 'resumen-clientes' && (
                     <div className="overflow-x-auto sm:overflow-hidden">
-                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-slate-900 text-white">
+                        <div className="p-8 border-b border-enterprise-700 flex justify-between items-center bg-enterprise-950 text-white">
                             <div>
-                                <h3 className="text-lg font-black tracking-tighter uppercase">Pipeline de Ventas y Efectividad</h3>
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Estado actual de propuestas por cuenta</p>
+                                <h3 className="text-lg font-black tracking-tighter uppercase italic italic-brand">Pipeline de Ventas y Efectividad</h3>
+                                <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5 italic">Estado actual de propuestas por cuenta</p>
                             </div>
-                            <Layout className="text-red-500" size={30} />
+                            <Layout className="text-brand-orange" size={30} />
                         </div>
                         <table className="w-full text-left">
                             <thead>
@@ -689,7 +689,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                     <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest sticky left-0 bg-slate-50 z-10">Cuenta</th>
                                     <th className="py-4 px-6 text-center text-[9px] font-black text-blue-500 uppercase tracking-widest">Valor Abiertas</th>
                                     <th className="py-4 px-6 text-center text-[9px] font-black text-emerald-500 uppercase tracking-widest">Valor Ganadas</th>
-                                    <th className="py-4 px-6 text-center text-[9px] font-black text-red-500 uppercase tracking-widest">Valor Perdidas</th>
+                                    <th className="py-4 px-6 text-center text-[9px] font-black text-brand-orange uppercase tracking-widest">Valor Perdidas</th>
                                     <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Venta Acumulada</th>
                                 </tr>
                             </thead>
@@ -763,9 +763,9 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                                 <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-0.5 italic">Total Cobrado</p>
                                                 <p className="text-lg sm:text-xl font-black text-emerald-500">{formatMXN(totalCobrado, 0)}</p>
                                             </div>
-                                            <div className="text-left sm:text-right border-l-2 sm:border-l-0 border-red-500/30 pl-3 sm:pl-0">
-                                                <p className="text-[8px] font-black text-red-500 uppercase tracking-widest mb-0.5 italic">Pendiente Pago</p>
-                                                <p className="text-lg sm:text-xl font-black text-red-500">{formatMXN(pendiente, 0)}</p>
+                                            <div className="text-left sm:text-right border-l-2 sm:border-l-0 border-brand-orange/30 pl-3 sm:pl-0">
+                                                <p className="text-[8px] font-black text-brand-orange uppercase tracking-widest mb-0.5 italic">Pendiente Pago</p>
+                                                <p className="text-lg sm:text-xl font-black text-brand-orange">{formatMXN(pendiente, 0)}</p>
                                             </div>
                                         </div>
                                     </div>

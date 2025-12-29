@@ -138,19 +138,19 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
     }
 
     return (
-        <div className="space-y-8 max-w-5xl mx-auto animate-in fade-in duration-500 pb-20">
+        <div className="space-y-8 max-w-5xl mx-auto animate-in fade-in duration-500 pb-24">
 
-            <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100">
+            <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl border border-enterprise-100">
                 {/* Header Responsivo */}
-                <div className="px-4 py-4 bg-slate-900 flex justify-between items-center">
+                <div className="px-6 py-5 bg-enterprise-950 flex justify-between items-center rounded-t-[2rem] md:rounded-t-[2.5rem]">
                     <div className="flex items-center gap-3">
-                        <ShieldCheck size={20} className="text-red-500" />
-                        <h3 className="text-sm font-black text-white uppercase tracking-widest">Mi Cuenta y Directorio</h3>
+                        <ShieldCheck size={20} className="text-brand-orange" />
+                        <h3 className="text-sm font-black text-white uppercase tracking-widest italic italic-brand">Mi Cuenta y Directorio</h3>
                     </div>
                     {!editMode && (
                         <button
                             onClick={handleNewUser}
-                            className="px-3 md:px-4 py-2 bg-white text-slate-900 rounded-lg font-black uppercase tracking-widest text-[8px] md:text-[9px] hover:bg-red-600 hover:text-white transition-all shadow-md flex items-center gap-2 active:scale-95"
+                            className="px-3 md:px-4 py-2 bg-white text-enterprise-950 rounded-lg font-black uppercase tracking-widest text-[8px] md:text-[9px] hover:bg-brand-orange hover:text-white transition-all shadow-md flex items-center gap-2 active:scale-95"
                         >
                             <UserPlus size={14} /> <span className="hidden xs:inline">Nuevo</span>
                         </button>
@@ -212,53 +212,53 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
                                 </div>
 
                                 {/* Columna 2: Seguridad y Auth */}
-                                <div className="bg-slate-50 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] space-y-4 md:space-y-5 border border-slate-100">
-                                    <h5 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-1">
-                                        <Lock size={12} className="text-red-500" /> Credenciales de Sistema
+                                <div className="bg-enterprise-50 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] space-y-4 md:space-y-5 border border-enterprise-100">
+                                    <h5 className="text-[9px] font-black text-enterprise-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-1">
+                                        <Lock size={12} className="text-brand-orange" /> Credenciales de Sistema
                                     </h5>
                                     <div className="space-y-1.5">
-                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Email de Acceso</label>
+                                        <label className="text-[9px] font-black text-enterprise-400 uppercase tracking-widest ml-1">Email de Acceso</label>
                                         <div className="relative">
-                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-enterprise-300" size={18} />
                                             <input
                                                 type="email"
                                                 value={userFormData.email}
                                                 onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
                                                 disabled={selectedUser && selectedUser.id !== perfil.id}
-                                                className="w-full p-3.5 pl-12 bg-white border border-gray-100 focus:border-red-500 rounded-xl transition-all font-bold outline-none text-sm disabled:opacity-60"
+                                                className="w-full p-3.5 pl-12 bg-white border border-enterprise-100 focus:border-brand-orange rounded-xl transition-all font-bold outline-none text-sm disabled:opacity-60"
                                                 required
                                             />
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{selectedUser?.id === perfil?.id ? 'Cambiar Contraseña' : 'Password'}</label>
+                                        <label className="text-[9px] font-black text-enterprise-400 uppercase tracking-widest ml-1">{selectedUser?.id === perfil?.id ? 'Cambiar Contraseña' : 'Password'}</label>
                                         <div className="relative">
-                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-enterprise-300" size={18} />
                                             <input
                                                 type="password"
                                                 value={userFormData.newPassword}
                                                 onChange={(e) => setUserFormData({ ...userFormData, newPassword: e.target.value })}
                                                 disabled={selectedUser && selectedUser.id !== perfil.id}
                                                 placeholder={selectedUser?.id === perfil?.id ? "Mínimo 6 caracteres" : "Restringido"}
-                                                className="w-full p-3.5 pl-12 bg-white border border-gray-100 focus:border-red-500 rounded-xl transition-all font-bold outline-none text-sm disabled:opacity-60"
+                                                className="w-full p-3.5 pl-12 bg-white border border-enterprise-100 focus:border-brand-orange rounded-xl transition-all font-bold outline-none text-sm disabled:opacity-60"
                                             />
                                         </div>
                                     </div>
                                     {selectedUser?.id === perfil?.id && userFormData.newPassword && (
                                         <div className="space-y-1.5">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar Password</label>
+                                            <label className="text-[9px] font-black text-enterprise-400 uppercase tracking-widest ml-1">Confirmar Password</label>
                                             <input
                                                 type="password"
                                                 value={userFormData.confirmPassword}
                                                 onChange={(e) => setUserFormData({ ...userFormData, confirmPassword: e.target.value })}
-                                                className="w-full p-3.5 bg-white border border-gray-100 focus:border-red-500 rounded-xl transition-all font-bold outline-none text-sm"
+                                                className="w-full p-3.5 bg-white border border-enterprise-100 focus:border-brand-orange rounded-xl transition-all font-bold outline-none text-sm"
                                             />
                                         </div>
                                     )}
                                     {selectedUser && selectedUser.id !== perfil.id && (
-                                        <div className="p-3 bg-slate-100/50 rounded-lg flex items-start gap-2">
-                                            <AlertCircle size={14} className="text-slate-400 mt-0.5" />
-                                            <p className="text-[8px] font-bold text-slate-400 uppercase leading-relaxed italic">
+                                        <div className="p-3 bg-enterprise-100/50 rounded-lg flex items-start gap-2">
+                                            <AlertCircle size={14} className="text-enterprise-400 mt-0.5" />
+                                            <p className="text-[8px] font-bold text-enterprise-400 uppercase leading-relaxed italic">
                                                 Las claves de acceso son privadas. Solo el titular puede modificarlas desde su propio panel.
                                             </p>
                                         </div>
@@ -266,11 +266,11 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
                                 </div>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 border-t border-gray-100">
+                            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 border-t border-enterprise-100">
                                 <button
                                     type="submit"
                                     disabled={isUpdating}
-                                    className="flex-1 py-4 bg-slate-900 text-white rounded-xl font-black uppercase tracking-widest text-[9px] md:text-[10px] hover:bg-emerald-600 transition-all shadow-xl flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                                    className="flex-1 py-4 bg-enterprise-950 text-white rounded-xl font-black uppercase tracking-widest text-[9px] md:text-[10px] hover:bg-emerald-600 transition-all shadow-xl flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
                                 >
                                     {isUpdating ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
                                     {selectedUser ? 'Aplicar y Sincronizar' : 'Vincular a Sistema'}

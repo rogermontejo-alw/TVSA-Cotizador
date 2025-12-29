@@ -192,12 +192,12 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
                     />
                 </div>
 
-                <div className="flex bg-enterprise-950 rounded-xl p-1 w-fit shadow-lg">
+                <div className="flex flex-wrap bg-enterprise-950 rounded-xl p-1 w-full md:w-fit shadow-lg">
                     {['todos', 'pendiente', 'programado', 'cobrado'].map(estatus => (
                         <button
                             key={estatus}
                             onClick={() => setFiltroEstatus(estatus)}
-                            className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all
+                            className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all
                                 ${filtroEstatus === estatus
                                     ? 'bg-brand-orange text-white shadow-lg'
                                     : 'text-enterprise-400 hover:text-enterprise-200'}`}
@@ -308,7 +308,7 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
             )}
 
             {/* Tabla de Registros (Estilo Reporte) */}
-            <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl border border-enterprise-100 overflow-hidden">
+            <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl border border-enterprise-100">
                 <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[900px]">
                         <thead>

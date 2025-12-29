@@ -33,8 +33,8 @@ const Navbar = ({ session, vistaActual, setVistaActual, onLogout }) => {
     // Enlaces operativos centrales
     const middleLinks = [
         { id: 'crm', label: 'Clientes', icon: Users },
-        { id: 'cotizador', label: 'Cotizador', icon: Calculator },
-        { id: 'historial', label: 'Historial', icon: History },
+        { id: 'cotizador', label: 'Cotizar', icon: Calculator },
+        { id: 'historial', label: 'Cotizaciones', icon: History },
         { id: 'master-contracts', label: 'Contratos', icon: Briefcase },
         { id: 'cobranza', label: 'Cobranza', icon: DollarSign },
     ];

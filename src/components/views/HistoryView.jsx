@@ -159,7 +159,8 @@ const HistoryView = ({
 
             {/* Main Content */}
             <div className="bg-white rounded-[2.5rem] shadow-premium border border-enterprise-100 overflow-hidden">
-                <div className="overflow-x-auto custom-scrollbar">
+                {/* Desktop view */}
+                <div className="hidden lg:block overflow-x-auto custom-scrollbar">
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-enterprise-950 text-white border-b border-white/5">
@@ -229,7 +230,7 @@ const HistoryView = ({
                                         <div className="flex items-center justify-center gap-2">
                                             <button
                                                 onClick={() => { setCotizacion(cotz); setVistaActual('cotizador'); }}
-                                                className="w-9 h-9 flex items-center justify-center bg-enterprise-50 text-enterprise-400 hover:bg-enterprise-900 hover:text-white rounded-xl transition-all"
+                                                className="w-9 h-9 flex items-center justify-center bg-enterprise-50 text-enterprise-400 hover:bg-enterprise-950 hover:text-white rounded-xl transition-all"
                                                 title="Revisar Parámetros"
                                             >
                                                 <Eye size={16} />
@@ -253,17 +254,85 @@ const HistoryView = ({
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan="6" className="py-20 text-center">
-                                        <div className="bg-enterprise-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-enterprise-200">
-                                            <Search size={32} />
-                                        </div>
-                                        <h3 className="text-lg font-black text-enterprise-900 uppercase">Sin Actividad Estratégica</h3>
-                                        <p className="text-xs text-enterprise-400 font-bold uppercase tracking-widest mt-1 italic">Realiza una consulta diferente</p>
-                                    </td>
+                                    <td colSpan="6" className="py-20 text-center text-enterprise-400 font-bold uppercase text-[10px] italic tracking-widest">No hay actividad registrada</td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile view */}
+                <div className="lg:hidden divide-y divide-enterprise-50">
+                    {historialFiltrado.length > 0 ? historialFiltrado.map(cotz => (
+                        <div key={cotz.id} className="p-6 space-y-4 hover:bg-enterprise-50/30 transition-all">
+                            <div className="flex justify-between items-start">
+                                <div className="space-y-1">
+                                    <h3 className="text-xs font-black text-enterprise-950 uppercase line-clamp-1">{cotz.cliente?.nombre_empresa || 'S/N'}</h3>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-black text-brand-orange uppercase tracking-widest">{cotz.folio || cotz.id.slice(0, 8)}</span>
+                                        {cotz.numero_contrato && (
+                                            <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black rounded uppercase">CT: {cotz.numero_contrato}</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-black text-enterprise-900 tracking-tight">
+                                        {formatMXN(cotz.subtotalGeneral || (cotz.monto_total || cotz.total) / 1.16)}
+                                    </p>
+                                    <p className="text-[8px] font-bold text-enterprise-400 uppercase tracking-widest">
+                                        {cotz.fecha instanceof Date && !isNaN(cotz.fecha) ? cotz.fecha.toLocaleDateString('es-MX') : '--/--'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between py-3 border-y border-enterprise-50">
+                                <div className="flex gap-1">
+                                    {['enviada', 'ganada', 'perdida'].map(st => (
+                                        <button
+                                            key={st}
+                                            onClick={() => openStatusModal(cotz, st)}
+                                            className={`px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${cotz.estatus === st
+                                                ? st === 'ganada' ? 'bg-emerald-500 text-white shadow-md' : st === 'perdida' ? 'bg-brand-magenta text-white shadow-md' : 'bg-enterprise-950 text-white shadow-md'
+                                                : 'bg-enterprise-50 text-enterprise-400'
+                                                }`}
+                                        >
+                                            {st}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[9px] font-black text-enterprise-600 bg-enterprise-50 px-2 py-0.5 rounded-md">{cotz.items.length}P</span>
+                                    {cotz.paqueteVIX && <div className="w-2 h-2 rounded-full bg-brand-orange animate-pulse" />}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => { setCotizacion(cotz); setVistaActual('cotizador'); }}
+                                    className="flex-1 h-10 flex items-center justify-center bg-enterprise-50 text-enterprise-950 rounded-xl active:bg-enterprise-950 active:text-white transition-all text-[9px] font-black uppercase gap-2"
+                                >
+                                    <Eye size={14} /> Editar
+                                </button>
+                                <button
+                                    onClick={() => mostrarPropuesta(cotz)}
+                                    className="flex-1 h-10 flex items-center justify-center bg-brand-orange/10 text-brand-orange rounded-xl active:bg-brand-orange active:text-white transition-all text-[9px] font-black uppercase gap-2"
+                                >
+                                    <Printer size={14} /> Reporte
+                                </button>
+                                <button
+                                    onClick={() => { if (window.confirm('Eliminar registro?')) eliminarCotizacion(cotz.id); }}
+                                    className="w-10 h-10 flex items-center justify-center bg-enterprise-50 text-enterprise-400 rounded-xl active:bg-brand-magenta active:text-white transition-all"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                        </div>
+                    )) : (
+                        <div className="py-20 text-center">
+                            <Search size={32} className="mx-auto text-enterprise-100 mb-4" />
+                            <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-widest italic">Sin actividad histórica</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="bg-enterprise-50 p-6 border-t border-enterprise-100 flex items-center justify-between">

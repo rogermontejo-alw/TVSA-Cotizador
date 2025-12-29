@@ -73,7 +73,8 @@ const ProductManager = ({ productos = [], onSave, setMensaje }) => {
             </div>
 
             <div className="bg-white rounded-[2.5rem] shadow-xl border border-enterprise-100 overflow-hidden">
-                <div className="overflow-x-auto custom-scrollbar">
+                {/* Desktop view */}
+                <div className="hidden lg:block overflow-x-auto custom-scrollbar">
                     <table className="enterprise-table w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-enterprise-950 text-white font-black uppercase text-[9px] tracking-[0.2em]">
@@ -176,6 +177,77 @@ const ProductManager = ({ productos = [], onSave, setMensaje }) => {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile view */}
+                <div className="lg:hidden divide-y divide-enterprise-50">
+                    {productosFiltrados.length > 0 ? productosFiltrados.map((p) => (
+                        <div key={p.id} className={`p-5 space-y-4 ${!p.activo ? 'bg-enterprise-50/30' : ''}`}>
+                            <div className="flex justify-between items-start">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-enterprise-950 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                        <Tv size={18} className="text-brand-orange" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-[11px] font-black text-enterprise-950 uppercase">{p.canal}</h4>
+                                        <p className="text-[9px] font-bold text-enterprise-500 uppercase tracking-widest">{p.tipo}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => handleToggleActivo(p)}
+                                    className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${p.activo
+                                        ? 'bg-emerald-50 text-emerald-600'
+                                        : 'bg-enterprise-100 text-enterprise-400'
+                                        }`}
+                                >
+                                    {p.activo ? 'Live' : 'Hold'}
+                                </button>
+                            </div>
+
+                            <div className="flex items-center justify-between bg-enterprise-50/50 p-3 rounded-xl">
+                                <div className="flex items-center gap-2">
+                                    <Tag size={12} className="text-brand-orange" />
+                                    <span className="text-[9px] font-black text-enterprise-700 uppercase tracking-widest">{p.plaza}</span>
+                                </div>
+                                <div className="text-right">
+                                    {productoEditando?.id === p.id ? (
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="number"
+                                                value={productoEditando.costo_base}
+                                                onChange={(e) => setProductoEditando({ ...productoEditando, costo_base: e.target.value })}
+                                                className="w-24 h-9 bg-white border border-brand-orange/30 rounded-lg text-right font-black text-xs px-2 outline-none"
+                                                autoFocus
+                                            />
+                                            <button
+                                                onClick={handleSavePrecio}
+                                                className="w-8 h-8 flex items-center justify-center bg-emerald-500 text-white rounded-lg"
+                                            >
+                                                <Save size={14} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[13px] font-black text-enterprise-950 tabular-nums">
+                                                {formatMXN(p.costo_base, 0)}
+                                            </span>
+                                            <button
+                                                onClick={() => setProductoEditando({ ...p })}
+                                                className="p-2 text-enterprise-300 hover:text-enterprise-950"
+                                            >
+                                                <Edit3 size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )) : (
+                        <div className="py-20 text-center">
+                            <AlertCircle size={32} className="mx-auto text-enterprise-100 mb-4" />
+                            <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-widest italic">No se hallaron activos</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Performance Insight Footer */}
