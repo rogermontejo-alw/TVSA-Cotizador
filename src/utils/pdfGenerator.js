@@ -57,7 +57,7 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
       <style>
         @page {
           size: letter;
-          margin: 0;
+          margin: 15mm 15mm 20mm 15mm;
         }
         :root {
           --brand-orange: #FF5900;
@@ -71,10 +71,6 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           margin: 0;
           padding: 100px 0 40px 0;
           -webkit-print-color-adjust: exact;
-          min-height: 100vh;
-          overflow-x: auto;
-          width: 100%;
-          -webkit-overflow-scrolling: touch;
         }
         .no-print-bar {
           position: fixed;
@@ -125,18 +121,33 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           background: rgba(255,255,255,0.1);
           border-color: white;
         }
+        * {
+          box-sizing: border-box;
+        }
         .order-container {
           width: 215.9mm;
-          min-width: 215.9mm;
           min-height: 279.4mm;
           background: white;
-          padding: 15mm 20mm;
-          box-sizing: border-box;
+          padding: 20mm !important;
           position: relative;
           box-shadow: 0 0 50px rgba(0,0,0,0.1);
-          margin-left: auto;
-          margin-right: auto;
+          margin: 40px auto !important;
           display: block;
+        }
+        @media print {
+          .order-container {
+            width: 100% !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+          }
+          body {
+            padding: 0 !important;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
         }
         .header {
           border-bottom: 2px solid var(--brand-orange);
@@ -179,7 +190,7 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           background: #f9f9f9;
           border-radius: 6px;
           padding: 10px 12px;
-          margin-bottom: 25px; /* Más aire para bajar el detalle */
+          margin-bottom: 25px;
           display: grid;
           grid-template-cols: 2fr 1fr;
           gap: 10px;
@@ -199,6 +210,7 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 15px;
+          table-layout: auto;
         }
         .header-cell {
           background: #f0f0f0;
@@ -224,14 +236,15 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           display: flex;
           flex-direction: column;
           align-items: flex-end;
-          margin-top: 15px; /* Más aire antes de los totales */
+          margin-top: 15px;
           gap: 8px;
           width: 100%;
+          page-break-inside: avoid;
         }
         .vix-box {
           border: 1px solid #eee;
           border-radius: 6px;
-          padding: 12px 15px; /* Más aire al VIX */
+          padding: 12px 15px;
           width: 220px;
           text-align: right;
           background: #fdfdfd;
@@ -275,14 +288,16 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           line-height: 1.3; 
           margin-top: 10px; 
           max-width: 60%;
+          page-break-inside: avoid;
         }
         .signature-area {
-          margin-top: 110px; /* Aumentado para bajar las firmas y pie de página */
+          margin-top: 50px;
           margin-bottom: 25px;
           display: flex;
           justify-content: center;
           width: 100%;
           gap: 60px;
+          page-break-inside: avoid;
         }
         .signature-block {
           flex: 1;
@@ -303,6 +318,10 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           color: var(--enterprise-dark);
         }
         .page-footer {
+          position: fixed;
+          bottom: -10mm;
+          left: 0;
+          right: 0;
           text-align: center;
           font-size: 7.5px;
           color: #999;
@@ -311,13 +330,14 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           width: 100%;
           border-top: 1px solid #eee;
           padding-top: 10px;
-          margin-bottom: 5mm;
+          background: white;
         }
         
         @media print {
           body { 
             background: white; 
             padding: 0;
+            margin: 0;
           }
           .order-container { 
             box-shadow: none; 
@@ -327,6 +347,15 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
             width: 100%;
           }
           .no-print { display: none !important; }
+          
+          thead { display: table-header-group; }
+          tfoot { display: table-footer-group; }
+          tr { page-break-inside: avoid; }
+          
+          /* Page Numbering */
+          .page-number:after {
+            content: "Página " counter(page);
+          }
         }
       </style>
     </head>
@@ -341,26 +370,30 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
       </div>
 
       <div class="order-container">
-        <div class="header">
+        <div class="header" style="margin-bottom: 12px;">
           <div class="brand-section">
-            <img src="/logo-tvsa.png" class="logo-img" />
-            <div class="logo-text">televisa<span style="color:var(--brand-orange)">univision</span> <span style="font-weight:400; font-size: 12px; margin-left: 5px; color: #999;">MID</span></div>
+            <img src="${window.location.origin}/logo-tvsa.png" class="logo-img" />
+            <div class="logo-text" style="font-size: 16px;">televisa<span style="color:var(--brand-orange)">univision</span> <span style="font-weight:400; font-size: 10px; margin-left: 5px; color: #999;">MID</span></div>
           </div>
-          <div class="doc-title">Propuesta Comercial de Pauta</div>
+          <div class="doc-title" style="font-size: 8px;">Propuesta Comercial de Pauta</div>
         </div>
 
-        <div class="client-info-box">
-          <div>
-            <div class="label">Razon Social / Cliente</div>
-            <div class="value" style="font-size: 13px;">${cotz.cliente.nombre_empresa || cotz.cliente.nombre || 'Cliente'}</div>
-            <div class="label" style="margin-top:8px">ID de Propuesta</div>
-            <div class="value" style="font-size: 9px">${cotz.id}</div>
+        <div class="client-info-box" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; border: 1px solid #eee; background: #fafafa; margin-bottom: 15px;">
+          <div style="grid-column: span 3; border-right: 1px solid #eee; padding-right: 10px;">
+            <div class="label" style="font-size: 6.5px; margin-bottom: 2px;">Razon Social / Cliente</div>
+            <div class="value" style="font-size: 14px; line-height: 1.1; margin-bottom: 6px;">${cotz.cliente.nombre_empresa || cotz.cliente.nombre || 'Cliente'}</div>
+            <div class="label" style="font-size: 6.5px; display: inline-block; margin-right: 5px;">ID DE PROPUESTA:</div>
+            <span style="font-size: 8px; font-weight: 600; color: #666; font-family: monospace;">${cotz.folio || cotz.id}</span>
           </div>
-          <div style="text-align: right">
-            <div class="label">Fecha de Emisión</div>
-            <div class="value" style="font-size: 9px">${now.toLocaleDateString('es-MX')}</div>
-            <div class="label" style="margin-top:8px">Vigencia</div>
-            <div class="value" style="font-size: 9px">${cotz.diasCampana} Días de Campaña</div>
+          <div style="grid-column: span 1; text-align: right; display: flex; flex-direction: column; justify-content: center;">
+            <div style="margin-bottom: 6px;">
+              <div class="label" style="font-size: 6.5px;">Fecha de Emisión</div>
+              <div class="value" style="font-size: 9px;">${now.toLocaleDateString('es-MX')}</div>
+            </div>
+            <div>
+              <div class="label" style="font-size: 6.5px;">Vigencia Plan</div>
+              <div class="value" style="font-size: 9px; color: var(--brand-orange);">${cotz.diasCampana || 30} Días de Campaña</div>
+            </div>
           </div>
         </div>
 
@@ -390,28 +423,31 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           </tfoot>
         </table>
 
-        <div class="summary-section">
-          ${cotz.paqueteVIX ? `
-            <div class="vix-box">
-              <div class="label" style="color: var(--brand-magenta)">Inversión Digital</div>
-              <div style="font-weight: 900; font-size: 13px; color: #111;">${formatMXN(cotz.costoVIX)}</div>
-              <div style="font-size: 8px; color: #555; margin-top: 3px">
-                ${cotz.paqueteVIX.nombre} | ${(cotz.paqueteVIX.impresiones || 0).toLocaleString()} Impresiones
-              </div>
-            </div>
-          ` : ''}
-
-          <div class="totals-column">
-            <div class="total-box">
-              <div class="total-label" style="font-size: 9px;">Inversión Final</div>
-              <div class="total-value">${formatMXN(cotz.subtotalGeneral)}</div>
-            </div>
-            <div class="iva-disclaimer">MÁS IVA</div>
+        <div class="summary-section" style="flex-direction: row; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
+          <div class="disclaimer-text" style="max-width: 380px; margin: 0; text-align: left;">
+            <div style="font-weight: 800; font-size: 8.5px; color: #444; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Nota Importante:</div>
+            Propuesta sujeta a disponibilidad de espacios. Precios de lista vigentes según contrato. Esta proyección no incluye cargos por producción u otros servicios no especificados.
           </div>
-        </div>
 
-        <div class="disclaimer-text">
-           Propuesta sujeta a disponibilidad de espacios. Precios de lista vigentes según contrato. Esta proyección no incluye cargos por producción u otros servicios no especificados.
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+            ${cotz.paqueteVIX ? `
+              <div class="vix-box">
+                <div class="label" style="color: var(--brand-magenta)">Inversión Digital</div>
+                <div style="font-weight: 900; font-size: 13px; color: #111;">${formatMXN(cotz.costoVIX)}</div>
+                <div style="font-size: 8px; color: #555; margin-top: 3px">
+                  ${cotz.paqueteVIX.nombre} | ${(cotz.paqueteVIX.impresiones || 0).toLocaleString()} Impresiones
+                </div>
+              </div>
+            ` : ''}
+
+            <div class="totals-column">
+              <div class="total-box">
+                <div class="total-label" style="font-size: 9px;">Inversión Final</div>
+                <div class="total-value">${formatMXN(cotz.subtotalGeneral)}</div>
+              </div>
+              <div class="iva-disclaimer">MÁS IVA</div>
+            </div>
+          </div>
         </div>
 
         <div class="signature-area">
@@ -428,7 +464,11 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
         </div>
 
         <div class="page-footer">
-          Generado el: ${fechaImpresion} | TELEVISA UNIVISIÓN MID - PROPUESTA PUBLICITARIA 2025
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 40px;">
+            <div>Generado el: ${fechaImpresion}</div>
+            <div class="page-number"></div>
+          </div>
+          <div style="margin-top: 5px;">TELEVISA UNIVISIÓN MID - PROPUESTA PUBLICITARIA 2025</div>
         </div>
       </div>
     </body>
