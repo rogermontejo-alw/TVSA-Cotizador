@@ -31,25 +31,38 @@ const KPINode = ({ title, value, subtext, icon: Icon, colorClass, isCurrency = t
     </div>
 );
 
-const FunnelStep = ({ label, value, icon: Icon, next = true, color = "brand-orange" }) => (
-    <div className="flex flex-col lg:flex-row items-center gap-1 lg:gap-4 flex-1 w-full">
-        <div className="w-full bg-white border border-enterprise-100 p-3 sm:p-4 rounded-2xl flex items-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-all">
-            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-${color} text-white flex items-center justify-center shrink-0 shadow-lg shadow-${color}/20`}>
-                <Icon size={18} className="sm:w-5 sm:h-5" />
+const FunnelStep = ({ label, value, icon: Icon, next = true, color = "brand-orange" }) => {
+    const colorClasses = {
+        'brand-orange': 'bg-brand-orange shadow-brand-orange/20',
+        'blue-600': 'bg-blue-600 shadow-blue-600/20',
+        'emerald-500': 'bg-emerald-500 shadow-emerald-500/20'
+    };
+    const activeColor = colorClasses[color] || 'bg-enterprise-950 shadow-enterprise-950/20';
+
+    return (
+        <div className="flex flex-col xl:flex-row items-center gap-2 xl:gap-0 flex-1 w-full min-w-0">
+            <div className="flex-1 w-full bg-white border border-enterprise-100 p-3 sm:p-4 rounded-2xl flex items-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-all">
+                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg text-white shadow-enterprise-900/10 ${activeColor}`}>
+                    <Icon size={18} className="sm:w-5 sm:h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                    <p className="text-[7.5px] sm:text-[8px] font-black text-enterprise-400 uppercase tracking-widest leading-none mb-1 truncate">{label}</p>
+                    <p className="text-xs sm:text-sm font-black text-enterprise-950 italic truncate">{formatMXN(value, 0)}</p>
+                </div>
             </div>
-            <div className="min-w-0">
-                <p className="text-[7.5px] sm:text-[8px] font-black text-enterprise-400 uppercase tracking-widest leading-none mb-1 truncate">{label}</p>
-                <p className="text-xs sm:text-sm font-black text-enterprise-950 italic">{formatMXN(value, 0)}</p>
+
+            {/* Area de flecha - Siempre ocupa espacio para mantener balance */}
+            <div className="w-6 xl:w-12 shrink-0 flex items-center justify-center">
+                {next && (
+                    <>
+                        <ArrowRight className="text-enterprise-200 hidden xl:block" size={16} />
+                        <div className="w-px h-3 bg-enterprise-200 xl:hidden" />
+                    </>
+                )}
             </div>
         </div>
-        {next && (
-            <div className="flex lg:items-center justify-center shrink-0">
-                <ArrowRight className="text-enterprise-200 hidden lg:block" size={20} />
-                <div className="w-px h-2 sm:h-4 bg-enterprise-200 lg:hidden" />
-            </div>
-        )}
-    </div>
-);
+    );
+};
 
 const DashboardView = ({
     historial = [],
@@ -209,9 +222,9 @@ const DashboardView = ({
                     <Target size={14} className="text-brand-orange" />
                     <h2 className="text-[9px] sm:text-[10px] font-black text-enterprise-950 uppercase tracking-[0.3em]">Embudo de Conversión Crítica</h2>
                 </div>
-                <div className="flex flex-col lg:flex-row gap-2 lg:gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-y-2 md:gap-x-4 xl:gap-0">
                     <FunnelStep label="Oportunidad (Pipeline)" value={stats.totalPipelineValue} icon={Zap} color="blue-600" />
-                    <FunnelStep label="Contrato (Venta Real)" value={stats.totalRealContracted} icon={Briefcase} color="brand-orange" />
+                    <FunnelStep label="Venta Real (Contratos)" value={stats.totalRealContracted} icon={Briefcase} color="brand-orange" />
                     <FunnelStep label="Facturado (Emitido)" value={stats.totalBilled} icon={BarChart3} color="enterprise-950" />
                     <FunnelStep label="Recaudado (Liquidez)" value={stats.totalCollected} icon={Wallet} color="emerald-500" next={false} />
                 </div>
@@ -220,7 +233,7 @@ const DashboardView = ({
             {/* SECONDARY KPIs & VELOCITY */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <KPINode
-                    title="Meta de Ejecución"
+                    title="Meta de Contratación"
                     value={stats.cumplimiento}
                     isCurrency={false}
                     icon={Target}
@@ -275,7 +288,7 @@ const DashboardView = ({
                                 <ShieldCheck size={14} /> DESEMPEÑO DE CUENTA REAL
                             </span>
                             <div className="mt-4 flex items-baseline gap-6">
-                                <h2 className="text-7xl font-black tracking-tighter italic italic-brand">{stats.cumplimiento}%</h2>
+                                <h2 className="text-5xl sm:text-7xl font-black tracking-tighter italic italic-brand">{stats.cumplimiento}%</h2>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest italic leading-none">CUMPLIMIENTO BASE CONTRATO</p>
                                     <p className="text-[14px] font-black text-emerald-400 tracking-tight leading-none">{formatMXN(stats.totalRealContracted)}</p>
@@ -357,7 +370,7 @@ const DashboardView = ({
                                 <div className="p-4 bg-brand-orange/5 border border-brand-orange/10 rounded-2xl group hover:bg-brand-orange/10 transition-all cursor-pointer" onClick={() => setVistaActual('master-contracts')}>
                                     <p className="text-[8px] font-black text-brand-orange uppercase mb-1">Cero Formalización</p>
                                     <p className="text-[11px] font-bold text-enterprise-800">
-                                        Tienes <span className="font-black underline">{stats.countWonNoContract} ventas</span> retenidas sin contrato de ejecución.
+                                        Tienes <span className="font-black underline">{stats.countWonNoContract} cierres</span> retenidos sin contrato de operación.
                                     </p>
                                 </div>
                             )}

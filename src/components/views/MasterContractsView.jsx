@@ -17,7 +17,7 @@ const MasterContractsView = ({
     onSaveQuote,
     setMensaje
 }) => {
-    const [activeTab, setActiveTab] = useState('mcs'); // 'mcs' o 'ejecuciones'
+    const [activeTab, setActiveTab] = useState('mcs'); // 'mcs' (Convenios) o 'ejecuciones' (Contratos)
     const [busqueda, setBusqueda] = useState('');
     const [filtroEstatus, setFiltroEstatus] = useState('todos');
     const [isCreating, setIsCreating] = useState(false);
@@ -160,7 +160,7 @@ const MasterContractsView = ({
                     <h4 className="text-sm font-black text-enterprise-950 relative z-10">{formatMXN(globalStats.totalAprobado)}</h4>
                 </div>
                 <div className="bg-white p-4 rounded-2xl shadow-premium border border-enterprise-100 border-l-4 border-l-brand-orange relative overflow-hidden">
-                    <p className="text-[8px] font-black text-brand-orange uppercase tracking-widest mb-1 italic">Consumo Ejecutado</p>
+                    <p className="text-[8px] font-black text-brand-orange uppercase tracking-widest mb-1 italic">Consumo Contratado</p>
                     <h4 className="text-sm font-black text-brand-orange">{formatMXN(globalStats.totalEjecutado)}</h4>
                 </div>
                 <div className="bg-enterprise-950 p-4 rounded-2xl shadow-2xl relative overflow-hidden lg:col-span-2">
@@ -188,7 +188,7 @@ const MasterContractsView = ({
                             <div className="flex items-center gap-3 mt-2 text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
                                 <span>Gestión de Ciclo de Vida y Órdenes</span>
                                 <span className="w-1 h-1 bg-white/20 rounded-full" />
-                                <span className="text-brand-orange/80">Marcos Activos: {enrichedMCs.length}</span>
+                                <span className="text-brand-orange/80">Convenios Activos: {enrichedMCs.length}</span>
                             </div>
                         </div>
                     </div>
@@ -198,13 +198,13 @@ const MasterContractsView = ({
                             onClick={() => setActiveTab('mcs')}
                             className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === 'mcs' ? 'bg-brand-orange text-white shadow-lg' : 'text-white/40 hover:text-white'}`}
                         >
-                            Contratos
+                            Convenios
                         </button>
                         <button
                             onClick={() => setActiveTab('ejecuciones')}
                             className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === 'ejecuciones' ? 'bg-brand-orange text-white shadow-lg' : 'text-white/40 hover:text-white'}`}
                         >
-                            Ejecuciones
+                            Contratos
                         </button>
                     </div>
 
@@ -213,7 +213,7 @@ const MasterContractsView = ({
                         className="w-full lg:w-auto px-8 py-3.5 bg-white text-enterprise-950 rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-brand-orange hover:text-white transition-all shadow-xl active:scale-95 group/btn"
                     >
                         <Plus size={16} strokeWidth={3} className="group-hover/btn:rotate-90 transition-transform duration-300" />
-                        Iniciar Marco
+                        {activeTab === 'mcs' ? 'Nuevo Convenio' : 'Vincular Contrato'}
                     </button>
                 </div>
             </div>
@@ -238,10 +238,10 @@ const MasterContractsView = ({
                         <table className="w-full text-left">
                             <thead className="bg-enterprise-950 text-white/40">
                                 <tr>
-                                    <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Socio / Folio MC</th>
+                                    <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Socio / Folio Convenio</th>
                                     <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Capital Aut.</th>
                                     <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Diferencial</th>
-                                    <th className="px-6 py-3 text-right text-[8px] font-black uppercase tracking-widest italic">Ejecutado</th>
+                                    <th className="px-6 py-3 text-right text-[8px] font-black uppercase tracking-widest italic">Contratado</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-enterprise-50">
@@ -254,7 +254,7 @@ const MasterContractsView = ({
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-black text-enterprise-950 uppercase leading-none group-hover:text-brand-orange">{mc.cliente?.nombre_empresa}</p>
-                                                    <p className="text-[8px] font-bold text-enterprise-400 uppercase tracking-widest mt-1">MC: {mc.numero_mc}</p>
+                                                    <p className="text-[8px] font-bold text-enterprise-400 uppercase tracking-widest mt-1">CVE: {mc.numero_mc}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -297,9 +297,9 @@ const MasterContractsView = ({
                             <thead className="bg-enterprise-950 text-white/40">
                                 <tr>
                                     <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Fecha Pauta</th>
-                                    <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Socio / CTR EJE</th>
-                                    <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Valor Ejecutado</th>
-                                    <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic text-center">Referencia MC</th>
+                                    <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Socio / CTR</th>
+                                    <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Valor Contratado</th>
+                                    <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic text-center">Referencia Convenio</th>
                                     <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic text-right">Vinculado a</th>
                                 </tr>
                             </thead>
@@ -346,7 +346,7 @@ const MasterContractsView = ({
             {isCreating && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-enterprise-950/80 backdrop-blur-sm animate-premium-fade">
                     <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white">
-                        <h3 className="text-[12px] font-black text-enterprise-950 uppercase italic tracking-widest mb-6">Abrir Marco Estratégico</h3>
+                        <h3 className="text-[12px] font-black text-enterprise-950 uppercase italic tracking-widest mb-6">Nuevo Convenio Estratégico</h3>
                         <form onSubmit={handleSaveMC} className="space-y-4">
                             <select
                                 required
@@ -375,7 +375,7 @@ const MasterContractsView = ({
                             />
                             <div className="grid grid-cols-2 gap-4 pt-4">
                                 <button type="button" onClick={() => setIsCreating(false)} className="h-11 text-[9px] font-black uppercase tracking-widest text-enterprise-400">Abortar</button>
-                                <button type="submit" className="h-11 bg-enterprise-950 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-brand-orange shadow-lg shadow-enterprise-900/20 active:scale-95 transition-all">Iniciar MC</button>
+                                <button type="submit" className="h-11 bg-enterprise-950 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-brand-orange shadow-lg shadow-enterprise-900/20 active:scale-95 transition-all">Crear Convenio</button>
                             </div>
                         </form>
                     </div>
@@ -388,19 +388,19 @@ const MasterContractsView = ({
                     <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl border border-white">
                         <div className="flex items-center gap-3 mb-8">
                             <Calculator className="text-brand-orange" size={20} />
-                            <h3 className="text-[12px] font-black text-enterprise-950 uppercase italic tracking-widest">Formalizar Ejecución</h3>
+                            <h3 className="text-[12px] font-black text-enterprise-950 uppercase italic tracking-widest">Formalizar Contrato</h3>
                         </div>
 
                         <form onSubmit={handleSaveExecution} className="space-y-5">
                             <div className="space-y-1.5">
-                                <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Asignar a MC</label>
+                                <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Vincular a Convenio</label>
                                 <select
                                     required
                                     value={executionData.mc_id}
                                     onChange={(e) => setExecutionData({ ...executionData, mc_id: e.target.value })}
                                     className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none appearance-none uppercase"
                                 >
-                                    <option value="">Elegir Master Contract...</option>
+                                    <option value="">Elegir Convenio / Master Contract...</option>
                                     {enrichedMCs.map(mc => (
                                         <option key={mc.id} value={mc.id}>{mc.cliente?.nombre_empresa} ({mc.numero_mc})</option>
                                     ))}
@@ -475,7 +475,7 @@ const MasterContractsView = ({
                                 <div className="w-12 h-12 bg-enterprise-950 rounded-2xl flex items-center justify-center text-white"><Briefcase size={22} className="text-brand-orange" /></div>
                                 <div>
                                     <h2 className="text-[14px] font-black text-enterprise-950 uppercase italic leading-none">{selectedMC.cliente?.nombre_empresa}</h2>
-                                    <p className="text-[8px] font-black text-brand-orange uppercase tracking-[.3em] mt-1">Matriz de Análisis MC: {selectedMC.numero_mc}</p>
+                                    <p className="text-[8px] font-black text-brand-orange uppercase tracking-[.3em] mt-1">Matriz de Análisis Convenio: {selectedMC.numero_mc}</p>
                                 </div>
                             </div>
                             <div className="flex gap-3">
@@ -495,7 +495,7 @@ const MasterContractsView = ({
                                     <p className="text-[11px] font-black text-enterprise-950">{formatMXN(selectedMC.monto_aprobado)}</p>
                                 </div>
                                 <div className="bg-brand-orange/5 p-4 rounded-2xl border border-brand-orange/10">
-                                    <p className="text-[7px] font-black text-brand-orange uppercase tracking-widest mb-1">Total Ejecutado</p>
+                                    <p className="text-[7px] font-black text-brand-orange uppercase tracking-widest mb-1">Total Contratado</p>
                                     <p className="text-[11px] font-black text-brand-orange">{formatMXN(selectedMC.montoConsumido)}</p>
                                 </div>
                                 <div className={`p-4 rounded-2xl border ${selectedMC.saldoDisponible < (selectedMC.monto_aprobado * 0.1) ? 'bg-error text-white' : 'bg-emerald-50 text-emerald-600'}`}>
@@ -505,7 +505,7 @@ const MasterContractsView = ({
                             </div>
 
                             <div className="space-y-4">
-                                <h4 className="text-[9px] font-black text-enterprise-950 uppercase tracking-[0.3em] border-l-2 border-brand-orange pl-3 italic">Contratos de Ejecución</h4>
+                                <h4 className="text-[9px] font-black text-enterprise-950 uppercase tracking-[0.3em] border-l-2 border-brand-orange pl-3 italic">Contratos de Operación</h4>
                                 <div className="bg-enterprise-50 rounded-2xl border border-enterprise-100 p-2 overflow-hidden">
                                     <table className="w-full text-left">
                                         <thead className="text-enterprise-400">
@@ -532,7 +532,7 @@ const MasterContractsView = ({
                                             ))}
                                             {selectedMC.ejecuciones?.length === 0 && (
                                                 <tr>
-                                                    <td colSpan="3" className="py-8 text-center text-[7.5px] font-black text-enterprise-300 uppercase tracking-widest italic opacity-50">Sin ejecuciones formalizadas</td>
+                                                    <td colSpan="3" className="py-8 text-center text-[7.5px] font-black text-enterprise-300 uppercase tracking-widest italic opacity-50">Sin contratos formalizados</td>
                                                 </tr>
                                             )}
                                         </tbody>

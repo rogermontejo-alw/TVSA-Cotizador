@@ -244,7 +244,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             ]);
             rows.push(['TOTAL CIUDAD', ...matrizCiudad.plazas.map(p => matrizCiudad.totalesPorPlaza[p] || 0), matrizCiudad.granTotal]);
         } else if (id === 'control-cierres') {
-            title = subCorte === 'pipeline' ? "CONTROL ADMINISTRATIVO DE CIERRES (COMMERCIAL)" : "CONTROL ADMINISTRATIVO DE EJECUCIONES (FINANCIAL)";
+            title = subCorte === 'pipeline' ? "CONTROL ADMINISTRATIVO DE CIERRES (COMMERCIAL)" : "CONTROL ADMINISTRATIVO DE CONTRATOS (FINANCIAL)";
             headers = ['Fecha Ref', 'Cliente', 'Folio Cotz', 'Nº Contrato', 'M. Contract', 'Factura', 'Monto'];
             rows = datosFinancierosTotal.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).map(item => {
                 const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
@@ -688,7 +688,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                         <div className="p-6 md:p-8 border-b border-enterprise-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-enterprise-950 text-white">
                             <div>
                                 <h3 className="text-lg font-black tracking-tighter uppercase italic italic-brand">
-                                    {subCorte === 'pipeline' ? 'Control Administrativo de Cierres' : 'Control Administrativo de Ejecuciones'}
+                                    {subCorte === 'pipeline' ? 'Control Administrativo de Cierres' : 'Control Administrativo de Contratos'}
                                 </h3>
                                 <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5 italic">Folios, Contratos y Master Contracts</p>
                             </div>
