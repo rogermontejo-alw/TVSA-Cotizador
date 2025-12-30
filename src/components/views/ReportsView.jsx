@@ -253,15 +253,14 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             title = subCorte === 'pipeline' ? "CONTROL ADMINISTRATIVO DE CIERRES (COMMERCIAL)" : "CONTROL ADMINISTRATIVO DE CONTRATOS (FINANCIAL)";
             headers = ['Fecha Cierre', 'Cliente / Empresa', 'Folio Cotz', 'Master Contract', 'Orden / Contrato', 'Factura', 'Inversión Neta'];
 
-            let totalCierres = 0;
-            rows = datosFinancierosTotal.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).map(item => {
-                totalCierres += item.monto;
+            let totalInversion = 0;
+            const dataRows = datosFinancierosTotal.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).map(item => {
+                totalInversion += item.monto;
                 const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
                 const q = subCorte === 'pipeline' ? item.original : (cotizaciones || []).find(c => String(c.id) === String(item.original?.cotizacion_id));
                 const ce = subCorte === 'ejecucion' ? item.original : (contratosEjecucion || []).find(e => String(e.cotizacion_id) === String(item.id));
                 const registroCobranza = (cobranza || []).find(cob => (q && String(cob.cotizacion_id) === String(q.id)) || (ce && String(cob.contrato_ejecucion_id) === String(ce.id)));
 
-                // BÚSQUEDA ULTRA-ROBUSTA DEL MASTER CONTRACT (CONVENIO)
                 let mcEncontrado = (masterContracts || []).find(m =>
                     (ce && String(m.id) === String(ce.mc_id)) ||
                     (item.mc_id && String(m.id) === String(item.mc_id)) ||
@@ -269,19 +268,10 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 );
 
                 if (!mcEncontrado) {
-                    // Fallback 1: Por ID de Cliente (UUID String comparison)
                     mcEncontrado = (masterContracts || []).find(m =>
                         String(m.cliente_id) === String(item.cliente_id) ||
                         (cliente && String(m.cliente_id) === String(cliente.id))
                     );
-                }
-
-                if (!mcEncontrado && cliente) {
-                    // Fallback 2: Por Nombre de Empresa (por si hay inconsistencia de IDs)
-                    mcEncontrado = (masterContracts || []).find(m => {
-                        const mName = m.clientes?.nombre_empresa || (Array.isArray(m.clientes) && m.clientes[0]?.nombre_empresa);
-                        return mName && mName.toLowerCase().trim() === cliente.nombre_empresa.toLowerCase().trim();
-                    });
                 }
 
                 const numContrato = ce?.numero_contrato || q?.numero_contrato;
@@ -290,13 +280,22 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     new Date(item.fecha).toLocaleDateString('es-MX'),
                     cliente?.nombre_empresa || 'IDENTIDAD DESCONOCIDA',
                     q?.folio || '-',
-                    mcEncontrado ? (mcEncontrado.numero_mc || 'VINCULADO') : 'FALTA', // Col 4: Master Contract
-                    numContrato || 'FALTA',                                         // Col 5: Orden / Contrato
+                    mcEncontrado ? (mcEncontrado.numero_mc || 'VINCULADO') : 'FALTA',
+                    numContrato || 'FALTA',
                     registroCobranza?.numero_factura || 'FALTA',
                     item.monto
                 ];
             });
-            rows.push(['TOTAL CIERRES', '', '', '', '', '', totalCierres]);
+
+            // Agregamos filas de resumen al inicio
+            rows = [
+                ['RESUMEN DE OPERACIÓN', '', '', '', '', '', ''],
+                ['Total Inversión Neta:', '', '', '', '', '', totalInversion],
+                ['Registros en Periodo:', '', '', '', '', '', dataRows.length],
+                [],
+                ...dataRows,
+                ['TOTAL GENERAL', '', '', '', '', '', totalInversion]
+            ];
         } else if (id === 'resumen-clientes') {
             title = "PIPELINE Y EFECTIVIDAD POR CUENTA ($)";
             headers = ['Cuenta', 'Plaza', 'Valor Abiertas', 'Valor Ganadas', 'Valor Perdidas', 'Venta Acumulada'];
@@ -306,17 +305,11 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             let totalPerdidas = 0;
             let totalAcumulada = 0;
 
-            rows = (clientes || []).map(c => {
+            const dataRows = (clientes || []).map(c => {
                 const cCotz = (cotizaciones || []).filter(q => String(q.cliente_id) === String(c.id));
-
-                const valAbiertas = cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada')
-                    .reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
-
-                const valGanadas = cCotz.filter(q => q.estatus === 'ganada')
-                    .reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
-
-                const valPerdidas = cCotz.filter(q => q.estatus === 'perdida')
-                    .reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+                const valAbiertas = cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+                const valGanadas = cCotz.filter(q => q.estatus === 'ganada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+                const valPerdidas = cCotz.filter(q => q.estatus === 'perdida').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
 
                 if (valAbiertas === 0 && valGanadas === 0 && valPerdidas === 0) return null;
 
@@ -328,12 +321,25 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 return [c.nombre_empresa, c.plaza, valAbiertas, valGanadas, valPerdidas, valGanadas];
             }).filter(Boolean);
 
-            rows.push(['TOTAL GENERAL', '-', totalAbiertas, totalGanadas, totalPerdidas, totalAcumulada]);
+            rows = [
+                ['MÉTRICAS DE PIPELINE', '', '', '', '', ''],
+                ['Total Abiertas:', '', totalAbiertas, '', '', ''],
+                ['Total Ganadas:', '', '', totalGanadas, '', ''],
+                ['Total Perdidas:', '', '', '', totalPerdidas, ''],
+                ['Venta Total Acumulada:', '', '', '', '', totalAcumulada],
+                [],
+                ...dataRows,
+                ['TOTAL GENERAL', '-', totalAbiertas, totalGanadas, totalPerdidas, totalAcumulada]
+            ];
         } else if (id === 'cobranza-periodo') {
             title = "REPORTE DE COBRANZA Y FACTURACIÓN";
             headers = ['F. Programada', 'Cliente', 'Factura', 'Monto', 'Estado', 'F. Pago Real', 'Notas'];
-            let totalCobranza = 0;
-            rows = (cobranza || []).filter(c => {
+
+            let totalFacturado = 0;
+            let totalCobrado = 0;
+            let pendienteFactura = 0;
+
+            const dataRows = (cobranza || []).filter(c => {
                 const fecha = new Date(c.fecha_programada_cobro || c.created_at);
                 const start = new Date(fechaInicio);
                 const end = new Date(fechaFin);
@@ -341,7 +347,10 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 return fecha >= start && fecha <= end;
             }).sort((a, b) => new Date(a.fecha_programada_cobro) - new Date(b.fecha_programada_cobro)).map(c => {
                 const monto = parseFloat(c.monto_facturado) || 0;
-                totalCobranza += monto;
+                totalFacturado += monto;
+                if (c.estatus_pago === 'cobrado') totalCobrado += monto;
+                if (!c.numero_factura) pendienteFactura += monto;
+
                 return [
                     c.fecha_programada_cobro ? new Date(c.fecha_programada_cobro).toLocaleDateString('es-MX') : '-',
                     c.cotizaciones?.clientes?.nombre_empresa || 'S/N',
@@ -352,7 +361,17 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     c.notas || '-'
                 ];
             });
-            rows.push(['TOTAL COBRANZA', '', '', totalCobranza, '', '', '']);
+
+            rows = [
+                ['RESUMEN DE COBRANZA', '', '', '', '', '', ''],
+                ['Total Facturación Emitida:', '', '', totalFacturado, '', '', ''],
+                ['Total Cobrado Real:', '', '', totalCobrado, '', '', ''],
+                ['Pendiente por Cobrar:', '', '', (totalFacturado - totalCobrado), '', '', ''],
+                ['Pendiente de Facturar:', '', '', pendienteFactura, '', '', ''],
+                [],
+                ...dataRows,
+                ['TOTAL COBRANZA', '', '', totalFacturado, '', '', '']
+            ];
         }
 
         return { title, headers, rows };
@@ -406,6 +425,35 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
         let sheetsXml = "";
 
+        if (mode === 'all') {
+            // Generar Hoja de Resumen Ejecutivo
+            let summaryRowXml = "";
+            summaryRowXml += `<Row ss:Height="22"><Cell ss:StyleID="Title"><Data ss:Type="String">RESUMEN EJECUTIVO CONSOLIDADO</Data></Cell></Row>`;
+            summaryRowXml += `<Row ss:Height="22"><Cell><Data ss:Type="String">Periodo: ${fechaInicio} al ${fechaFin}</Data></Cell></Row>`;
+            summaryRowXml += `<Row ss:Height="22"></Row>`;
+
+            reportIds.forEach(id => {
+                const { title, rows } = getReportData(id);
+                // Buscamos la fila que empieza con TOTAL o el resumen
+                const totalRow = rows.find(r => String(r[0]).startsWith('TOTAL'));
+                if (totalRow) {
+                    summaryRowXml += `<Row ss:Height="22">
+                        <Cell ss:StyleID="Header"><Data ss:Type="String">${title}</Data></Cell>
+                        <Cell ss:StyleID="TotalCurrency"><Data ss:Type="Number">${totalRow.find(c => typeof c === 'number') || 0}</Data></Cell>
+                    </Row>`;
+                }
+            });
+
+            sheetsXml += `
+                <Worksheet ss:Name="Resumen Ejecutivo">
+                  <Table>
+                    <Column ss:Width="350"/>
+                    <Column ss:Width="150"/>
+                    ${summaryRowXml}
+                  </Table>
+                </Worksheet>`;
+        }
+
         reportIds.forEach(id => {
             const { title, headers, rows } = getReportData(id);
             const sheetName = id === 'ventas-mes' ? 'Mensual' :
@@ -431,7 +479,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
             // Data Rows
             rows.forEach(row => {
-                const isTotalRow = String(row[0]).startsWith('TOTAL');
+                const isTotalRow = String(row[0]).startsWith('TOTAL') || String(row[0]).startsWith('RESUMEN') || String(row[0]).includes('Total:');
                 rowXml += `<Row ss:Height="22">`;
                 row.forEach((cell, cellIdx) => {
                     const header = headers[cellIdx];
