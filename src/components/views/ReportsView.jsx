@@ -126,18 +126,14 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         return { mesesColumnas, mesesNombres, filas, totalesPorMes, granTotal };
     }, [datosFinancierosTotal, clientes]);
 
-    // 2. REPORTE: Ventas por Canal (Matriz)
+    // 2. REPORTE: Ventas por Canal (Matriz: Canales x Ciudades)
     const matrizCanales = useMemo(() => {
         const canalesMap = {}; // { canal: { plaza: monto } }
         const plazasSet = new Set();
         const totalesPorPlaza = {};
 
         datosFinancierosTotal.forEach(item => {
-            const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
-            const pPlaza = cliente?.plaza || 'Mérida';
-            plazasSet.add(pPlaza);
-
-            // Intentar obtener la cotización original para el desglose
+            // Obtener cotización vinculada para entrar a sus partidas
             let q = null;
             if (subCorte === 'pipeline') {
                 q = (cotizaciones || []).find(c => c.id === item.id);
@@ -150,26 +146,34 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 // 1. Pauta tradicional
                 (q.items || []).forEach(i => {
                     const canal = i.producto?.canal || 'Otros';
+                    const plazaItem = i.producto?.plaza || 'Mérida'; // PLAZA DEL PRODUCTO
+
+                    plazasSet.add(plazaItem);
                     if (!canalesMap[canal]) canalesMap[canal] = {};
+
                     const montoItem = (i.subtotal || 0);
-                    canalesMap[canal][pPlaza] = (canalesMap[canal][pPlaza] || 0) + montoItem;
-                    totalesPorPlaza[pPlaza] = (totalesPorPlaza[pPlaza] || 0) + montoItem;
+                    canalesMap[canal][plazaItem] = (canalesMap[canal][plazaItem] || 0) + montoItem;
+                    totalesPorPlaza[plazaItem] = (totalesPorPlaza[plazaItem] || 0) + montoItem;
                 });
 
                 // 2. VIX
                 const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
                 if (costoVIX > 0) {
                     const canalVIX = 'VIX';
+                    const plazaVIX = q.clientes?.plaza || 'Nacional'; // VIX se suele atribuir a la plaza del cliente o Nacional
+                    plazasSet.add(plazaVIX);
                     if (!canalesMap[canalVIX]) canalesMap[canalVIX] = {};
-                    canalesMap[canalVIX][pPlaza] = (canalesMap[canalVIX][pPlaza] || 0) + costoVIX;
-                    totalesPorPlaza[pPlaza] = (totalesPorPlaza[pPlaza] || 0) + costoVIX;
+                    canalesMap[canalVIX][plazaVIX] = (canalesMap[canalVIX][plazaVIX] || 0) + costoVIX;
+                    totalesPorPlaza[plazaVIX] = (totalesPorPlaza[plazaVIX] || 0) + costoVIX;
                 }
             } else {
-                // Fallback si no hay cotización vinculada (ej: facturas manuales en el futuro?)
+                // Fallback (monto global si no hay desglose)
                 const canal = 'Sin Clasificar';
+                const dummyPlaza = 'Mérida';
+                plazasSet.add(dummyPlaza);
                 if (!canalesMap[canal]) canalesMap[canal] = {};
-                canalesMap[canal][pPlaza] = (canalesMap[canal][pPlaza] || 0) + item.monto;
-                totalesPorPlaza[pPlaza] = (totalesPorPlaza[pPlaza] || 0) + item.monto;
+                canalesMap[canal][dummyPlaza] = (canalesMap[canal][dummyPlaza] || 0) + item.monto;
+                totalesPorPlaza[dummyPlaza] = (totalesPorPlaza[dummyPlaza] || 0) + item.monto;
             }
         });
 
@@ -185,7 +189,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         return { plazas, filas, totalesPorPlaza, granTotal };
     }, [datosFinancierosTotal, clientes, cotizaciones, contratosEjecucion, subCorte]);
 
-    // 3. REPORTE: Ventas por Ciudad (Matriz)
+    // 3. REPORTE: Ventas por Ciudad (Matriz: Clientes x Ciudades)
     const matrizCiudad = useMemo(() => {
         const clienteMap = {}; // { clienteId: { plaza: monto } }
         const plazasSet = new Set();
@@ -193,16 +197,47 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
         datosFinancierosTotal.forEach(item => {
             const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
-            const plaza = cliente?.plaza || 'Mérida';
             const cId = item.cliente_id;
-            const monto = item.monto;
+            const clienteNombre = cliente?.nombre_empresa || 'S/N';
 
-            plazasSet.add(plaza);
             if (!clienteMap[cId]) {
-                clienteMap[cId] = { nombre: cliente?.nombre_empresa || 'S/N', importes: {} };
+                clienteMap[cId] = { nombre: clienteNombre, importes: {} };
             }
-            clienteMap[cId].importes[plaza] = (clienteMap[cId].importes[plaza] || 0) + monto;
-            totalesPorPlaza[plaza] = (totalesPorPlaza[plaza] || 0) + monto;
+
+            // Obtener partidas para saber la plaza del producto
+            let q = null;
+            if (subCorte === 'pipeline') {
+                q = (cotizaciones || []).find(c => c.id === item.id);
+            } else {
+                const ce = (contratosEjecucion || []).find(e => e.id === item.id);
+                q = (cotizaciones || []).find(c => c.id === ce?.cotizacion_id);
+            }
+
+            if (q) {
+                // 1. Pauta tradicional
+                (q.items || []).forEach(i => {
+                    const plazaItem = i.producto?.plaza || 'Mérida';
+                    const montoItem = (i.subtotal || 0);
+
+                    plazasSet.add(plazaItem);
+                    clienteMap[cId].importes[plazaItem] = (clienteMap[cId].importes[plazaItem] || 0) + montoItem;
+                    totalesPorPlaza[plazaItem] = (totalesPorPlaza[plazaItem] || 0) + montoItem;
+                });
+
+                // 2. VIX
+                const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
+                if (costoVIX > 0) {
+                    const plazaVIX = q.clientes?.plaza || 'Nacional';
+                    plazasSet.add(plazaVIX);
+                    clienteMap[cId].importes[plazaVIX] = (clienteMap[cId].importes[plazaVIX] || 0) + costoVIX;
+                    totalesPorPlaza[plazaVIX] = (totalesPorPlaza[plazaVIX] || 0) + costoVIX;
+                }
+            } else {
+                const plazaFallback = cliente?.plaza || 'Mérida';
+                plazasSet.add(plazaFallback);
+                clienteMap[cId].importes[plazaFallback] = (clienteMap[cId].importes[plazaFallback] || 0) + item.monto;
+                totalesPorPlaza[plazaFallback] = (totalesPorPlaza[plazaFallback] || 0) + item.monto;
+            }
         });
 
         const plazas = Array.from(plazasSet).sort();
@@ -215,7 +250,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const granTotal = Object.values(totalesPorPlaza).reduce((a, b) => a + b, 0);
 
         return { plazas, filas, totalesPorPlaza, granTotal };
-    }, [datosFinancierosTotal, clientes]);
+    }, [datosFinancierosTotal, clientes, cotizaciones, contratosEjecucion, subCorte]);
 
     const getReportData = (id) => {
         let headers = [];
@@ -287,18 +322,13 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 ];
             });
 
-            // Agregamos filas de resumen al inicio
             rows = [
-                ['RESUMEN DE OPERACIÓN', '', '', '', '', '', ''],
-                ['Total Inversión Neta:', '', '', '', '', '', totalInversion],
-                ['Registros en Periodo:', '', '', '', '', '', dataRows.length],
-                [],
                 ...dataRows,
                 ['TOTAL GENERAL', '', '', '', '', '', totalInversion]
             ];
         } else if (id === 'resumen-clientes') {
             title = "PIPELINE Y EFECTIVIDAD POR CUENTA ($)";
-            headers = ['Cuenta', 'Plaza', 'Valor Abiertas', 'Valor Ganadas', 'Valor Perdidas', 'Venta Acumulada'];
+            headers = ['Cuenta', 'Valor Abiertas', 'Valor Ganadas', 'Valor Perdidas', 'Venta Acumulada'];
 
             let totalAbiertas = 0;
             let totalGanadas = 0;
@@ -318,18 +348,12 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 totalPerdidas += valPerdidas;
                 totalAcumulada += valGanadas;
 
-                return [c.nombre_empresa, c.plaza, valAbiertas, valGanadas, valPerdidas, valGanadas];
+                return [c.nombre_empresa, valAbiertas, valGanadas, valPerdidas, valGanadas];
             }).filter(Boolean);
 
             rows = [
-                ['MÉTRICAS DE PIPELINE', '', '', '', '', ''],
-                ['Total Abiertas:', '', totalAbiertas, '', '', ''],
-                ['Total Ganadas:', '', '', totalGanadas, '', ''],
-                ['Total Perdidas:', '', '', '', totalPerdidas, ''],
-                ['Venta Total Acumulada:', '', '', '', '', totalAcumulada],
-                [],
                 ...dataRows,
-                ['TOTAL GENERAL', '-', totalAbiertas, totalGanadas, totalPerdidas, totalAcumulada]
+                ['TOTAL GENERAL', totalAbiertas, totalGanadas, totalPerdidas, totalAcumulada]
             ];
         } else if (id === 'cobranza-periodo') {
             title = "REPORTE DE COBRANZA Y FACTURACIÓN";
@@ -337,7 +361,6 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
             let totalFacturado = 0;
             let totalCobrado = 0;
-            let pendienteFactura = 0;
 
             const dataRows = (cobranza || []).filter(c => {
                 const fecha = new Date(c.fecha_programada_cobro || c.created_at);
@@ -349,7 +372,6 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 const monto = parseFloat(c.monto_facturado) || 0;
                 totalFacturado += monto;
                 if (c.estatus_pago === 'cobrado') totalCobrado += monto;
-                if (!c.numero_factura) pendienteFactura += monto;
 
                 return [
                     c.fecha_programada_cobro ? new Date(c.fecha_programada_cobro).toLocaleDateString('es-MX') : '-',
@@ -363,12 +385,6 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             });
 
             rows = [
-                ['RESUMEN DE COBRANZA', '', '', '', '', '', ''],
-                ['Total Facturación Emitida:', '', '', totalFacturado, '', '', ''],
-                ['Total Cobrado Real:', '', '', totalCobrado, '', '', ''],
-                ['Pendiente por Cobrar:', '', '', (totalFacturado - totalCobrado), '', '', ''],
-                ['Pendiente de Facturar:', '', '', pendienteFactura, '', '', ''],
-                [],
                 ...dataRows,
                 ['TOTAL COBRANZA', '', '', totalFacturado, '', '', '']
             ];
@@ -425,35 +441,6 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
         let sheetsXml = "";
 
-        if (mode === 'all') {
-            // Generar Hoja de Resumen Ejecutivo
-            let summaryRowXml = "";
-            summaryRowXml += `<Row ss:Height="22"><Cell ss:StyleID="Title"><Data ss:Type="String">RESUMEN EJECUTIVO CONSOLIDADO</Data></Cell></Row>`;
-            summaryRowXml += `<Row ss:Height="22"><Cell><Data ss:Type="String">Periodo: ${fechaInicio} al ${fechaFin}</Data></Cell></Row>`;
-            summaryRowXml += `<Row ss:Height="22"></Row>`;
-
-            reportIds.forEach(id => {
-                const { title, rows } = getReportData(id);
-                // Buscamos la fila que empieza con TOTAL o el resumen
-                const totalRow = rows.find(r => String(r[0]).startsWith('TOTAL'));
-                if (totalRow) {
-                    summaryRowXml += `<Row ss:Height="22">
-                        <Cell ss:StyleID="Header"><Data ss:Type="String">${title}</Data></Cell>
-                        <Cell ss:StyleID="TotalCurrency"><Data ss:Type="Number">${totalRow.find(c => typeof c === 'number') || 0}</Data></Cell>
-                    </Row>`;
-                }
-            });
-
-            sheetsXml += `
-                <Worksheet ss:Name="Resumen Ejecutivo">
-                  <Table>
-                    <Column ss:Width="350"/>
-                    <Column ss:Width="150"/>
-                    ${summaryRowXml}
-                  </Table>
-                </Worksheet>`;
-        }
-
         reportIds.forEach(id => {
             const { title, headers, rows } = getReportData(id);
             const sheetName = id === 'ventas-mes' ? 'Mensual' :
@@ -479,12 +466,12 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
             // Data Rows
             rows.forEach(row => {
-                const isTotalRow = String(row[0]).startsWith('TOTAL') || String(row[0]).startsWith('RESUMEN') || String(row[0]).includes('Total:');
+                const isTotalRow = String(row[0]).startsWith('TOTAL');
                 rowXml += `<Row ss:Height="22">`;
                 row.forEach((cell, cellIdx) => {
                     const header = headers[cellIdx];
                     // Identificamos columnas que NO deben ser moneda aunque sean números
-                    const isTextCol = ["Orden", "Factura", "Folio", "Folio Cotz", "Master Contract", "Cuenta", "Plaza", "Orden / Contrato", "Estado", "F. Pago Real", "F. Programada", "Cliente", "Canal"].some(tc => header.includes(tc));
+                    const isTextCol = !header.includes('Total') && ["Orden", "Factura", "Folio", "Folio Cotz", "Master Contract", "Cuenta", "Plaza", "Orden / Contrato", "Estado", "F. Pago Real", "F. Programada", "Cliente", "Canal"].some(tc => header.includes(tc));
 
                     const isNum = !isNaN(cell) && typeof cell !== 'boolean' && cell !== '' && !isTextCol;
                     const type = isNum ? 'Number' : 'String';
@@ -513,7 +500,8 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             let colWidthsXml = "";
             headers.forEach((h, hIdx) => {
                 let width = 100; // Default width
-                if (h.includes('Cliente') || h.includes('Cuenta') || h.includes('Empresa')) width = 250;
+                if (h.includes('Folio Cotz')) width = 160;
+                else if (h.includes('Cliente') || h.includes('Cuenta') || h.includes('Empresa')) width = 250;
                 else if (h.includes('Canal') || h.includes('Notas')) width = 180;
                 else if (h.includes('Total') || h.includes('Monto') || h.includes('Inversión')) width = 120;
                 else if (h.includes('Fecha') || h.includes('F. ')) width = 80;

@@ -1,7 +1,7 @@
 {
   "name": "cotizador-final",
   "private": true,
-  "version": "1.8.2",
+  "version": "1.8.4",
   "type": "module",
   "homepage": "https://rogermontejo-alw.github.io/TVSA-Cotizador",
   "scripts": {
