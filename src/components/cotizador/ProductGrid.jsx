@@ -89,22 +89,21 @@ const ProductGrid = ({
                                                     <Tv size={12} className="text-brand-orange" />
                                                     <span className="text-[9px] sm:text-[10px] font-black text-white uppercase tracking-widest leading-none">{p.canal}</span>
                                                 </div>
-                                                <div className="flex items-center gap-1.5 px-3 py-1 bg-enterprise-50 rounded-[0.5rem] text-[9px] font-black text-enterprise-600 uppercase tracking-widest border border-enterprise-100">
-                                                    <Tag size={10} /> {p.tipo}
-                                                </div>
                                                 <div className="flex items-center gap-1.5 text-[9px] font-black text-enterprise-300 uppercase tracking-[0.2em]">
                                                     <MapPin size={12} /> {p.plaza}
                                                 </div>
                                             </div>
 
-                                            {/* Identity Row */}
+                                            {/* Identity Row - Prioritizing Spot/Type & Channel as requested */}
                                             <div className="min-w-0">
-                                                <h3 className="text-base sm:text-lg font-black text-enterprise-950 uppercase tracking-tight mb-0.5 truncate leading-tight">
-                                                    {p.horario}
-                                                </h3>
-                                                <p className="text-[8px] sm:text-[9px] font-bold text-enterprise-500 uppercase tracking-widest opacity-60">
-                                                    {p.categoria || 'Strategic Media Asset'}
-                                                </p>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-[10px] font-black text-brand-orange uppercase tracking-[0.2em]">{p.canal}</span>
+                                                    <div className="w-1 h-3 bg-enterprise-200 rotate-12" />
+                                                    <span className="text-[10px] font-black text-enterprise-400 uppercase tracking-[0.2em]">{p.horario}</span>
+                                                </div>
+                                                <h4 className="text-2xl font-black text-enterprise-950 uppercase italic italic-brand leading-none group-hover:text-brand-orange transition-colors tracking-tighter">
+                                                    {p.tipo} <span className="text-enterprise-300 not-italic font-medium ml-1">{p.duracion}</span>
+                                                </h4>
                                             </div>
 
                                             {/* Pricing Row */}

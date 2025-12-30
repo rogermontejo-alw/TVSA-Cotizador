@@ -31,7 +31,7 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
         <td class="data-cell" style="padding: 4px 6px;">
           <div class="product-info">
             <span class="product-title" style="font-size: 8.5px; font-weight: 800;">${dist.producto.tipo}</span>
-            <span class="product-subtitle" style="font-size: 6.5px; display: block;">${dist.producto.canal} | ${dist.producto.plaza} | ${dist.producto.horario}</span>
+            <span class="product-subtitle" style="font-size: 6.5px; display: block;">${dist.producto.canal} | ${dist.producto.plaza} | ${dist.producto.duracion || '--'} | ${dist.producto.horario}</span>
           </div>
         </td>
         <td class="data-cell text-center font-bold" style="font-size: 8.5px; padding: 4px 2px;">${dist.totalUnidades}</td>

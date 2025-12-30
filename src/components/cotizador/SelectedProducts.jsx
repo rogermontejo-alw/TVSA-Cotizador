@@ -66,11 +66,11 @@ const SelectedProducts = ({
                                                 <Zap size={10} className="fill-brand-red" /> {producto.plaza}
                                             </span>
                                         </div>
-                                        <h4 className="text-sm font-black text-enterprise-950 uppercase truncate mb-0.5">
-                                            {producto.horario}
+                                        <h4 className="text-sm font-black text-enterprise-950 uppercase truncate mb-0.5 group-hover:text-brand-red transition-colors">
+                                            {producto.tipo} <span className="text-enterprise-400 font-medium ml-1">{producto.duracion}</span>
                                         </h4>
                                         <div className="flex items-center gap-2 text-[9px] font-bold text-enterprise-400 uppercase tracking-[0.1em]">
-                                            <span className="px-1.5 py-0.5 bg-enterprise-100 rounded-md text-enterprise-600 font-black">{producto.tipo}</span>
+                                            <span className="text-brand-red">●</span> {producto.horario}
                                             <span className="w-1 h-1 bg-enterprise-200 rounded-full" />
                                             <span className="text-enterprise-400">Unit: <span className="text-enterprise-900 font-black">{formatMXN(precioUnitario)}</span></span>
                                         </div>

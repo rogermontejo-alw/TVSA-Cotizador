@@ -220,8 +220,8 @@ const CotizacionResult = ({
                         <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {cotizacion.distribucion.map((dist, idx) => (
                                 <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                    <p className="font-black text-gray-800 text-[11px] leading-tight line-clamp-1">{dist.producto.tipo}</p>
-                                    <p className="text-[9px] font-bold text-red-600 uppercase mb-2">{dist.producto.canal} | {dist.totalUnidades} Unids.</p>
+                                    <p className="font-black text-gray-800 text-[11px] leading-tight line-clamp-1">{dist.producto.tipo} - {dist.producto.duracion || '--'}</p>
+                                    <p className="text-[9px] font-bold text-red-600 uppercase mb-2">{dist.producto.canal} | {dist.producto.horario} | {dist.totalUnidades} Unids.</p>
                                     <p className="text-xs font-black text-gray-700 border-t pt-2 mt-1">
                                         {formatMXN(cotizacion.items.find(i => i.producto.id === dist.producto.id)?.subtotal || 0)}
                                     </p>

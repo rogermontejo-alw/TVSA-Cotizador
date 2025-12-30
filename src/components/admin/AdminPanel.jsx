@@ -10,7 +10,8 @@ import CobranzaView from './CobranzaView';
 import ProfileForm from './ProfileForm';
 import MaintenanceView from './MaintenanceView';
 import PriceListView from '../views/PriceListView';
-import { DollarSign, UserCircle, Eye, Wrench } from 'lucide-react';
+import { DollarSign, UserCircle, Eye, Wrench, MapPin, Briefcase, Database, CreditCard, Shield } from 'lucide-react';
+import PlazaManager from './PlazaManager';
 
 const AdminPanel = ({
     setVistaActual,
@@ -32,21 +33,65 @@ const AdminPanel = ({
     calcularPrecioUnitario,
     onLogout
 }) => {
+    const [moduloActivo, setModuloActivo] = useState('comercial');
     const [seccionActiva, setSeccionActiva] = useState('clientes');
     const [clienteEdicion, setClienteEdicion] = useState(null);
     const [showClientModal, setShowClientModal] = useState(false);
 
-    const tabs = [
-        { id: 'clientes', label: 'Clientes', icon: Users },
-        { id: 'tarifas', label: 'Especiales', icon: Tag },
-        { id: 'catalogo', label: 'Catálogo', icon: Package },
-        { id: 'tarifario', label: 'Tarifario', icon: Eye },
-        { id: 'metas', label: 'Metas', icon: Target },
-        { id: 'cobranza', label: 'Cobranza', icon: DollarSign },
-        { id: 'config', label: 'Config', icon: Sliders },
-        { id: 'mantenimiento', label: 'Limpieza', icon: Wrench },
-        { id: 'cuenta', label: 'Mi Cuenta', icon: UserCircle },
+    const modulos = [
+        {
+            id: 'comercial',
+            label: 'Comercial',
+            icon: Briefcase,
+            color: 'brand-orange',
+            sections: [
+                { id: 'clientes', label: 'Clientes', icon: Users },
+                { id: 'tarifas', label: 'Especiales', icon: Tag },
+                { id: 'metas', label: 'Metas', icon: Target },
+            ]
+        },
+        {
+            id: 'inventario',
+            label: 'Inventario',
+            icon: Database,
+            color: 'brand-orange',
+            sections: [
+                { id: 'catalogo', label: 'Activos', icon: Package },
+                { id: 'plazas', label: 'Regiones', icon: MapPin },
+                { id: 'tarifario', label: 'Tarifario', icon: Eye },
+            ]
+        },
+        {
+            id: 'finanzas',
+            label: 'Finanzas',
+            icon: CreditCard,
+            color: 'brand-orange',
+            sections: [
+                { id: 'cobranza', label: 'Cobranza', icon: DollarSign },
+            ]
+        },
+        {
+            id: 'sistema',
+            label: 'Sistema',
+            icon: Shield,
+            color: 'brand-orange',
+            sections: [
+                { id: 'config', label: 'Config', icon: Sliders },
+                { id: 'mantenimiento', label: 'Limpieza', icon: Wrench },
+                { id: 'cuenta', label: 'Mi Cuenta', icon: UserCircle },
+            ]
+        }
     ];
+
+    const currentModule = modulos.find(m => m.id === moduloActivo);
+
+    const handleModuleChange = (modId) => {
+        setModuloActivo(modId);
+        const mod = modulos.find(m => m.id === modId);
+        if (mod && mod.sections.length > 0) {
+            setSeccionActiva(mod.sections[0].id);
+        }
+    };
 
     const handleEditCliente = (cliente) => {
         setClienteEdicion(cliente);
@@ -86,24 +131,54 @@ const AdminPanel = ({
                         </button>
                     </div>
 
-                    {/* Tabs de Navegación Responsivos */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-3 mt-10">
-                        {tabs.map(tab => (
+                    {/* Pilares Maestros (Módulos principales) */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
+                        {modulos.map(mod => (
                             <button
-                                key={tab.id}
-                                onClick={() => setSeccionActiva(tab.id)}
+                                key={mod.id}
+                                onClick={() => handleModuleChange(mod.id)}
                                 className={`
-                                    flex items-center justify-center gap-3 px-4 py-3 rounded-2xl font-black uppercase tracking-widest text-[9px] transition-all
-                                    ${seccionActiva === tab.id
-                                        ? 'bg-brand-orange text-white shadow-xl shadow-brand-orange/40 scale-105 z-10'
-                                        : 'bg-enterprise-900/50 text-enterprise-400 hover:text-white hover:bg-enterprise-900 border border-white/5'}
+                                    relative group p-6 rounded-[2rem] border transition-all duration-300 flex flex-col items-center gap-3 overflow-hidden
+                                    ${moduloActivo === mod.id
+                                        ? 'bg-brand-orange border-brand-orange text-white shadow-2xl shadow-brand-orange/40 scale-[1.02]'
+                                        : 'bg-white/5 border-white/10 text-enterprise-400 hover:bg-white/10 hover:border-white/20'}
                                 `}
                             >
-                                <tab.icon size={14} className={seccionActiva === tab.id ? 'text-white' : 'text-brand-orange'} />
-                                {tab.label}
+                                <div className={`
+                                    w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300
+                                    ${moduloActivo === mod.id ? 'bg-white text-brand-orange' : 'bg-enterprise-900 text-brand-orange group-hover:scale-110'}
+                                `}>
+                                    <mod.icon size={24} />
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.3em]">{mod.label}</span>
+
+                                {moduloActivo === mod.id && (
+                                    <div className="absolute -bottom-1 w-12 h-1 bg-white rounded-full"></div>
+                                )}
                             </button>
                         ))}
                     </div>
+
+                    {/* Sub-Navegación Dinámica */}
+                    {currentModule && currentModule.sections.length > 1 && (
+                        <div className="flex flex-wrap justify-center gap-2 mt-8 animate-in fade-in slide-in-from-top-2">
+                            {currentModule.sections.map(section => (
+                                <button
+                                    key={section.id}
+                                    onClick={() => setSeccionActiva(section.id)}
+                                    className={`
+                                        px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center gap-2
+                                        ${seccionActiva === section.id
+                                            ? 'bg-white text-enterprise-950 shadow-lg'
+                                            : 'text-enterprise-400 hover:text-white bg-white/5 border border-white/5'}
+                                    `}
+                                >
+                                    <section.icon size={12} className={seccionActiva === section.id ? 'text-brand-orange' : 'text-brand-orange/50'} />
+                                    {section.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-24 relative z-20">
@@ -156,7 +231,11 @@ const AdminPanel = ({
                         <ProductManager
                             productos={productos}
                             onSave={guardarRegistro}
+                            eliminarRegistro={eliminarRegistro}
                             setMensaje={setMensajeAdmin}
+                            historial={historial}
+                            condicionesCliente={condicionesCliente}
+                            configuracion={configuracion}
                         />
                     )}
 
@@ -173,6 +252,14 @@ const AdminPanel = ({
                             metas={metasComerciales}
                             onSaveGoal={(data) => guardarRegistro('metas_comerciales', data)}
                             onRemoveGoal={(id) => eliminarRegistro('metas_comerciales', 'id', id)}
+                        />
+                    )}
+
+                    {seccionActiva === 'plazas' && (
+                        <PlazaManager
+                            configuracion={configuracion}
+                            onSave={guardarRegistro}
+                            setMensaje={setMensajeAdmin}
                         />
                     )}
 
