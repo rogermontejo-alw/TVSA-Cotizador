@@ -423,30 +423,53 @@ export const generatePDF = (cotz, configuracion, perfil = {}) => {
           </tfoot>
         </table>
 
-        <div class="summary-section" style="flex-direction: row; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
-          <div class="disclaimer-text" style="max-width: 380px; margin: 0; text-align: left;">
-            <div style="font-weight: 800; font-size: 8.5px; color: #444; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Nota Importante:</div>
-            Propuesta sujeta a disponibilidad de espacios. Precios de lista vigentes según contrato. Esta proyección no incluye cargos por producción u otros servicios no especificados.
+        <div class="summary-section" style="margin-top: 20px; display: grid; grid-template-columns: 1fr auto; gap: 0 30px; align-items: stretch;">
+          <!-- Row 1 Left: Observations -->
+          <div style="grid-column: 1; grid-row: 1; padding-bottom: 10px;">
+            <div class="observations-box" style="background: #fdfdfd; border: 1px solid #eee; border-radius: 6px; padding: 12px 15px; border-left: 4px solid var(--brand-orange); height: 100%; box-sizing: border-box; min-height: 65px;">
+              <div style="font-weight: 800; font-size: 8px; color: var(--brand-orange); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">Observaciones del Plan:</div>
+              <div style="font-size: 8.5px; color: #333; line-height: 1.4; white-space: pre-wrap;">${cotz.observaciones || ''}</div>
+            </div>
           </div>
 
-          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
-            ${cotz.paqueteVIX ? `
-              <div class="vix-box">
+          <!-- Row 1 Right: Digital investment -->
+          <div style="grid-column: 2; grid-row: 1; display: flex; justify-content: flex-end; padding-bottom: 10px;">
+             ${cotz.paqueteVIX ? `
+              <div class="vix-box" style="margin-top: 0; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center;">
                 <div class="label" style="color: var(--brand-magenta)">Inversión Digital</div>
-                <div style="font-weight: 900; font-size: 13px; color: #111;">${formatMXN(cotz.costoVIX)}</div>
+                <div style="font-weight: 900; font-size: 13px; color: #111; line-height: 1;">${formatMXN(cotz.costoVIX)}</div>
                 <div style="font-size: 8px; color: #555; margin-top: 3px">
                   ${cotz.paqueteVIX.nombre} | ${(cotz.paqueteVIX.impresiones || 0).toLocaleString()} Impresiones
                 </div>
               </div>
-            ` : ''}
-
-            <div class="totals-column">
-              <div class="total-box">
-                <div class="total-label" style="font-size: 9px;">Inversión Final</div>
-                <div class="total-value">${formatMXN(cotz.subtotalGeneral)}</div>
+            ` : `
+              <div class="vix-box" style="margin-top: 0; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; background: #fafafa; border-style: dashed;">
+                <div class="label" style="color: #ccc">Inversión Digital</div>
+                <div style="font-weight: 900; font-size: 13px; color: #ddd; line-height: 1;">$0.00</div>
+                <div style="font-size: 8px; color: #ddd; margin-top: 3px">Sin impacto digital seleccionado</div>
               </div>
-              <div class="iva-disclaimer">MÁS IVA</div>
+            `}
+          </div>
+
+          <!-- Row 2 Left: Legal Note (ALIGNED TO BOX BOTTOM) -->
+          <div style="grid-column: 1; grid-row: 2; display: flex; align-items: flex-end;">
+            <div class="disclaimer-text" style="max-width: 400px; margin: 0; text-align: left; line-height: 1.2;">
+              <span style="font-weight: 800; font-size: 8.5px; color: #444; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 2px;">Nota Importante:</span><br/>
+              <span style="font-size: 7px; color: #888;">Propuesta sujeta a disponibilidad de espacios. Precios de lista vigentes según contrato. Esta proyección no incluye cargos por producción u otros servicios no especificados.</span>
             </div>
+          </div>
+
+          <!-- Row 2 Right: Final Totals Box -->
+          <div style="grid-column: 2; grid-row: 2; display: flex; justify-content: flex-end;">
+            <div class="total-box" style="margin-bottom: 0;">
+              <div class="total-label" style="font-size: 9px;">Inversión Final</div>
+              <div class="total-value" style="line-height: 1;">${formatMXN(cotz.subtotalGeneral)}</div>
+            </div>
+          </div>
+
+          <!-- Row 3: IVA Disclaimer (Hanging below the alignment line) -->
+          <div style="grid-column: 2; grid-row: 3; display: flex; justify-content: flex-end; padding-top: 4px;">
+            <div class="iva-disclaimer" style="font-size: 9px; font-weight: 900; color: #333; text-transform: uppercase; padding-right: 2px; line-height: 1;">MÁS IVA</div>
           </div>
         </div>
 

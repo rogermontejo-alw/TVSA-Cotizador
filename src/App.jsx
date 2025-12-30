@@ -383,11 +383,13 @@ const App = () => {
         </div>
       </footer>
 
-      <StatusMessage
-        tipo={mensajeAdmin.tipo}
-        texto={mensajeAdmin.texto}
-        setMensaje={setMensajeAdmin}
-      />
+      {mensajeAdmin && (
+        <StatusMessage
+          tipo={mensajeAdmin.tipo}
+          texto={mensajeAdmin.texto}
+          setMensaje={setMensajeAdmin}
+        />
+      )}
     </div>
   );
 };

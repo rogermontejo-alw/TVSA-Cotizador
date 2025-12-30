@@ -18,6 +18,7 @@ const CotizacionResult = ({
     const [confirmingStage, setConfirmingStage] = useState(null);
     const [confirmingQuoteStatus, setConfirmingQuoteStatus] = useState(null);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [localObservaciones, setLocalObservaciones] = useState(cotizacion.observaciones || '');
     const [cierreData, setCierreData] = useState({ numero_contrato: '', mc_id: '' });
 
     if (!cotizacion) return null;
@@ -99,7 +100,8 @@ const CotizacionResult = ({
                     subtotalTV: cotizacion.subtotalTV || 0,
                     subtotalGeneral: cotizacion.subtotalGeneral || 0,
                     iva: cotizacion.iva || 0
-                }
+                },
+                observaciones: localObservaciones
             };
             const result = await guardarCotizacion('cotizaciones', payload);
             if (result?.[0]) {
@@ -248,6 +250,20 @@ const CotizacionResult = ({
                         </div>
                     </div>
 
+                    {/* OBSERVATIONS FIELD */}
+                    <div className="bg-white rounded-2xl shadow-premium border border-enterprise-100 p-4 space-y-2">
+                        <div className="flex items-center gap-2">
+                            <FileText size={12} className="text-brand-orange" />
+                            <span className="text-[7px] font-black text-enterprise-400 uppercase tracking-widest italic leading-none">Observaciones del Plan</span>
+                        </div>
+                        <textarea
+                            value={localObservaciones}
+                            onChange={(e) => setLocalObservaciones(e.target.value)}
+                            placeholder="AÑADE NOTAS ESPECÍFICAS PARA EL CLIENTE..."
+                            className="w-full h-20 p-3 bg-enterprise-50 rounded-xl text-[9px] font-bold text-enterprise-900 placeholder:text-enterprise-300 outline-none focus:ring-1 focus:ring-brand-orange resize-none transition-all"
+                        />
+                    </div>
+
                     {/* NEW ACTION BAR - ALWAYS BELOW RECAP, MATCHING WIDTH */}
                     <div className="grid grid-cols-2 gap-3">
                         <button
@@ -267,7 +283,7 @@ const CotizacionResult = ({
                             </span>
                         </button>
                         <button
-                            onClick={mostrarPropuesta}
+                            onClick={() => mostrarPropuesta({ ...cotizacion, observaciones: localObservaciones })}
                             className="bg-enterprise-950 border border-white/10 rounded-2xl h-14 flex flex-col items-center justify-center gap-1.5 hover:bg-brand-orange group transition-all shadow-premium"
                         >
                             <FileText size={14} className="text-white/40 group-hover:text-white" />

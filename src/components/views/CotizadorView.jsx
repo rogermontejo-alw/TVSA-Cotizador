@@ -206,7 +206,7 @@ const CotizadorView = ({
                     iniciarNuevaCotizacion={iniciarNuevaCotizacion}
                     guardarCotizacion={guardarCotizacion}
                     agregarAComparador={agregarAComparador}
-                    mostrarPropuesta={() => mostrarPropuesta(cotizacionResult)}
+                    mostrarPropuesta={(data) => mostrarPropuesta(data || cotizacionResult)}
                     configuracion={configuracion}
                     onSaveClient={onSaveClient}
                     masterContracts={masterContracts}
