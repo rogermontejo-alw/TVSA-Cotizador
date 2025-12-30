@@ -6,11 +6,10 @@ import ClientManager from './ClientManager';
 import ConditionsForm from './ConditionsForm';
 import ProductManager from './ProductManager';
 import ConfigForm from './ConfigForm';
-import CobranzaView from './CobranzaView';
 import ProfileForm from './ProfileForm';
 import MaintenanceView from './MaintenanceView';
 import PriceListView from '../views/PriceListView';
-import { DollarSign, UserCircle, Eye, Wrench, MapPin, Briefcase, Database, CreditCard, Shield } from 'lucide-react';
+import { UserCircle, Eye, Wrench, MapPin, Briefcase, Database, Shield } from 'lucide-react';
 import PlazaManager from './PlazaManager';
 
 const AdminPanel = ({
@@ -59,15 +58,6 @@ const AdminPanel = ({
                 { id: 'catalogo', label: 'Activos', icon: Package },
                 { id: 'plazas', label: 'Regiones', icon: MapPin },
                 { id: 'tarifario', label: 'Tarifario', icon: Eye },
-            ]
-        },
-        {
-            id: 'finanzas',
-            label: 'Finanzas',
-            icon: CreditCard,
-            color: 'brand-orange',
-            sections: [
-                { id: 'cobranza', label: 'Cobranza', icon: DollarSign },
             ]
         },
         {
@@ -132,13 +122,14 @@ const AdminPanel = ({
                     </div>
 
                     {/* Pilares Maestros (Módulos principales) */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
+                    <div className="flex flex-wrap justify-center gap-4 mt-12 max-w-5xl mx-auto">
                         {modulos.map(mod => (
                             <button
                                 key={mod.id}
                                 onClick={() => handleModuleChange(mod.id)}
                                 className={`
                                     relative group p-6 rounded-[2rem] border transition-all duration-300 flex flex-col items-center gap-3 overflow-hidden
+                                    w-full sm:w-64
                                     ${moduloActivo === mod.id
                                         ? 'bg-brand-orange border-brand-orange text-white shadow-2xl shadow-brand-orange/40 scale-[1.02]'
                                         : 'bg-white/5 border-white/10 text-enterprise-400 hover:bg-white/10 hover:border-white/20'}
@@ -272,14 +263,6 @@ const AdminPanel = ({
                         />
                     )}
 
-                    {seccionActiva === 'cobranza' && (
-                        <CobranzaView
-                            cobranza={cobranza}
-                            clientes={clientes}
-                            onSave={guardarRegistro}
-                            setMensaje={setMensajeAdmin}
-                        />
-                    )}
 
                     {seccionActiva === 'mantenimiento' && (
                         <MaintenanceView
