@@ -346,35 +346,76 @@ const MasterContractsView = ({
             {isCreating && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-enterprise-950/80 backdrop-blur-sm animate-premium-fade">
                     <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-white">
-                        <h3 className="text-[12px] font-black text-enterprise-950 uppercase italic tracking-widest mb-6">Nuevo Convenio Estratégico</h3>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 bg-enterprise-950 rounded-xl flex items-center justify-center text-brand-orange shadow-lg">
+                                <Plus size={20} strokeWidth={3} />
+                            </div>
+                            <h3 className="text-[12px] font-black text-enterprise-950 uppercase italic tracking-widest">Nuevo Convenio Estratégico</h3>
+                        </div>
+
                         <form onSubmit={handleSaveMC} className="space-y-4">
-                            <select
-                                required
-                                value={formData.cliente_id}
-                                onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
-                                className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none appearance-none uppercase shadow-inner"
-                            >
-                                <option value="">Seleccionar Socio...</option>
-                                {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre_empresa}</option>)}
-                            </select>
-                            <input
-                                type="text"
-                                required
-                                placeholder="CÓDIGO MC (Ej. MC-2025-01)..."
-                                value={formData.numero_mc}
-                                onChange={(e) => setFormData({ ...formData, numero_mc: e.target.value.toUpperCase() })}
-                                className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none uppercase shadow-inner"
-                            />
-                            <input
-                                type="number"
-                                required
-                                placeholder="CAPITAL BASE (Bolsa de Crédito)..."
-                                value={formData.monto_aprobado}
-                                onChange={(e) => setFormData({ ...formData, monto_aprobado: e.target.value })}
-                                className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none uppercase shadow-inner"
-                            />
-                            <div className="grid grid-cols-2 gap-4 pt-4">
-                                <button type="button" onClick={() => setIsCreating(false)} className="h-11 text-[9px] font-black uppercase tracking-widest text-enterprise-400">Abortar</button>
+                            <div className="space-y-1">
+                                <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2 tracking-widest">Socio Comercial</label>
+                                <select
+                                    required
+                                    value={formData.cliente_id}
+                                    onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
+                                    className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none appearance-none uppercase shadow-inner"
+                                >
+                                    <option value="">Seleccionar Socio...</option>
+                                    {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre_empresa}</option>)}
+                                </select>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2 tracking-widest">Identificador Convenio</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="CVE-2025-XXX..."
+                                    value={formData.numero_mc}
+                                    onChange={(e) => setFormData({ ...formData, numero_mc: e.target.value.toUpperCase() })}
+                                    className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none uppercase shadow-inner"
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2 tracking-widest">Bolsa de Crédito (Capital)</label>
+                                <input
+                                    type="number"
+                                    required
+                                    placeholder="0.00"
+                                    value={formData.monto_aprobado}
+                                    onChange={(e) => setFormData({ ...formData, monto_aprobado: e.target.value })}
+                                    className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none uppercase shadow-inner"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2 tracking-widest">Fecha Inicio</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={formData.fecha_inicio}
+                                        onChange={(e) => setFormData({ ...formData, fecha_inicio: e.target.value })}
+                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none shadow-inner"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2 tracking-widest">Vencimiento</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={formData.fecha_fin}
+                                        onChange={(e) => setFormData({ ...formData, fecha_fin: e.target.value })}
+                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none shadow-inner"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-enterprise-50">
+                                <button type="button" onClick={() => setIsCreating(false)} className="h-11 text-[9px] font-black uppercase tracking-widest text-enterprise-400 hover:text-error transition-colors">Abortar</button>
                                 <button type="submit" className="h-11 bg-enterprise-950 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-brand-orange shadow-lg shadow-enterprise-900/20 active:scale-95 transition-all">Crear Convenio</button>
                             </div>
                         </form>
