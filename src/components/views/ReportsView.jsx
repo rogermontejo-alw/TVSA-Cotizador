@@ -253,7 +253,9 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             title = subCorte === 'pipeline' ? "CONTROL ADMINISTRATIVO DE CIERRES (COMMERCIAL)" : "CONTROL ADMINISTRATIVO DE CONTRATOS (FINANCIAL)";
             headers = ['Fecha Cierre', 'Cliente / Empresa', 'Folio Cotz', 'Master Contract', 'Orden / Contrato', 'Factura', 'Inversión Neta'];
 
+            let totalCierres = 0;
             rows = datosFinancierosTotal.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).map(item => {
+                totalCierres += item.monto;
                 const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
                 const q = subCorte === 'pipeline' ? item.original : (cotizaciones || []).find(c => String(c.id) === String(item.original?.cotizacion_id));
                 const ce = subCorte === 'ejecucion' ? item.original : (contratosEjecucion || []).find(e => String(e.cotizacion_id) === String(item.id));
@@ -294,6 +296,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     item.monto
                 ];
             });
+            rows.push(['TOTAL CIERRES', '', '', '', '', '', totalCierres]);
         } else if (id === 'resumen-clientes') {
             title = "PIPELINE Y EFECTIVIDAD POR CUENTA ($)";
             headers = ['Cuenta', 'Plaza', 'Valor Abiertas', 'Valor Ganadas', 'Valor Perdidas', 'Venta Acumulada'];
@@ -329,21 +332,27 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         } else if (id === 'cobranza-periodo') {
             title = "REPORTE DE COBRANZA Y FACTURACIÓN";
             headers = ['F. Programada', 'Cliente', 'Factura', 'Monto', 'Estado', 'F. Pago Real', 'Notas'];
+            let totalCobranza = 0;
             rows = (cobranza || []).filter(c => {
                 const fecha = new Date(c.fecha_programada_cobro || c.created_at);
                 const start = new Date(fechaInicio);
                 const end = new Date(fechaFin);
                 end.setHours(23, 59, 59, 999);
                 return fecha >= start && fecha <= end;
-            }).sort((a, b) => new Date(a.fecha_programada_cobro) - new Date(b.fecha_programada_cobro)).map(c => [
-                c.fecha_programada_cobro ? new Date(c.fecha_programada_cobro).toLocaleDateString('es-MX') : '-',
-                c.cotizaciones?.clientes?.nombre_empresa || 'S/N',
-                c.numero_factura || 'PENDIENTE',
-                parseFloat(c.monto_facturado) || 0,
-                c.estatus_pago?.toUpperCase() || 'PENDIENTE',
-                c.fecha_cobro_real ? new Date(c.fecha_cobro_real).toLocaleDateString('es-MX') : '-',
-                c.notas || '-'
-            ]);
+            }).sort((a, b) => new Date(a.fecha_programada_cobro) - new Date(b.fecha_programada_cobro)).map(c => {
+                const monto = parseFloat(c.monto_facturado) || 0;
+                totalCobranza += monto;
+                return [
+                    c.fecha_programada_cobro ? new Date(c.fecha_programada_cobro).toLocaleDateString('es-MX') : '-',
+                    c.cotizaciones?.clientes?.nombre_empresa || 'S/N',
+                    c.numero_factura || 'PENDIENTE',
+                    monto,
+                    c.estatus_pago?.toUpperCase() || 'PENDIENTE',
+                    c.fecha_cobro_real ? new Date(c.fecha_cobro_real).toLocaleDateString('es-MX') : '-',
+                    c.notas || '-'
+                ];
+            });
+            rows.push(['TOTAL COBRANZA', '', '', totalCobranza, '', '', '']);
         }
 
         return { title, headers, rows };
@@ -368,7 +377,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
              </DocumentProperties>
              <Styles>
               <Style ss:ID="Default" ss:Name="Normal">
-               <Alignment ss:Vertical="Bottom"/>
+               <Alignment ss:Vertical="Center"/>
                <Borders/>
                <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
                <Interior/>
@@ -376,6 +385,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                <Protection/>
               </Style>
               <Style ss:ID="Header">
+               <Alignment ss:Vertical="Center"/>
                <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="12" ss:Color="#FFFFFF" ss:Bold="1"/>
                <Interior ss:Color="#0F172A" ss:Pattern="Solid"/>
               </Style>
@@ -383,6 +393,11 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="14" ss:Color="#DC2626" ss:Bold="1"/>
               </Style>
               <Style ss:ID="Currency">
+               <NumberFormat ss:Format="&quot;$&quot;#,##0.00"/>
+              </Style>
+              <Style ss:ID="TotalCurrency">
+               <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="12" ss:Color="#FFFFFF" ss:Bold="1"/>
+               <Interior ss:Color="#0F172A" ss:Pattern="Solid"/>
                <NumberFormat ss:Format="&quot;$&quot;#,##0.00"/>
               </Style>
              </Styles>
@@ -402,13 +417,13 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             let rowXml = "";
 
             // Title and Metadata
-            rowXml += `<Row><Cell ss:StyleID="Title"><Data ss:Type="String">${title}</Data></Cell></Row>`;
-            rowXml += `<Row><Cell><Data ss:Type="String">Periodo: ${fechaInicio} al ${fechaFin}</Data></Cell></Row>`;
-            rowXml += `<Row><Cell><Data ss:Type="String">Generado: ${new Date().toLocaleString()}</Data></Cell></Row>`;
-            rowXml += `<Row></Row>`;
+            rowXml += `<Row ss:Height="22"><Cell ss:StyleID="Title"><Data ss:Type="String">${title}</Data></Cell></Row>`;
+            rowXml += `<Row ss:Height="22"><Cell><Data ss:Type="String">Periodo: ${fechaInicio} al ${fechaFin}</Data></Cell></Row>`;
+            rowXml += `<Row ss:Height="22"><Cell><Data ss:Type="String">Generado: ${new Date().toLocaleString()}</Data></Cell></Row>`;
+            rowXml += `<Row ss:Height="22"></Row>`;
 
             // Headers
-            rowXml += `<Row>`;
+            rowXml += `<Row ss:Height="22">`;
             headers.forEach(h => {
                 rowXml += `<Cell ss:StyleID="Header"><Data ss:Type="String">${h}</Data></Cell>`;
             });
@@ -417,18 +432,18 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             // Data Rows
             rows.forEach(row => {
                 const isTotalRow = String(row[0]).startsWith('TOTAL');
-                rowXml += `<Row>`;
+                rowXml += `<Row ss:Height="22">`;
                 row.forEach((cell, cellIdx) => {
                     const header = headers[cellIdx];
                     // Identificamos columnas que NO deben ser moneda aunque sean números
-                    const isTextCol = ["Orden", "Factura", "Folio", "Folio Cotz", "Master Contract", "Cuenta", "Plaza"].includes(header);
+                    const isTextCol = ["Orden", "Factura", "Folio", "Folio Cotz", "Master Contract", "Cuenta", "Plaza", "Orden / Contrato", "Estado", "F. Pago Real", "F. Programada", "Cliente", "Canal"].some(tc => header.includes(tc));
 
                     const isNum = !isNaN(cell) && typeof cell !== 'boolean' && cell !== '' && !isTextCol;
                     const type = isNum ? 'Number' : 'String';
 
                     let styleID = "";
                     if (isTotalRow) {
-                        styleID = isNum ? ' ss:StyleID="Header"' : ' ss:StyleID="Header"'; // O podrías crear un estilo Total
+                        styleID = isNum ? ' ss:StyleID="TotalCurrency"' : ' ss:StyleID="Header"';
                     } else if (isNum) {
                         styleID = ' ss:StyleID="Currency"';
                     }
@@ -446,9 +461,23 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 rowXml += `</Row>`;
             });
 
+            // Column Width definitions
+            let colWidthsXml = "";
+            headers.forEach((h, hIdx) => {
+                let width = 100; // Default width
+                if (h.includes('Cliente') || h.includes('Cuenta') || h.includes('Empresa')) width = 250;
+                else if (h.includes('Canal') || h.includes('Notas')) width = 180;
+                else if (h.includes('Total') || h.includes('Monto') || h.includes('Inversión')) width = 120;
+                else if (h.includes('Fecha') || h.includes('F. ')) width = 80;
+                else if (h.includes('Folio') || h.includes('Factura') || h.includes('Contrato')) width = 100;
+
+                colWidthsXml += `<Column ss:AutoFitWidth="0" ss:Width="${width}"/>`;
+            });
+
             sheetsXml += `
                 <Worksheet ss:Name="${sheetName}">
                  <Table>
+                  ${colWidthsXml}
                   ${rowXml}
                  </Table>
                 </Worksheet>`;
