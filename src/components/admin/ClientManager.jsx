@@ -119,21 +119,21 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
 
                                         {/* CORE DATA MATRIX */}
                                         <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-brand-orange whitespace-nowrap">
+                                            <div className="flex items-center gap-3">
+                                                <h3 className="text-[13px] font-black text-enterprise-950 uppercase tracking-tight leading-none">
                                                     {c.nombre_empresa}
-                                                </span>
-                                                <span className="w-1 h-1 rounded-full bg-enterprise-200" />
-                                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-enterprise-400 whitespace-nowrap flex items-center gap-1">
+                                                </h3>
+                                                <div className="h-3 w-px bg-enterprise-100" />
+                                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-enterprise-400 whitespace-nowrap flex items-center gap-1 py-0.5">
                                                     <MapPin size={8} className="text-enterprise-300" />
                                                     {c.plaza}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <h3 className="text-[12px] font-black text-enterprise-950 uppercase tracking-tight leading-none">
-                                                    {c.nombre_contacto || 'IDENTIDAD NO ASIGNADA'}
-                                                </h3>
-                                                <div className="h-3 w-px bg-enterprise-100" />
+                                                <span className="text-[9px] font-bold text-brand-orange uppercase tracking-[0.1em] whitespace-nowrap">
+                                                    {c.nombre_contacto || 'CONTACTO NO ASIGNADO'}
+                                                </span>
+                                                <span className="w-1 h-1 rounded-full bg-enterprise-200" />
                                                 <span className="text-[8px] font-black text-enterprise-300 uppercase tracking-widest italic pt-0.5">
                                                     ID-ENTT:{c.id.slice(0, 6)}
                                                 </span>
