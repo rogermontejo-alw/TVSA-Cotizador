@@ -20,24 +20,25 @@ import {
 import { formatMXN } from '../../utils/formatters';
 
 const StatCard = ({ title, value, icon: Icon, colorClass, isCurrency = false, trend = null, subtext = null }) => (
-    <div className="bg-white p-4 rounded-2xl shadow-sm border border-enterprise-100 flex items-start gap-3 transition-all hover:shadow-md group animate-premium-fade min-w-0">
-        <div className={`p-2.5 rounded-xl ${colorClass} flex-shrink-0 transition-transform group-hover:scale-110 duration-500`}>
-            <Icon size={18} />
+    <div className="bg-white rounded-3xl shadow-premium border border-enterprise-100 overflow-hidden flex flex-col group hover:border-brand-orange transition-all duration-500 animate-premium-fade">
+        <div className="bg-enterprise-950 px-4 py-2 flex items-center justify-between">
+            <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">{title}</span>
+            <div className={`w-5 h-5 rounded-lg ${colorClass} flex items-center justify-center`}>
+                <Icon size={12} strokeWidth={2.5} />
+            </div>
         </div>
-        <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-black text-enterprise-400 uppercase tracking-widest mb-0.5 truncate">
-                {title}
-            </p>
-            <h3 className="text-xl font-black text-enterprise-950 tracking-tight leading-none mb-1 truncate">
+        <div className="p-4 flex flex-col justify-center">
+            <h3 className="text-xl font-black text-enterprise-950 tracking-tighter leading-none mb-1 group-hover:text-brand-orange transition-colors">
                 {isCurrency ? formatMXN(value, 0) : value}
             </h3>
-            {trend && (
-                <div className="flex items-center gap-1">
-                    <span className="text-[8px] font-black text-emerald-600">+{trend}%</span>
-                </div>
-            )}
             {subtext && (
-                <p className="text-[8px] font-bold text-enterprise-300 uppercase italic truncate">{subtext}</p>
+                <p className="text-[7px] font-black text-enterprise-300 uppercase italic truncate tracking-wider">{subtext}</p>
+            )}
+            {trend && (
+                <div className="flex items-center gap-1 mt-1">
+                    <ArrowUpRight size={8} className="text-emerald-500" />
+                    <span className="text-[8px] font-black text-emerald-500">{trend}% de eficiencia</span>
+                </div>
             )}
         </div>
     </div>
@@ -110,90 +111,105 @@ const DashboardView = ({
 
     return (
         <div className="max-w-[1440px] mx-auto space-y-8 animate-premium-fade pb-20 px-4 xl:px-8">
-            {/* Executive Masthead - Compact */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-enterprise-100 pb-6">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-brand-orange rounded-xl flex items-center justify-center text-white shadow-brand">
-                        <Activity size={20} />
-                    </div>
-                    <div>
-                        <h1 className="text-lg font-black text-enterprise-950 tracking-tighter uppercase italic italic-brand leading-none">
-                            Financial <span className="text-brand-orange">Control Tower</span>
-                        </h1>
-                        <p className="text-[10px] font-bold text-enterprise-400 uppercase tracking-widest mt-1">
-                            Media Performance Synchronizer • TelevisaUnivision
-                        </p>
-                    </div>
-                </div>
+            {/* NEXUS KPI CONSOLE - MAIN HEADER */}
+            <div className="sticky top-0 z-50 pt-4 pb-2 bg-slate-50/80 backdrop-blur-md">
+                <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden group">
+                    {/* Background Accents */}
+                    <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-brand-orange/10 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute -left-10 -top-10 w-48 h-48 bg-brand-orange/5 blur-3xl rounded-full" />
 
-                <div className="flex items-center gap-4">
-                    <div className="flex bg-white p-1 rounded-xl border border-enterprise-100 shadow-sm">
-                        {['mes', 'anio'].map(v => (
+                    <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-6">
+                        <div className="flex items-center gap-5">
+                            <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500">
+                                <Activity size={28} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-3">
+                                    Torre de <span className="text-brand-orange">Control Financiero</span>
+                                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                </h1>
+                                <div className="flex items-center gap-3 mt-2 text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
+                                    <span>Estación de Lógica Nexus v4.0</span>
+                                    <span className="w-1 h-1 bg-white/20 rounded-full" />
+                                    <span className="text-brand-orange/80">Inteligencia TelevisaUnivision</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 bg-white/5 p-2 rounded-2xl border border-white/10 backdrop-blur-xl">
+                            <div className="flex p-1 bg-white/5 rounded-xl border border-white/5">
+                                {['mes', 'anio'].map(v => (
+                                    <button
+                                        key={v}
+                                        onClick={() => setPeriodo(v)}
+                                        className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300
+                                            ${periodo === v
+                                                ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20'
+                                                : 'text-white/40 hover:text-white'}`}
+                                    >
+                                        {v === 'mes' ? 'Mes' : 'Año'}
+                                    </button>
+                                ))}
+                            </div>
                             <button
-                                key={v}
-                                onClick={() => setPeriodo(v)}
-                                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all
-                                    ${periodo === v
-                                        ? 'bg-enterprise-950 text-white shadow-md'
-                                        : 'text-enterprise-400 hover:text-enterprise-950'}`}
+                                onClick={handleRefresh}
+                                className="w-10 h-10 bg-white/10 text-white rounded-xl flex items-center justify-center hover:bg-white hover:text-enterprise-950 transition-all border border-white/10 group/btn"
                             >
-                                {v === 'mes' ? 'Mensual' : 'Anual'}
+                                <RefreshCw size={18} className={`${isRefreshing ? 'animate-spin' : ''} group-hover/btn:rotate-180 transition-transform duration-500`} />
                             </button>
-                        ))}
+                        </div>
                     </div>
-                    <button
-                        onClick={handleRefresh}
-                        className="w-9 h-9 bg-white text-enterprise-950 border border-enterprise-100 rounded-lg flex items-center justify-center hover:bg-enterprise-950 hover:text-white transition-all shadow-sm group"
-                    >
-                        <RefreshCw size={16} className={`${isRefreshing ? 'animate-spin' : ''}`} />
-                    </button>
                 </div>
             </div>
 
             {/* Financial Ribbon - 6 Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 min-[1190px]:grid-cols-6 gap-4">
+            {/* Financial Ribbon - Nexus Modules */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 min-[1190px]:grid-cols-6 gap-6">
                 <StatCard
-                    title="Venta Bruta"
+                    title="Ingresos Brutos"
                     value={statistics.totalVenta}
                     isCurrency
                     icon={DollarSign}
                     colorClass="bg-brand-orange text-white"
                 />
                 <StatCard
-                    title="Formalizado (CPS)"
+                    title="Alineación CPS"
                     value={statistics.montoCPS}
                     isCurrency
                     icon={Briefcase}
                     colorClass="bg-blue-600 text-white"
-                    subtext={`${statistics.countCPS} de ${statistics.totalWon} contratos`}
+                    subtext={`${statistics.countCPS} Acuerdos Firmados`}
+                    trend={Math.round((statistics.montoCPS / Math.max(1, statistics.totalVenta)) * 100)}
                 />
                 <StatCard
-                    title="Facturación"
+                    title="Volumen Facturado"
                     value={statistics.totalFacturado}
                     isCurrency
                     icon={BarChart3}
-                    colorClass="bg-slate-800 text-white"
+                    colorClass="bg-enterprise-950 text-white"
                 />
                 <StatCard
                     title="Cobranza"
                     value={statistics.totalCobrado}
                     isCurrency
                     icon={CheckCircle2}
-                    colorClass="bg-emerald-600 text-white"
+                    colorClass="bg-emerald-500 text-white"
+                    trend={Math.round((statistics.totalCobrado / Math.max(1, statistics.totalFacturado)) * 100)}
                 />
                 <StatCard
-                    title="Por Cobrar"
+                    title="Exposición AR"
                     value={Math.max(0, statistics.totalFacturado - statistics.totalCobrado)}
                     isCurrency
                     icon={Activity}
-                    colorClass="bg-red-50 text-red-600 border border-red-100"
+                    colorClass="bg-red-500 text-white"
+                    subtext="Cuentas por Cobrar"
                 />
                 <StatCard
-                    title="Meta Index"
+                    title="Eficiencia Meta"
                     value={statistics.cumplimiento}
                     icon={Target}
                     colorClass="bg-enterprise-100 text-enterprise-900"
-                    subtext={`${statistics.cumplimiento}% de la meta`}
+                    trend={statistics.cumplimiento}
                 />
             </div>
 
@@ -207,19 +223,19 @@ const DashboardView = ({
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10">
                             <div>
                                 <span className="text-[9px] font-black text-brand-orange uppercase tracking-widest flex items-center gap-2">
-                                    <Target size={14} /> Revenue Performance
+                                    <Target size={14} /> Desempeño de Ingresos
                                 </span>
                                 <div className="mt-2 flex items-baseline gap-4">
                                     <h2 className="text-5xl font-black tracking-tighter leading-none">{statistics.cumplimiento}%</h2>
                                     <div className="space-y-0.5">
-                                        <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest italic">Sync Fulfillment</p>
+                                        <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest italic">Cumplimiento Sync</p>
                                         <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{formatMXN(statistics.totalVenta)}</p>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-md w-full md:w-auto">
-                                <span className="block text-[8px] font-black text-white/40 uppercase tracking-widest mb-1 text-left md:text-right">Target Period</span>
+                                <span className="block text-[8px] font-black text-white/40 uppercase tracking-widest mb-1 text-left md:text-right">Meta del Periodo</span>
                                 <span className="text-2xl font-black tracking-tight">{formatMXN(statistics.meta, 0)}</span>
                             </div>
                         </div>
@@ -301,7 +317,7 @@ const DashboardView = ({
                     >
                         <div className="bg-[#111111] p-6 rounded-[0.9rem] flex items-center justify-between text-white overflow-hidden relative">
                             <div className="relative z-10">
-                                <span className="block text-[8px] font-black uppercase tracking-[0.2em] opacity-50 mb-1">Intelligence Station</span>
+                                <span className="block text-[8px] font-black uppercase tracking-[0.2em] opacity-50 mb-1">Estación de Inteligencia</span>
                                 <h3 className="text-xl font-black uppercase tracking-tighter italic italic-brand">Nueva Cotización</h3>
                             </div>
                             <div className="relative z-10 w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">

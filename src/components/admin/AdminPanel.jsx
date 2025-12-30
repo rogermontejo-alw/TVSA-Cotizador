@@ -76,7 +76,7 @@ const AdminPanel = ({
             icon: Shield,
             color: 'brand-orange',
             sections: [
-                { id: 'config', label: 'Config', icon: Sliders },
+                { id: 'config', label: 'Configuración', icon: Sliders },
                 { id: 'mantenimiento', label: 'Limpieza', icon: Wrench },
                 { id: 'cuenta', label: 'Mi Cuenta', icon: UserCircle },
             ]
@@ -117,7 +117,7 @@ const AdminPanel = ({
                                 </div>
                                 <div>
                                     <h1 className="text-sm font-black text-white uppercase tracking-[0.3em]">Central de Operaciones</h1>
-                                    <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5">Premium Management Suite</p>
+                                    <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5">Suite de Gestión Premium</p>
                                 </div>
                             </div>
                         </div>
@@ -306,8 +306,8 @@ const AdminPanel = ({
                 </div>
 
                 <div className="mt-24 text-center pb-10">
-                    <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-[0.5em] opacity-60">Televisa MID Admin Layer • Enterprise Deployment v2.0</p>
-                    <p className="text-[8px] font-bold text-enterprise-200 uppercase tracking-[0.3em] mt-2">High-Performance Media Budgeting Engine</p>
+                    <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-[0.5em] opacity-60">Capa de Administración Televisa MID • Despliegue Empresarial v2.0</p>
+                    <p className="text-[8px] font-bold text-enterprise-200 uppercase tracking-[0.3em] mt-2">Motor de Presupuesto de Medios de Alto Rendimiento</p>
                 </div>
             </div>
         </div>

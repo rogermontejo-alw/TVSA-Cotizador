@@ -81,7 +81,7 @@ const MaintenanceView = ({
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="TERMINAL CODE"
+                        placeholder="CÓDIGO DE TERMINAL"
                         className="w-full bg-enterprise-50 border border-enterprise-100 p-5 rounded-2xl text-center font-black tracking-[0.8em] focus:ring-1 focus:ring-brand-orange/20 outline-none transition-all placeholder:tracking-normal placeholder:opacity-30 text-enterprise-950"
                     />
                     <button
@@ -106,8 +106,8 @@ const MaintenanceView = ({
         },
         {
             id: 'MC',
-            label: 'Master Contracts',
-            desc: 'Vacia las bolsas de inversión de todos los clientes.',
+            label: 'Bolsas Master Contract',
+            desc: 'Vacía las bolsas de inversión de todos los clientes.',
             count: masterContracts?.length || 0,
             icon: Database,
             color: 'amber'
@@ -123,7 +123,7 @@ const MaintenanceView = ({
         {
             id: 'GOALS',
             label: 'Metas Comerciales',
-            desc: 'Vacia el histórico de metas mensuales.',
+            desc: 'Vacía el histórico de metas mensuales.',
             count: metasComerciales?.length || 0,
             icon: Target,
             color: 'purple'
@@ -183,7 +183,7 @@ const MaintenanceView = ({
                 >
                     <AlertTriangle size={32} className="group-hover:scale-110 transition-transform" />
                     <span className="text-[12px]">Restablecimiento Global de Infraestructura</span>
-                    <span className="text-[8px] opacity-60 tracking-[0.1em] font-bold">Resetea todas las tablas de producción (Irreversible)</span>
+                    <span className="text-[8px] opacity-60 tracking-[0.1em] font-bold">Reinicia todas las tablas de producción (Irreversible)</span>
                 </button>
             </div>
 

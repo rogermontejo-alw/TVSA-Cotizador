@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Save, Printer, Eye, Smartphone, Monitor,
-    CheckCircle, RefreshCw, Briefcase, AlertCircle, Activity
+    CheckCircle, RefreshCw, Briefcase, AlertCircle, Activity, FileText
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
@@ -33,7 +33,7 @@ const CotizacionResult = ({
             const updated = { ...cliente, etapa: targetStage };
             const success = await onSaveClient('clientes', updated);
             if (success) {
-                setMensaje({ tipo: 'exito', texto: `Status Updated: ${targetStage}` });
+                setMensaje({ tipo: 'exito', texto: `Estatus Actualizado: ${targetStage}` });
                 setConfirmingStage(null);
             }
         } catch (err) { console.error(err); } finally { setIsUpdating(false); }
@@ -53,7 +53,7 @@ const CotizacionResult = ({
         setIsUpdating(true);
         try {
             if (!cotizacion.id || String(cotizacion.id).startsWith('COT-')) {
-                setMensaje({ tipo: 'info', texto: 'Save quote first before changing status.' });
+                setMensaje({ tipo: 'info', texto: 'Guarda la cotización primero antes de cambiar el estatus.' });
                 setConfirmingQuoteStatus(null);
                 return;
             }
@@ -65,7 +65,7 @@ const CotizacionResult = ({
             }
             const success = await onSaveClient('cotizaciones', payload);
             if (success) {
-                setMensaje({ tipo: 'exito', texto: `Status: ${newStatus.toUpperCase()}` });
+                setMensaje({ tipo: 'exito', texto: `Estatus: ${newStatus.toUpperCase()}` });
                 if (newStatus === 'ganada' && cliente.etapa !== 'Cliente') {
                     setConfirmingQuoteStatus(null);
                     setConfirmingStage('Cliente');
@@ -78,7 +78,7 @@ const CotizacionResult = ({
         setIsUpdating(true);
         try {
             if (!cliente?.id) {
-                setMensaje({ tipo: 'error', texto: 'No client selected.' });
+                setMensaje({ tipo: 'error', texto: 'No se ha seleccionado cliente.' });
                 return;
             }
             const isNew = !cotizacion.id || String(cotizacion.id).startsWith('COT-');
@@ -105,7 +105,7 @@ const CotizacionResult = ({
             if (result?.[0]) {
                 cotizacion.id = result[0].id;
                 cotizacion.folio = result[0].folio;
-                setMensaje({ tipo: 'exito', texto: 'Plan Persisted Successfully.' });
+                setMensaje({ tipo: 'exito', texto: 'Plan Guardado Exitosamente.' });
             }
         } catch (err) { setMensaje({ tipo: 'error', texto: `Error: ${err.message}` }); } finally { setIsUpdating(false); }
     };
@@ -119,87 +119,94 @@ const CotizacionResult = ({
     const saldoColor = saldoFinal >= 0 ? 'text-emerald-400' : 'text-brand-orange';
 
     return (
-        <div className="max-w-6xl mx-auto space-y-4 animate-premium-fade">
-            {/* Dashboard Headers - Normalizing Fonts */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="bg-white rounded-xl shadow-premium border border-enterprise-100 p-4">
+        <div className="max-w-[1000px] mx-auto pb-20 px-4 md:px-0 space-y-4 animate-premium-fade">
+            {/* Dashboard Headers - 4 Columns on Tablet (md) and Desktop */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <div className="bg-white rounded-2xl shadow-premium border border-enterprise-100 p-4">
                     <div className="flex items-center gap-2 mb-2">
                         <Briefcase size={12} className="text-brand-orange" />
-                        <span className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest italic leading-none">Identity Check</span>
+                        <span className="text-[7px] font-black text-enterprise-400 uppercase tracking-widest italic leading-none">Verificación de Identidad</span>
                     </div>
-                    <h3 className="text-[11px] font-black text-enterprise-950 uppercase italic leading-none truncate">
-                        {cliente?.nombre_empresa || 'Prospect Partner'}
+                    <h3 className="text-[10px] font-black text-enterprise-950 uppercase italic leading-none truncate">
+                        {cliente?.nombre_empresa || 'Socio Prospecto'}
                     </h3>
                     <div className="flex items-center gap-1.5 mt-2">
-                        <span className="text-[7px] font-black text-enterprise-400 uppercase tracking-widest leading-none">{cliente?.segmento || 'GENERAL'} • {cliente?.etapa || 'Pipeline'}</span>
+                        <span className="text-[6px] font-black text-enterprise-400 uppercase tracking-widest leading-none">{cliente?.segmento || 'GENERAL'} • {cliente?.etapa || 'Pipeline'}</span>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-premium border border-enterprise-100 p-4">
+                <div className="bg-white rounded-2xl shadow-premium border border-enterprise-100 p-4">
                     <div className="flex items-center gap-2 mb-2">
                         <Activity size={12} className="text-brand-orange" />
-                        <span className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest italic leading-none">Deployment Matrix</span>
+                        <span className="text-[7px] font-black text-enterprise-400 uppercase tracking-widest italic leading-none">Matriz de Despliegue</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                         <div>
-                            <span className="block text-[7px] text-enterprise-300 uppercase font-black leading-none mb-0.5">Duration</span>
-                            <span className="text-[10px] font-black text-enterprise-900">{cotizacion.diasCampana || 30} Days</span>
+                            <span className="block text-[6px] text-enterprise-300 uppercase font-black leading-none mb-1">Duración</span>
+                            <span className="text-[9px] font-black text-enterprise-900">{cotizacion.diasCampana || 30} Días</span>
                         </div>
                         <div>
-                            <span className="block text-[7px] text-enterprise-300 uppercase font-black leading-none mb-0.5">Structure</span>
-                            <span className="text-[10px] font-black text-enterprise-900 uppercase">Hybrid TV+VIX</span>
+                            <span className="block text-[6px] text-enterprise-300 uppercase font-black leading-none mb-1">Estructura</span>
+                            <span className="text-[9px] font-black text-enterprise-900 uppercase">Híbrida TV+VIX</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-enterprise-950 rounded-xl shadow-premium p-4 relative overflow-hidden">
-                    <div className="flex items-center gap-2 mb-2">
+                <div className="bg-enterprise-950 rounded-2xl shadow-premium p-4 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-brand-orange/10 blur-[40px] -mr-10 -mt-10" />
+                    <div className="flex items-center gap-2 mb-2 relative z-10">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                        <span className="text-[8px] font-black text-white/40 uppercase tracking-widest italic leading-none">Capital Valuation</span>
+                        <span className="text-[7px] font-black text-white/40 uppercase tracking-widest italic leading-none">Valuación de Capital</span>
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-[13px] font-black text-white tracking-widest">
+                    <div className="flex flex-col relative z-10">
+                        <span className="text-[12px] font-black text-white tracking-widest">
                             {formatMXN(inversionTotalNeto)}
                         </span>
-                        <span className="text-[6px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">+ NET VALUATION</span>
+                        <span className="text-[6px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">+ VALUACIÓN AUTORIZADA</span>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                    <button onClick={handleSaveQuote} disabled={isUpdating} className="bg-white border border-enterprise-100 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-brand-orange group">
-                        {isUpdating ? <RefreshCw size={12} className="animate-spin text-brand-orange" /> : <Save size={12} className="text-enterprise-300 group-hover:text-brand-orange" />}
-                        <span className="text-[7px] font-black text-enterprise-950 uppercase tracking-widest">Store Data</span>
-                    </button>
-                    <button onClick={mostrarPropuesta} className="bg-enterprise-950 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:bg-brand-orange group transition-all">
-                        <Printer size={12} className="text-white/40 group-hover:text-white" />
-                        <span className="text-[7px] font-black text-white uppercase tracking-widest">Draft PDF</span>
-                    </button>
+                <div className="bg-white rounded-2xl shadow-premium border border-enterprise-100 p-4 flex flex-col justify-center">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Activity size={12} className="text-brand-orange" />
+                        <span className="text-[7px] font-black text-enterprise-400 uppercase tracking-widest italic leading-none">Seguimiento de Estatus</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-widest ${cotizacion.estatus === 'ganada' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-brand-orange/10 text-brand-orange'}`}>
+                            {cotizacion.estatus || 'BORRADOR'}
+                        </span>
+                        <span className="text-[9px] font-black text-enterprise-950 uppercase italic">
+                            {cotizacion.folio || 'NUEVO PLAN'}
+                        </span>
+                    </div>
                 </div>
             </div>
 
-            {/* Detailed Content */}
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
-                <div className="xl:col-span-8 space-y-3">
-                    <div className="bg-white rounded-2xl shadow-premium border border-enterprise-100 overflow-hidden">
-                        <div className="bg-enterprise-950 px-4 py-2 flex items-center justify-between">
+            {/* Detailed Content - 50/50 Split on Tablet (md) and Desktop */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+
+                {/* DEPLOYMENT DETAIL - 2 COLUMNS WIDTH */}
+                <div className="space-y-3">
+                    <div className="bg-white rounded-2xl shadow-premium border border-enterprise-100 overflow-hidden flex flex-col h-[450px]">
+                        <div className="bg-enterprise-950 px-4 py-2 flex items-center justify-between shrink-0">
                             <div className="flex items-center gap-2">
                                 <Monitor size={12} className="text-brand-orange" />
-                                <h4 className="text-white text-[9px] font-black uppercase tracking-widest italic">Linear TV Deployment</h4>
+                                <h4 className="text-white text-[9px] font-black uppercase tracking-widest italic">Despliegue TV Lineal</h4>
                             </div>
-                            <span className="text-[8px] font-black text-white/30 uppercase">{cotizacion.distribucion.length} Lines</span>
+                            <span className="text-[8px] font-black text-white/30 uppercase">{cotizacion.distribucion?.length || 0} Activos</span>
                         </div>
-                        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-enterprise-50/30">
-                            {cotizacion.distribucion.map((dist, idx) => {
+                        <div className="p-3 overflow-y-auto custom-scrollbar space-y-1.5 bg-enterprise-50/30 flex-1">
+                            {cotizacion.distribucion?.map((dist, idx) => {
                                 const lineTotal = cotizacion.items.find(i => i.producto.id === dist.producto.id)?.subtotal || 0;
                                 return (
-                                    <div key={idx} className="bg-white p-3 rounded-xl border border-enterprise-100 flex items-center justify-between">
+                                    <div key={idx} className="bg-white p-2.5 rounded-xl border border-enterprise-100 flex items-center justify-between shadow-sm">
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-1.5 mb-1">
                                                 <span className="text-[7px] font-black text-brand-orange uppercase">{dist.producto.canal}</span>
-                                                <span className="text-[7px] text-enterprise-400 uppercase truncate">{dist.producto.plaza}</span>
+                                                <span className="text-[7px] text-enterprise-400 font-bold uppercase truncate">{dist.producto.plaza}</span>
                                             </div>
                                             <h5 className="text-[10px] font-black text-enterprise-950 uppercase truncate italic leading-none">
-                                                {dist.producto.tipo} <span className="not-italic text-enterprise-300 text-[8px] font-medium ml-1">{dist.producto.duracion}</span>
+                                                {dist.producto.tipo} <span className="not-italic text-enterprise-500 text-[8px] font-bold ml-1">{dist.producto.duracion}</span>
                                             </h5>
                                         </div>
                                         <div className="text-right ml-3 shrink-0">
@@ -212,51 +219,83 @@ const CotizacionResult = ({
                     </div>
                 </div>
 
-                <div className="xl:col-span-4 space-y-3">
-                    {/* Strategy Metrics */}
-                    <div className="bg-white rounded-2xl shadow-premium border border-enterprise-100 p-5 space-y-4">
-                        <div className="flex items-center gap-2 pb-2 border-b border-enterprise-50">
-                            <span className="text-[8px] font-black text-enterprise-950 uppercase tracking-[0.3em] italic">Pipeline Recap</span>
+                {/* PIPELINE RECAP & ACTIONS - 2 COLUMNS WIDTH */}
+                <div className="space-y-4">
+                    <div className="bg-enterprise-950 rounded-2xl shadow-premium border border-white/10 p-6 space-y-6">
+                        <div className="flex items-center gap-3 pb-3 border-b border-white/10">
+                            <Activity size={14} className="text-brand-orange" />
+                            <span className="text-[9px] font-black text-white uppercase tracking-[0.3em] italic">Resumen del Pipeline</span>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-4">
                             <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                                <span className="text-enterprise-400">Total Approved</span>
-                                <span className="text-enterprise-950">{formatMXN(presupuestoBase)}</span>
+                                <span className="text-white/40">Total Aprobado</span>
+                                <span className="text-white">{formatMXN(presupuestoBase)}</span>
                             </div>
                             <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-brand-orange">
-                                <span>Linear Assets</span>
+                                <span>Activos Lineales</span>
                                 <span>-{formatMXN(inversionTV)}</span>
                             </div>
                             {inversionDigital > 0 && (
                                 <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-emerald-500">
-                                    <span>Digital Impact</span>
+                                    <span>Impacto Digital</span>
                                     <span>-{formatMXN(inversionDigital)}</span>
                                 </div>
                             )}
-                            <div className="pt-2 border-t border-enterprise-100 flex justify-between items-center">
-                                <span className="text-[9px] font-black text-enterprise-950 uppercase tracking-[0.2em]">Strategy Balance</span>
-                                <span className={`text-[13px] font-black tracking-widest italic ${saldoColor}`}>{formatMXN(saldoFinal)}</span>
+                            <div className="pt-4 border-t border-white/10 flex justify-between items-center">
+                                <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Balance Estratégico</span>
+                                <span className={`text-[14px] font-black tracking-widest italic ${saldoColor}`}>{formatMXN(saldoFinal)}</span>
                             </div>
                         </div>
-                        <button onClick={iniciarNuevaCotizacion} className="w-full py-2 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[8px] font-black text-enterprise-400 uppercase tracking-widest hover:text-error transition-all">
-                            Archive & New Plan
+                    </div>
+
+                    {/* NEW ACTION BAR - ALWAYS BELOW RECAP, MATCHING WIDTH */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <button
+                            onClick={handleSaveQuote}
+                            disabled={isUpdating || cotizacion.estatus === 'ganada'}
+                            className="bg-white border border-enterprise-100 rounded-2xl h-14 flex flex-col items-center justify-center gap-1.5 hover:border-brand-orange shadow-premium group transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            {isUpdating ? (
+                                <RefreshCw size={14} className="animate-spin text-brand-orange" />
+                            ) : cotizacion.estatus === 'ganada' ? (
+                                <CheckCircle size={14} className="text-emerald-500" />
+                            ) : (
+                                <Save size={14} className="text-enterprise-300 group-hover:text-brand-orange" />
+                            )}
+                            <span className="text-[8px] font-black text-enterprise-950 uppercase tracking-widest">
+                                {cotizacion.estatus === 'ganada' ? 'Plan Finalizado' : 'Guardar Datos'}
+                            </span>
+                        </button>
+                        <button
+                            onClick={mostrarPropuesta}
+                            className="bg-enterprise-950 border border-white/10 rounded-2xl h-14 flex flex-col items-center justify-center gap-1.5 hover:bg-brand-orange group transition-all shadow-premium"
+                        >
+                            <FileText size={14} className="text-white/40 group-hover:text-white" />
+                            <span className="text-[8px] font-black text-white uppercase tracking-widest">Borrador PDF</span>
                         </button>
                     </div>
+
+                    <button
+                        onClick={iniciarNuevaCotizacion}
+                        className="w-full py-3 bg-enterprise-50 border border-enterprise-100 rounded-2xl text-[8px] font-black text-enterprise-400 uppercase tracking-widest hover:text-error transition-all italic"
+                    >
+                        Archivar y Volver al Estratega
+                    </button>
                 </div>
             </div>
 
             {/* Modals Normalized to High Density */}
             {confirmingQuoteStatus && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-enterprise-950/80 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-white">
-                        <h3 className="text-center text-xs font-black text-slate-900 uppercase italic tracking-widest mb-4">
-                            Update Pipeline: {confirmingQuoteStatus.status}
+                    <div className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-white">
+                        <h3 className="text-center text-[10px] font-black text-slate-900 uppercase italic tracking-widest mb-4">
+                            Actualizar Pipeline: {confirmingQuoteStatus.status}
                         </h3>
                         {confirmingQuoteStatus.status === 'ganada' && (
                             <div className="space-y-3 mb-6">
                                 <input
                                     type="number"
-                                    placeholder="CONTRACT NUMBER..."
+                                    placeholder="NÚMERO DE CONTRATO..."
                                     value={cierreData.numero_contrato}
                                     onChange={(e) => setCierreData({ ...cierreData, numero_contrato: e.target.value })}
                                     className="w-full h-10 px-4 bg-slate-50 rounded-xl text-[10px] font-black focus:ring-1 focus:ring-emerald-500 outline-none uppercase"
@@ -266,7 +305,7 @@ const CotizacionResult = ({
                                     onChange={(e) => setCierreData({ ...cierreData, mc_id: e.target.value })}
                                     className="w-full h-10 px-4 bg-slate-50 rounded-xl text-[10px] font-black outline-none appearance-none uppercase"
                                 >
-                                    <option value="">ONE-TIME SALE (NO MC)</option>
+                                    <option value="">VENTA ÚNICA (SIN MC)</option>
                                     {clientMCs.map(mc => (
                                         <option key={mc.id} value={mc.id}>MC: {mc.numero_mc}</option>
                                     ))}
@@ -274,8 +313,8 @@ const CotizacionResult = ({
                             </div>
                         )}
                         <div className="grid grid-cols-2 gap-2">
-                            <button onClick={() => setConfirmingQuoteStatus(null)} className="h-10 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 rounded-xl">Discard</button>
-                            <button onClick={() => handleUpdateQuoteStatus(confirmingQuoteStatus.status)} className="h-10 bg-enterprise-950 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-brand-orange">Execute Change</button>
+                            <button onClick={() => setConfirmingQuoteStatus(null)} className="h-10 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 rounded-xl">Descartar</button>
+                            <button onClick={() => handleUpdateQuoteStatus(confirmingQuoteStatus.status)} className="h-10 bg-enterprise-950 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-brand-orange">Ejecutar Cambio</button>
                         </div>
                     </div>
                 </div>

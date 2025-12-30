@@ -55,7 +55,7 @@ const CotizadorView = ({
 
     if (loading) {
         return (
-            <div className="max-w-[1200px] mx-auto pt-10">
+            <div className="max-w-[1000px] mx-auto pt-10">
                 <CotizadorSkeleton />
             </div>
         );
@@ -66,64 +66,65 @@ const CotizadorView = ({
     const isExcedido = saldoRestante < 0;
 
     return (
-        <div className="max-w-6xl mx-auto animate-in fade-in duration-500 pb-24 px-4 sm:px-0">
+        <div className="max-w-[1000px] mx-auto animate-in fade-in duration-500 pb-24 px-4 sm:px-0">
             {!cotizacionResult ? (
                 <div className="flex flex-col gap-4">
 
-                    {/* TOP STATUS BAR - DUAL LEVEL KPI CONSOLE */}
-                    <div className="sticky top-20 z-40 mb-2">
-                        <div className={`bg-enterprise-950 border ${isExcedido ? 'border-brand-orange animate-pulse' : 'border-white/20'} rounded-2xl p-3 shadow-2xl relative overflow-hidden`}>
-                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-orange/5 to-transparent pointer-events-none" />
+                    {/* TOP STATUS BAR - NEXUS KPI CONSOLE */}
+                    <div className="sticky top-20 z-40 mb-4 animate-in slide-in-from-top duration-700">
+                        <div className={`bg-enterprise-950 border ${isExcedido ? 'border-brand-orange/50 shadow-brand-orange/10' : 'border-white/10'} rounded-[1.5rem] p-5 shadow-2xl relative overflow-hidden`}>
+                            {/* Accent Glow */}
+                            <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-brand-orange/5 to-transparent pointer-events-none" />
+                            <div className="absolute -left-10 -top-10 w-32 h-32 bg-brand-orange/5 blur-3xl rounded-full" />
 
-                            <div className="relative z-10 flex flex-col gap-2.5">
-                                {/* TOP ROW: PRIMARY OBJECTIVES (PLAN & EFFICIENCY) */}
-                                <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                                    <div className="flex items-center gap-3">
-                                        <Target size={12} className="text-brand-orange" />
-                                        <div className="flex items-center gap-4">
-                                            <div>
-                                                <p className="text-[6px] font-black text-white/50 uppercase tracking-[0.2em] leading-none mb-1">Target Plan</p>
-                                                <p className="text-[11px] font-black text-white leading-none tracking-tight">{formatMXN(presupuesto || 0)}</p>
+                            <div className="relative z-10 flex flex-col gap-4">
+                                {/* MAIN STATS ROW */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-4 h-4 rounded-full border border-brand-orange/30 flex items-center justify-center">
+                                                <Target size={8} className="text-brand-orange" />
                                             </div>
+                                            <span className="text-[7px] font-black text-white/40 uppercase tracking-[0.3em] italic">Target Plan</span>
                                         </div>
+                                        <p className="text-xl font-black text-white tracking-tighter ml-6">{formatMXN(presupuesto || 0)}</p>
                                     </div>
 
-                                    <div className="flex-1 max-w-[50%] flex items-center justify-end gap-3 px-4 border-l border-white/10">
-                                        <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full transition-all duration-500 ${isExcedido ? 'bg-brand-orange' : 'bg-emerald-500'}`}
-                                                style={{ width: `${Math.min(porcentajeUtilizado, 100)}%` }}
-                                            />
+                                    <div className="flex-1 max-w-[45%] flex flex-col gap-3">
+                                        <div className="flex items-center justify-between text-[7px] font-black uppercase tracking-[0.3em]">
+                                            <span className="text-white/20">System Load</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-white/40 italic">Efficiency</span>
+                                                <span className={isExcedido ? 'text-brand-orange' : 'text-emerald-400'}>{porcentajeUtilizado.toFixed(1)}%</span>
+                                            </div>
                                         </div>
-                                        <div className="shrink-0 text-right">
-                                            <p className="text-[6px] font-black text-white/50 uppercase tracking-widest leading-none mb-1">Efficiency</p>
-                                            <p className={`text-[10px] font-black leading-none ${isExcedido ? 'text-brand-orange' : 'text-emerald-400'}`}>
-                                                {porcentajeUtilizado.toFixed(1)}%
-                                            </p>
+                                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden flex items-center">
+                                            <div
+                                                className={`h-full transition-all duration-1000 ease-out relative ${isExcedido ? 'bg-brand-orange shadow-[0_0_10px_rgba(255,102,0,0.5)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]'}`}
+                                                style={{ width: `${Math.min(porcentajeUtilizado, 100)}%` }}
+                                            >
+                                                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full shadow-lg" />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* BOTTOM ROW: CURRENT STATUS (ACTUAL & AVAILABLE) */}
-                                <div className="flex items-center justify-between px-1">
+                                {/* SECONDARY MONITORING ROW */}
+                                <div className="flex items-center justify-between pt-3 border-t border-white/5">
                                     <div className="flex items-center gap-6">
                                         <div className="flex items-center gap-2">
-                                            <Activity size={10} className={isExcedido ? 'text-error' : 'text-emerald-400'} />
-                                            <div>
-                                                <span className="text-[6px] font-black text-white/40 uppercase tracking-widest mr-2">Actual Run:</span>
-                                                <span className={`text-[10px] font-black ${isExcedido ? 'text-error' : 'text-emerald-400'}`}>{formatMXN(subtotalActual)}</span>
-                                            </div>
+                                            <Activity size={10} className={isExcedido ? 'text-brand-orange' : 'text-emerald-400'} />
+                                            <span className="text-[7px] font-black text-white/30 uppercase tracking-widest italic">Actual Run:</span>
+                                            <span className={`text-[10px] font-black italic ${isExcedido ? 'text-brand-orange' : 'text-emerald-400'}`}>{formatMXN(subtotalActual)}</span>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3">
-                                        <div className="text-right">
-                                            <span className="text-[6px] font-black text-white/40 uppercase tracking-widest mr-2">Net Available:</span>
-                                            <span className={`text-[10px] font-black tracking-tight ${isExcedido ? 'text-brand-orange' : 'text-white'}`}>
-                                                {formatMXN(saldoRestante)}
-                                            </span>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[7px] font-black text-white/30 uppercase tracking-widest italic">Net Available:</span>
+                                            <span className={`text-[10px] font-black tracking-tight ${isExcedido ? 'text-brand-orange' : 'text-white'}`}>{formatMXN(saldoRestante)}</span>
                                         </div>
-                                        {isExcedido && <AlertCircle size={12} className="text-brand-orange" />}
+                                        {isExcedido && <AlertCircle size={12} className="text-brand-orange animate-pulse" />}
                                     </div>
                                 </div>
                             </div>

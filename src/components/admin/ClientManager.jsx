@@ -31,52 +31,71 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
     });
 
     return (
-        <div className="space-y-6 animate-premium-fade">
-            {/* Header / Toolbar Area */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                    <h2 className="text-3xl font-black text-enterprise-950 tracking-tight leading-none mb-1">Directorio de Entidades</h2>
-                    <p className="text-[10px] font-black text-enterprise-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                        <Globe size={12} className="text-brand-orange" />
-                        Master Business Registry v2.0
-                    </p>
+        <div className="space-y-6 animate-premium-fade px-4">
+            {/* NEXUS IDENTITY STATION - CLIENT MANAGER */}
+            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-brand-orange/10 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute -left-10 -top-10 w-48 h-48 bg-brand-orange/5 blur-3xl rounded-full" />
+
+                <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500">
+                            <Users size={28} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-3">
+                                Nexus de <span className="text-brand-orange">Identidad</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                            </h1>
+                            <div className="flex items-center gap-3 mt-2 text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
+                                <span>Registro Maestro de Entidades v2.0</span>
+                                <span className="w-1 h-1 bg-white/20 rounded-full" />
+                                <span className="text-brand-orange/80">Entidades Sincronizadas: {clientesFiltrados.length}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 max-w-xl w-full flex flex-col md:flex-row gap-3">
+                        <div className="flex-1 relative group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-brand-orange transition-colors" size={14} />
+                            <input
+                                type="text"
+                                placeholder="BUSCAR SOCIO, CONTACTO O PLAZA..."
+                                value={busqueda}
+                                onChange={(e) => setBusqueda(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-white uppercase tracking-widest outline-none focus:bg-white/10 focus:border-brand-orange transition-all placeholder:text-white/20"
+                            />
+                        </div>
+                        <button
+                            onClick={onNew}
+                            className="w-full md:w-auto px-8 py-3 bg-brand-orange text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-brand-orange/90 transition-all shadow-xl shadow-brand-orange/20 active:scale-95 group/btn"
+                        >
+                            <UserCircle size={16} strokeWidth={3} className="group-hover/btn:rotate-12 transition-transform" />
+                            Nuevo Cliente
+                        </button>
+                    </div>
                 </div>
+            </div>
 
-                <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-                    {/* Search Field */}
-                    <div className="relative flex-1 md:w-64">
-                        <input
-                            type="text"
-                            placeholder="Buscar Razón Social, Contacto..."
-                            value={busqueda}
-                            onChange={(e) => setBusqueda(e.target.value)}
-                            className="premium-input pl-11 h-12 text-sm"
-                        />
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-enterprise-300" size={18} />
-                    </div>
-
-                    {/* Filter Segment */}
-                    <div className="flex bg-enterprise-100 p-1.5 rounded-2xl border border-enterprise-200">
-                        {['activo', 'inactivo', 'todos'].map(st => (
-                            <button
-                                key={st}
-                                onClick={() => setFiltroEstatus(st)}
-                                className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-                                    ${filtroEstatus === st ? 'bg-enterprise-900 text-white shadow-lg' : 'text-enterprise-400 hover:text-enterprise-600'}`}
-                            >
-                                {st}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Action */}
-                    <button
-                        onClick={onNew}
-                        className="h-12 bg-brand-orange text-white px-6 rounded-2xl flex items-center gap-2 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-brand-orange/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                    >
-                        <UserCircle size={16} />
-                        + Cliente
-                    </button>
+            {/* Navigation & Lifecycle Filters */}
+            <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-3 rounded-[2rem] border border-enterprise-100 shadow-premium">
+                <div className="flex items-center gap-4 ml-2">
+                    <Activity size={16} className="text-brand-orange" />
+                    <span className="text-[10px] font-black text-enterprise-950 uppercase tracking-widest italic">Filtros de Ciclo de Vida:</span>
+                </div>
+                <div className="flex bg-enterprise-950 rounded-xl p-1 w-full md:w-fit shadow-xl border border-white/5">
+                    {['activo', 'inactivo', 'todos'].map(st => (
+                        <button
+                            key={st}
+                            onClick={() => setFiltroEstatus(st)}
+                            className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] whitespace-nowrap transition-all duration-300
+                                ${filtroEstatus === st
+                                    ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20'
+                                    : 'text-white/30 hover:text-white'}`}
+                        >
+                            {st === 'todos' ? 'TODOS' : st.toUpperCase()}
+                        </button>
+                    ))}
                 </div>
             </div>
 
@@ -84,89 +103,103 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
             <div className="bg-white rounded-[2.5rem] shadow-premium border border-enterprise-100 overflow-hidden">
                 {/* Desktop Table View */}
                 <div className="hidden lg:block overflow-x-auto">
-                    <table className="enterprise-table w-full">
-                        <thead>
-                            <tr className="bg-enterprise-950 text-white">
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Socio Comercial</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Enlace Externo</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Nivel Contractual</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Operación</th>
-                                <th className="px-8 py-6 text-center text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Terminal Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-enterprise-50">
+                    <div className="overflow-x-auto">
+                        <div className="p-6 space-y-3">
                             {clientesFiltrados.length > 0 ? clientesFiltrados.map(c => (
-                                <tr key={c.id} className={`hover:bg-enterprise-50/50 transition-colors ${c.estatus === 'inactivo' ? 'opacity-50' : ''}`}>
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-enterprise-950 rounded-2xl flex items-center justify-center text-white font-black text-lg border-2 border-white shadow-xl shadow-enterprise-900/10">
-                                                {c.nombre_empresa?.charAt(0).toUpperCase()}
+                                <div
+                                    key={c.id}
+                                    className={`group bg-white rounded-[1.8rem] border border-enterprise-100 p-4 flex items-center justify-between hover:border-brand-orange hover:shadow-xl hover:shadow-brand-orange/5 transition-all duration-300 ${c.estatus === 'inactivo' ? 'opacity-60 grayscale' : ''}`}
+                                >
+                                    <div className="flex items-center gap-5">
+                                        {/* CORPORATE IDENTITY SYMBOL */}
+                                        <div className="w-12 h-12 bg-enterprise-950 rounded-2xl flex items-center justify-center text-white font-black text-lg border-2 border-white/10 shadow-lg group-hover:scale-110 transition-transform duration-500">
+                                            {c.nombre_empresa?.charAt(0).toUpperCase()}
+                                        </div>
+
+                                        {/* CORE DATA MATRIX */}
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-brand-orange whitespace-nowrap">
+                                                    {c.nombre_empresa}
+                                                </span>
+                                                <span className="w-1 h-1 rounded-full bg-enterprise-200" />
+                                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-enterprise-400 whitespace-nowrap flex items-center gap-1">
+                                                    <MapPin size={8} className="text-enterprise-300" />
+                                                    {c.plaza}
+                                                </span>
                                             </div>
-                                            <div>
-                                                <span className="block text-sm font-black text-enterprise-950 uppercase tracking-tight">{c.nombre_empresa}</span>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${c.estatus === 'activo' ? 'bg-emerald-500' : 'bg-brand-orange'}`} />
-                                                    <span className="text-[9px] font-black text-enterprise-400 uppercase tracking-widest">ID-ENTT:{c.id.slice(0, 6)}</span>
+                                            <div className="flex items-center gap-3">
+                                                <h3 className="text-[12px] font-black text-enterprise-950 uppercase tracking-tight leading-none">
+                                                    {c.nombre_contacto || 'IDENTIDAD NO ASIGNADA'}
+                                                </h3>
+                                                <div className="h-3 w-px bg-enterprise-100" />
+                                                <span className="text-[8px] font-black text-enterprise-300 uppercase tracking-widest italic pt-0.5">
+                                                    ID-ENTT:{c.id.slice(0, 6)}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-enterprise-50 rounded-md border border-enterprise-100/50">
+                                                    <ShieldCheck size={10} className="text-emerald-500" />
+                                                    <span className="text-[7.5px] font-black text-enterprise-600 uppercase tracking-widest">
+                                                        {c.tipo_acuerdo?.replace(/_/g, ' ') || 'PRECIO LISTA'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-brand-orange/5 rounded-md border border-brand-orange/10">
+                                                    <Building2 size={10} className="text-brand-orange/70" />
+                                                    <span className="text-[7.5px] font-black text-brand-orange/80 uppercase tracking-widest">
+                                                        {c.segmento || 'MERCADO GENERAL'}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-2 text-enterprise-700 font-bold text-xs">
-                                                <User size={12} className="text-brand-orange" />
-                                                {c.nombre_contacto || 'No asignado'}
-                                            </div>
-                                            <div className="text-[10px] text-enterprise-400 font-medium">
-                                                {c.segmento || 'General Market'}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center gap-2">
-                                            <ShieldCheck size={14} className="text-emerald-500" />
-                                            <span className="text-[10px] font-black text-enterprise-700 uppercase tracking-widest">
-                                                {c.tipo_acuerdo?.replace(/_/g, ' ') || 'PRECIO LISTA'}
+                                    </div>
+
+                                    {/* TERMINAL ACTION HUB */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex flex-col items-end mr-4">
+                                            <span className={`text-[7px] font-black uppercase tracking-[0.2em] mb-1 ${c.estatus === 'activo' ? 'text-emerald-500' : 'text-brand-orange'}`}>
+                                                Estatus de Cuenta
                                             </span>
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${c.estatus === 'activo' ? 'bg-emerald-500' : 'bg-brand-orange'}`} />
+                                                <span className="text-[9px] font-black text-enterprise-950 uppercase italic tracking-tighter">{c.estatus === 'activo' ? 'ACTIVO' : 'INACTIVO'}</span>
+                                            </div>
                                         </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center gap-2">
-                                            <MapPin size={14} className="text-brand-orange" />
-                                            <span className="text-[10px] font-bold text-enterprise-950 uppercase">{c.plaza}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center justify-center gap-2">
+
+                                        <div className="flex items-center gap-1.5 bg-enterprise-50 p-1.5 rounded-2xl border border-enterprise-100 group-hover:bg-white transition-colors">
                                             <button
                                                 onClick={() => onEdit(c)}
-                                                className="w-10 h-10 flex items-center justify-center bg-enterprise-50 text-enterprise-500 hover:bg-enterprise-900 hover:text-white rounded-xl transition-all shadow-sm"
+                                                className="w-9 h-9 flex items-center justify-center bg-white text-enterprise-500 hover:bg-enterprise-900 hover:text-white rounded-xl transition-all shadow-sm border border-enterprise-100"
+                                                title="Editar Entidad"
                                             >
-                                                <Edit3 size={16} />
+                                                <Edit3 size={15} strokeWidth={2.5} />
                                             </button>
                                             <button
                                                 onClick={() => onToggleEstatus({ ...c, estatus: c.estatus === 'activo' ? 'inactivo' : 'activo' })}
-                                                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm ${c.estatus === 'activo' ? 'bg-enterprise-50 text-enterprise-500 hover:bg-brand-orange hover:text-white' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white'}`}
-                                                title={c.estatus === 'activo' ? 'Desactivar Cliente' : 'Activar Cliente'}
+                                                className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all shadow-sm border ${c.estatus === 'activo' ? 'bg-white border-enterprise-100 text-enterprise-500 hover:bg-brand-orange hover:text-white hover:border-brand-orange' : 'bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white'}`}
+                                                title={c.estatus === 'activo' ? 'Desactivar Entidad' : 'Activar Entidad'}
                                             >
-                                                <Activity size={16} />
+                                                <Activity size={15} strokeWidth={2.5} />
                                             </button>
                                             <button
-                                                onClick={() => { if (window.confirm('¿Eliminar definitivamente?')) onEliminar(c.id); }}
-                                                className="w-10 h-10 flex items-center justify-center bg-brand-orange/5 text-brand-orange hover:bg-brand-magenta hover:text-white rounded-xl transition-all"
+                                                onClick={() => { if (window.confirm('¿Eliminar Entidad?')) onEliminar(c.id); }}
+                                                className="w-9 h-9 flex items-center justify-center bg-white text-brand-orange border border-brand-orange/10 hover:bg-brand-orange hover:text-white rounded-xl transition-all shadow-sm"
+                                                title="Eliminar Entidad"
                                             >
-                                                <Trash2 size={16} />
+                                                <Trash2 size={15} strokeWidth={2.5} />
                                             </button>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </div>
+                                </div>
                             )) : (
-                                <tr>
-                                    <td colSpan="5" className="py-20 text-center text-enterprise-400 font-bold uppercase text-[10px] italic tracking-widest">No hay registros disponibles</td>
-                                </tr>
+                                <div className="py-24 text-center">
+                                    <Users size={48} className="mx-auto text-enterprise-100 mb-6 stroke-[1]" />
+                                    <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-[0.4em] italic">No se encontraron registros en el Nexus</p>
+                                </div>
                             )}
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
+
                 </div>
 
                 {/* Mobile Card View */}
@@ -200,7 +233,7 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
                                         <Activity size={14} />
                                     </button>
                                     <button
-                                        onClick={() => { if (window.confirm('¿Eliminar definitivamente?')) onEliminar(c.id); }}
+                                        onClick={() => { if (window.confirm('¿Eliminar Entidad?')) onEliminar(c.id); }}
                                         className="w-9 h-9 flex items-center justify-center bg-brand-orange/5 text-brand-orange rounded-lg active:bg-brand-magenta active:text-white transition-all"
                                     >
                                         <Trash2 size={14} />
@@ -240,22 +273,27 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
                         </div>
                     )}
                 </div>
+
                 {/* Footer Insight */}
-                <div className="bg-enterprise-50 px-8 py-5 border-t border-enterprise-200 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <div className="flex -space-x-2">
-                            {[1, 2, 3].map(i => (
-                                <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-enterprise-200 flex items-center justify-center">
-                                    <User size={12} className="text-enterprise-400" />
-                                </div>
-                            ))}
+                <div className="bg-enterprise-950 px-8 py-4 border-t border-white/10 flex justify-between items-center relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-brand-orange/5 to-transparent pointer-events-none" />
+
+                    <div className="flex items-center gap-6 relative z-10">
+                        <div className="flex items-center gap-3">
+                            <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.4em] italic">Señales de Identidad Activas</span>
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-full border border-white/10">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Sincronizado</span>
+                            </div>
                         </div>
-                        <p className="text-[10px] font-black text-enterprise-400 uppercase tracking-widest">
-                            {clientes.length} Cuentas sincronizadas con CRM Regional
+                        <div className="h-4 w-px bg-white/10" />
+                        <p className="text-[9px] font-black text-white/60 uppercase tracking-widest">
+                            {clientes.length} Cuentas Corporativas Integradas
                         </p>
                     </div>
-                    <button className="text-[10px] font-black text-brand-orange hover:underline uppercase tracking-widest flex items-center gap-2">
-                        Exportar a Excel <ExternalLink size={12} />
+
+                    <button className="relative z-10 px-5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[9px] font-black text-brand-orange uppercase tracking-[0.2em] transition-all flex items-center gap-2 active:scale-95">
+                        Exportación Analítica <ExternalLink size={12} strokeWidth={3} />
                     </button>
                 </div>
             </div>

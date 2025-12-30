@@ -138,81 +138,113 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
     };
 
     return (
-        <div className="space-y-4 md:space-y-6 pb-24 animate-premium-fade max-w-7xl mx-auto px-4 md:px-0 overflow-hidden">
-            {/* Header Cobranza */}
-            <div className="bg-enterprise-950 p-6 rounded-2xl md:rounded-b-none flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-brand-orange/10 blur-[80px] -mr-32 -mt-32"></div>
-                <div className="flex items-center gap-3 relative z-10">
-                    <DollarSign size={20} className="text-brand-orange" />
-                    <h3 className="text-sm font-black text-white uppercase italic italic-brand flex items-center gap-3 tracking-widest">
-                        Gestión de Cobranza Premium
-                    </h3>
+        <div className="space-y-6 pb-24 animate-premium-fade max-w-7xl mx-auto px-4 md:px-0 overflow-hidden">
+            {/* NEXUS COLLECTIONS STATION - MAIN HEADER */}
+            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-brand-orange/10 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute -left-10 -top-10 w-48 h-48 bg-brand-orange/5 blur-3xl rounded-full" />
+
+                <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500">
+                            <DollarSign size={28} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-3">
+                                Nexus de <span className="text-brand-orange">Cobranza</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            </h1>
+                            <div className="flex items-center gap-3 mt-2 text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
+                                <span>Garantía de Ingresos</span>
+                                <span className="w-1 h-1 bg-white/20 rounded-full" />
+                                <span className="text-brand-orange/80">Cuentas por Cobrar: {filtrados.length}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => setIsShowManualForm(true)}
+                        className="w-full lg:w-auto px-8 py-3.5 bg-brand-orange text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-brand-orange/90 transition-all shadow-xl shadow-brand-orange/20 active:scale-95 group/btn"
+                    >
+                        <Plus size={16} strokeWidth={3} className="group-hover/btn:rotate-90 transition-transform duration-300" />
+                        Desplegar Nueva Factura
+                    </button>
                 </div>
             </div>
-            {/* Header Stats Compact (Estilo Reporte) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-                <div className="bg-white px-3 md:px-6 py-5 rounded-xl md:rounded-2xl shadow-sm border border-enterprise-100 hover:shadow-lg transition-all duration-300">
-                    <p className="text-[7px] md:text-[8px] font-black text-enterprise-400 uppercase tracking-widest mb-1 md:mb-2">Cartera Individual</p>
-                    <div className="flex items-baseline gap-1 md:gap-2">
-                        <h4 className="text-sm md:text-xl font-black text-enterprise-950 tracking-tighter">{formatMXN(stats.total)}</h4>
-                        <span className="text-[6px] md:text-[7px] font-bold text-enterprise-300 uppercase tracking-tighter">Subt.</span>
+            {/* Premium Intelligence Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-3xl shadow-premium border border-enterprise-100 overflow-hidden flex flex-col group hover:border-enterprise-900 transition-all duration-500">
+                    <div className="bg-enterprise-950 px-4 py-2 flex items-center justify-between">
+                        <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Portafolio Activo</span>
+                        <Building2 size={12} className="text-brand-orange" />
+                    </div>
+                    <div className="p-5">
+                        <h4 className="text-xl font-black text-enterprise-950 tracking-tighter">{formatMXN(stats.total)}</h4>
+                        <p className="text-[7.5px] font-black text-enterprise-300 uppercase italic mt-1 tracking-widest">Exposición Bruta</p>
                     </div>
                 </div>
 
-                <div className="bg-white px-3 md:px-6 py-5 rounded-xl md:rounded-2xl shadow-sm border border-enterprise-100 border-l-4 border-l-emerald-500 hover:shadow-lg transition-all duration-300">
-                    <p className="text-[7px] md:text-[8px] font-black text-emerald-600 uppercase tracking-widest mb-1 md:mb-2">Recuperado</p>
-                    <h4 className="text-sm md:text-xl font-black text-emerald-600 tracking-tighter">{formatMXN(stats.cobrado)}</h4>
-                </div>
-
-                <div className="bg-white px-3 md:px-6 py-5 rounded-xl md:rounded-2xl shadow-sm border border-enterprise-100 border-l-4 border-l-brand-magenta hover:shadow-lg transition-all duration-300">
-                    <p className="text-[7px] md:text-[8px] font-black text-brand-magenta uppercase tracking-widest mb-1 md:mb-2">Vencido</p>
-                    <h4 className="text-sm md:text-xl font-black text-brand-magenta tracking-tighter">{formatMXN(stats.vencido)}</h4>
-                </div>
-
-                <div className="bg-enterprise-950 px-3 md:px-6 py-5 rounded-xl md:rounded-2xl shadow-xl flex items-center justify-between group relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-brand-orange/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="relative z-10">
-                        <p className="text-[7px] md:text-[8px] font-black text-enterprise-400 uppercase tracking-widest mb-1 md:mb-2">Facturas Totales</p>
-                        <h4 className="text-sm md:text-xl font-black text-white tracking-tighter">{filtrados.length}</h4>
+                <div className="bg-white rounded-3xl shadow-premium border border-enterprise-100 overflow-hidden flex flex-col group hover:border-emerald-500 transition-all duration-500">
+                    <div className="bg-emerald-500 px-4 py-2 flex items-center justify-between">
+                        <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Activos Recuperados</span>
+                        <CheckCircle2 size={12} className="text-white" />
                     </div>
-                    <DollarSign size={24} className="text-brand-orange opacity-50 relative z-10 group-hover:scale-110 transition-transform" />
+                    <div className="p-5">
+                        <h4 className="text-xl font-black text-emerald-600 tracking-tighter">{formatMXN(stats.cobrado)}</h4>
+                        <p className="text-[7.5px] font-black text-emerald-400 uppercase italic mt-1 tracking-widest">Cobranza Verificada</p>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-3xl shadow-premium border border-enterprise-100 overflow-hidden flex flex-col group hover:border-brand-magenta transition-all duration-500">
+                    <div className="bg-brand-magenta px-4 py-2 flex items-center justify-between">
+                        <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Exposición de Riesgo</span>
+                        <AlertCircle size={12} className="text-white" />
+                    </div>
+                    <div className="p-5">
+                        <h4 className="text-xl font-black text-brand-magenta tracking-tighter">{formatMXN(stats.vencido)}</h4>
+                        <p className="text-[7.5px] font-black text-brand-magenta/60 uppercase italic mt-1 tracking-widest">Saldo Vencido</p>
+                    </div>
+                </div>
+
+                <div className="bg-enterprise-950 rounded-3xl shadow-2xl border border-white/5 overflow-hidden flex flex-col group hover:border-brand-orange transition-all duration-500">
+                    <div className="bg-brand-orange px-4 py-2 flex items-center justify-between">
+                        <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Log de Actividad</span>
+                        <Clock size={12} className="text-white" />
+                    </div>
+                    <div className="p-5">
+                        <h4 className="text-xl font-black text-white tracking-tighter">{filtrados.length}</h4>
+                        <p className="text-[7.5px] font-black text-white/40 uppercase italic mt-1 tracking-widest">Unidades Documentadas</p>
+                    </div>
                 </div>
             </div>
 
-            {/* Filtros */}
-            <div className="flex flex-col md:flex-row gap-4 items-center">
+            {/* Filters & Actions Hub */}
+            <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-3 rounded-[2rem] border border-enterprise-100 shadow-premium">
                 <div className="flex-1 relative group w-full">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-enterprise-400 group-focus-within:text-brand-orange transition-colors" size={14} />
                     <input
                         type="text"
-                        placeholder="Buscar por cliente o factura..."
+                        placeholder="BUSCAR IDENTIDAD DE CUENTA O FACTURA..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-white border border-enterprise-100 rounded-xl font-bold text-[10px] shadow-sm outline-none focus:ring-1 focus:ring-brand-orange/20 transition-all placeholder:text-enterprise-300"
+                        className="w-full pl-10 pr-4 py-3 bg-enterprise-50 border border-enterprise-100/50 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-inner outline-none focus:bg-white focus:border-brand-orange/50 transition-all placeholder:text-enterprise-300"
                     />
                 </div>
 
-                <div className="flex flex-wrap bg-enterprise-950 rounded-xl p-1 w-full md:w-fit shadow-lg">
+                <div className="flex bg-enterprise-950 rounded-xl p-1 w-full md:w-fit shadow-xl border border-white/5">
                     {['todos', 'pendiente', 'programado', 'cobrado'].map(estatus => (
                         <button
                             key={estatus}
                             onClick={() => setFiltroEstatus(estatus)}
-                            className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all
+                            className={`flex-1 md:flex-none px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] whitespace-nowrap transition-all duration-300
                                 ${filtroEstatus === estatus
-                                    ? 'bg-brand-orange text-white shadow-lg'
-                                    : 'text-enterprise-400 hover:text-enterprise-200'}`}
+                                    ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20'
+                                    : 'text-white/30 hover:text-white'}`}
                         >
                             {estatus}
                         </button>
                     ))}
                 </div>
-
-                <button
-                    onClick={() => setIsShowManualForm(true)}
-                    className="w-full md:w-auto bg-brand-orange hover:bg-brand-magenta text-white px-6 py-3 rounded-xl font-black uppercase text-[9px] tracking-[0.2em] transition-all active:scale-95 shadow-xl shadow-brand-orange/20 flex items-center justify-center gap-2"
-                >
-                    <Plus size={14} /> Nueva Factura
-                </button>
             </div>
 
             {/* Modal de Nueva Factura */}
@@ -307,19 +339,19 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
                 </div>
             )}
 
-            {/* Tabla de Registros (Estilo Reporte) */}
-            <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl border border-enterprise-100">
+            {/* Recovery Audit Table */}
+            <div className="bg-white rounded-[2.5rem] shadow-premium border border-enterprise-100 overflow-hidden">
                 <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[900px]">
                         <thead>
-                            <tr className="bg-enterprise-950 text-white font-black uppercase text-[8px] tracking-[0.2em]">
-                                <th className="px-6 py-5">Status</th>
-                                <th className="px-6 py-5">Cliente / Origen</th>
-                                <th className="px-6 py-5">Factura / Folio</th>
-                                <th className="px-6 py-5 text-center">Fecha Pago</th>
-                                <th className="px-6 py-5 text-right">Subtotal Neto</th>
-                                <th className="px-6 py-5 text-center">Documentos</th>
-                                <th className="px-6 py-5 text-center">Acciones</th>
+                            <tr className="bg-enterprise-950 text-white border-b border-white/5">
+                                <th className="px-6 py-5 text-[7.5px] font-black uppercase tracking-[0.3em] opacity-40 italic">Estado de Sync</th>
+                                <th className="px-6 py-5 text-[7.5px] font-black uppercase tracking-[0.3em] opacity-40 italic">Origen de Cuenta</th>
+                                <th className="px-6 py-5 text-[7.5px] font-black uppercase tracking-[0.3em] opacity-40 italic">Referencia de Identidad</th>
+                                <th className="px-6 py-5 text-[7.5px] font-black uppercase tracking-[0.3em] opacity-40 italic text-center">Fecha de Compromiso</th>
+                                <th className="px-6 py-5 text-[7.5px] font-black uppercase tracking-[0.3em] opacity-40 italic text-right">Liquidez Neta</th>
+                                <th className="px-6 py-5 text-[7.5px] font-black uppercase tracking-[0.3em] opacity-40 italic text-center">Docs</th>
+                                <th className="px-6 py-5 text-[7.5px] font-black uppercase tracking-[0.3em] opacity-40 italic text-center">Control</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-enterprise-50">

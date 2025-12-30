@@ -62,42 +62,58 @@ const HistoryView = ({
             }
             const success = await onSaveQuote('cotizaciones', payload);
             if (success) {
-                setMensaje({ tipo: 'exito', texto: `Status: ${newStatus.toUpperCase()}` });
+                setMensaje({ tipo: 'exito', texto: `Estatus: ${newStatus.toUpperCase()}` });
                 setConfirmingStatus(null);
             }
         } catch (err) { console.error(err); } finally { setIsUpdating(false); }
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-4 animate-premium-fade">
-            <div className="flex flex-col md:flex-row justify-between items-end gap-4">
-                <div>
-                    <h1 className="text-sm font-black text-enterprise-950 tracking-widest uppercase italic leading-none mb-1 text-center md:text-left">
-                        Historical <span className="text-brand-orange not-italic">Pipeline</span>
-                    </h1>
-                    <p className="text-[8px] font-black text-enterprise-400 uppercase tracking-[0.3em] text-center md:text-left">Master Infrastructure Logs</p>
-                </div>
+        <div className="max-w-7xl mx-auto space-y-6 animate-premium-fade px-4">
+            {/* NEXUS HISTORY STATION HUB */}
+            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-brand-orange/10 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute -left-10 -top-10 w-48 h-48 bg-brand-orange/5 blur-3xl rounded-full" />
 
-                <div className="flex items-center gap-2 bg-white p-2 rounded-xl shadow-premium border border-enterprise-100 w-full md:w-auto">
-                    <div className="relative group flex-1 md:w-48">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-enterprise-300" size={12} />
-                        <input
-                            type="text"
-                            placeholder="SEARCH PARTNER..."
-                            value={busqueda}
-                            onChange={(e) => setBusqueda(e.target.value)}
-                            className="w-full h-8 bg-enterprise-50 border border-enterprise-100 rounded-lg pl-8 pr-3 text-[9px] font-black outline-none focus:border-brand-orange uppercase"
-                        />
+                <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500">
+                            <FileText size={28} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-3">
+                                Pipeline <span className="text-brand-orange">Histórico</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                            </h1>
+                            <div className="flex items-center gap-3 mt-2 text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
+                                <span>Logs Maestros de Infraestructura</span>
+                                <span className="w-1 h-1 bg-white/20 rounded-full" />
+                                <span className="text-brand-orange/80">Registros Capturados: {historialFiltrado.length}</span>
+                            </div>
+                        </div>
                     </div>
-                    <select
-                        value={filtroVix}
-                        onChange={(e) => setFiltroVix(e.target.value)}
-                        className="h-8 bg-enterprise-50 border border-enterprise-100 rounded-lg px-3 text-[8px] font-black uppercase tracking-widest outline-none cursor-pointer"
-                    >
-                        <option value="todos">ALL ASSETS</option>
-                        <option value="vix">VIX ONLY</option>
-                        <option value="no_vix">LINEAR ONLY</option>
-                    </select>
+
+                    <div className="flex-1 max-w-xl w-full flex flex-col md:flex-row gap-3">
+                        <div className="flex-1 relative group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-brand-orange transition-colors" size={14} />
+                            <input
+                                type="text"
+                                placeholder="BUSCAR SOCIO O FOLIO..."
+                                value={busqueda}
+                                onChange={(e) => setBusqueda(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-white uppercase tracking-widest outline-none focus:bg-white/10 focus:border-brand-orange transition-all placeholder:text-white/20"
+                            />
+                        </div>
+                        <select
+                            value={filtroVix}
+                            onChange={(e) => setFiltroVix(e.target.value)}
+                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[9px] font-black text-white uppercase tracking-widest outline-none cursor-pointer hover:bg-white/10 transition-all appearance-none text-center"
+                        >
+                            <option value="todos" className="bg-enterprise-950">TODOS LOS ACTIVOS</option>
+                            <option value="vix" className="bg-enterprise-950">SOLO VIX</option>
+                            <option value="no_vix" className="bg-enterprise-950">SOLO LINEAL</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -106,10 +122,10 @@ const HistoryView = ({
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-enterprise-950 text-white border-b border-white/5">
-                                <th className="px-4 py-3 text-left text-[8px] font-black uppercase tracking-[0.2em] opacity-40 italic">Sync Date</th>
-                                <th className="px-4 py-3 text-left text-[8px] font-black uppercase tracking-[0.2em] opacity-40 italic">Corporate Partner</th>
-                                <th className="px-4 py-3 text-center text-[8px] font-black uppercase tracking-[0.2em] opacity-40 italic">Phase</th>
-                                <th className="px-4 py-3 text-right text-[8px] font-black uppercase tracking-[0.2em] opacity-40 italic">Net Value</th>
+                                <th className="px-4 py-3 text-left text-[8px] font-black uppercase tracking-[0.2em] opacity-40 italic">Fecha Sinc.</th>
+                                <th className="px-4 py-3 text-left text-[8px] font-black uppercase tracking-[0.2em] opacity-40 italic">Socio Corporativo</th>
+                                <th className="px-4 py-3 text-center text-[8px] font-black uppercase tracking-[0.2em] opacity-40 italic">Fase</th>
+                                <th className="px-4 py-3 text-right text-[8px] font-black uppercase tracking-[0.2em] opacity-40 italic">Valor Neto</th>
                                 <th className="px-4 py-3 text-center text-[8px] font-black uppercase tracking-[0.2em] opacity-40 italic">Control</th>
                             </tr>
                         </thead>
@@ -127,7 +143,7 @@ const HistoryView = ({
                                     <td className="px-4 py-3">
                                         <div>
                                             <span className="block text-[10px] font-black text-enterprise-950 uppercase truncate max-w-[180px]">
-                                                {cotz.cliente?.nombre_empresa || 'Prospect Identity'}
+                                                {cotz.cliente?.nombre_empresa || 'Identidad Prospecto'}
                                             </span>
                                             <span className="text-[7px] font-black text-brand-orange uppercase">{cotz.folio || cotz.id.slice(0, 8)}</span>
                                         </div>
@@ -155,13 +171,13 @@ const HistoryView = ({
                                         <div className="flex items-center justify-center gap-1.5">
                                             <button onClick={() => { setCotizacion(cotz); setVistaActual('cotizador'); }} className="w-7 h-7 flex items-center justify-center bg-enterprise-50 text-enterprise-400 hover:bg-enterprise-950 hover:text-white rounded-lg transition-all"><Eye size={12} /></button>
                                             <button onClick={() => mostrarPropuesta(cotz)} className="w-7 h-7 flex items-center justify-center bg-enterprise-50 text-enterprise-400 hover:bg-brand-orange hover:text-white rounded-lg transition-all"><Printer size={12} /></button>
-                                            <button onClick={() => { if (window.confirm('Delete log?')) eliminarCotizacion(cotz.id); }} className="w-7 h-7 flex items-center justify-center bg-enterprise-50 text-enterprise-400 hover:text-brand-orange rounded-lg transition-all"><Trash2 size={12} /></button>
+                                            <button onClick={() => { if (window.confirm('¿Eliminar registro?')) eliminarCotizacion(cotz.id); }} className="w-7 h-7 flex items-center justify-center bg-enterprise-50 text-enterprise-400 hover:text-brand-orange rounded-lg transition-all"><Trash2 size={12} /></button>
                                         </div>
                                     </td>
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan="5" className="py-12 text-center text-enterprise-300 font-black uppercase text-[8px] italic tracking-widest opacity-40">Empty Infrastructure History</td>
+                                    <td colSpan="5" className="py-12 text-center text-enterprise-300 font-black uppercase text-[8px] italic tracking-widest opacity-40">Historial de Infraestructura Vacío</td>
                                 </tr>
                             )}
                         </tbody>
@@ -173,7 +189,7 @@ const HistoryView = ({
             {confirmingStatus && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-enterprise-950/80 backdrop-blur-sm animate-premium-fade">
                     <div className="bg-white w-full max-w-xs rounded-2xl p-6 shadow-2xl border border-enterprise-100">
-                        <h3 className="text-center text-[10px] font-black text-enterprise-950 uppercase italic tracking-widest mb-4">Pipeline Status: {confirmingStatus.status}</h3>
+                        <h3 className="text-center text-[10px] font-black text-enterprise-950 uppercase italic tracking-widest mb-4">Estatus del Pipeline: {confirmingStatus.status}</h3>
                         {confirmingStatus.status === 'ganada' && (
                             <div className="space-y-3 mb-6">
                                 <input
@@ -181,13 +197,13 @@ const HistoryView = ({
                                     value={cierreData.numero_contrato}
                                     onChange={(e) => setCierreData({ ...cierreData, numero_contrato: e.target.value })}
                                     className="w-full h-10 px-4 bg-enterprise-50 rounded-xl text-[10px] font-black outline-none placeholder:text-enterprise-300"
-                                    placeholder="CONTRACT REF..."
+                                    placeholder="REF. CONTRATO..."
                                 />
                             </div>
                         )}
                         <div className="grid grid-cols-2 gap-2">
-                            <button onClick={() => setConfirmingStatus(null)} className="h-9 text-[9px] font-black uppercase text-enterprise-400 hover:bg-enterprise-50 rounded-lg">Abort</button>
-                            <button onClick={() => handleUpdateStatus(confirmingStatus.quote, confirmingStatus.status)} className="h-9 bg-enterprise-950 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-orange">Commit</button>
+                            <button onClick={() => setConfirmingStatus(null)} className="h-9 text-[9px] font-black uppercase text-enterprise-400 hover:bg-enterprise-50 rounded-lg">Abortar</button>
+                            <button onClick={() => handleUpdateStatus(confirmingStatus.quote, confirmingStatus.status)} className="h-9 bg-enterprise-950 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-orange">Confirmar</button>
                         </div>
                     </div>
                 </div>

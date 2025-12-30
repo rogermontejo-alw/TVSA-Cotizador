@@ -26,46 +26,62 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-            {/* Header CRM Compacto */}
-            <div className="bg-[#111111] p-4 rounded-t-2xl flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="flex items-center gap-3">
-                    <Briefcase size={20} className="text-[#FF5900]" />
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest">
-                        Pipeline de Clientes
-                    </h3>
-                </div>
+        <div className="space-y-6 animate-premium-fade pb-20 px-4">
+            {/* NEXUS CRM STATION HEADER */}
+            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-brand-orange/10 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute -left-10 -top-10 w-48 h-48 bg-brand-orange/5 blur-3xl rounded-full" />
 
-                <button
-                    onClick={onAddNewClient}
-                    className="w-full md:w-auto px-6 py-2 bg-[#FF5900] text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-[#e65000] transition-all shadow-lg active:scale-95 shadow-orange-500/20"
-                >
-                    <Plus size={14} /> Alta de Prospecto
-                </button>
+                <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500">
+                            <Briefcase size={28} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-3">
+                                Pipeline de <span className="text-brand-orange">Clientes</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                            </h1>
+                            <div className="flex items-center gap-3 mt-2 text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
+                                <span>Hub de Identidad Comercial</span>
+                                <span className="w-1 h-1 bg-white/20 rounded-full" />
+                                <span className="text-brand-orange/80">Conexiones Activas: {clientesFiltrados.length}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={onAddNewClient}
+                        className="w-full lg:w-auto px-8 py-3.5 bg-brand-orange text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-brand-orange/90 transition-all shadow-xl shadow-brand-orange/20 active:scale-95 group/btn"
+                    >
+                        <Plus size={16} strokeWidth={3} className="group-hover/btn:rotate-90 transition-transform duration-300" />
+                        Desplegar Nuevo Prospecto
+                    </button>
+                </div>
             </div>
 
-            {/* Filtros de Navegación */}
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-                <div className="flex-1 relative w-full">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+            {/* Navigation & Intelligence Filters */}
+            <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-3 rounded-[2rem] border border-enterprise-100 shadow-premium">
+                <div className="flex-1 relative w-full group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-enterprise-400 group-focus-within:text-brand-orange transition-colors" size={14} />
                     <input
                         type="text"
-                        placeholder="Buscar por empresa o contacto..."
+                        placeholder="BUSCAR IDENTIDAD DE CUENTA O CONTACTO..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-white border border-enterprise-100 rounded-xl text-[10px] font-bold shadow-sm focus:ring-1 focus:ring-brand-orange/20 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-3 bg-enterprise-50 border border-enterprise-100/50 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:bg-white focus:border-brand-orange/50 transition-all placeholder:text-enterprise-300"
                     />
                 </div>
 
-                <div className="flex bg-[#111111] rounded-xl p-1 w-fit overflow-x-auto scrollbar-hide border border-white/5">
+                <div className="flex bg-enterprise-950 rounded-xl p-1 w-full md:w-fit overflow-x-auto scrollbar-hide border border-white/5 shadow-xl">
                     {etapas.map(etapa => (
                         <button
                             key={etapa}
                             onClick={() => setFiltroEtapa(etapa)}
-                            className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all
+                            className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] whitespace-nowrap transition-all duration-300
                                 ${filtroEtapa === etapa
-                                    ? 'bg-[#FF5900] text-white shadow-lg shadow-orange-500/20'
-                                    : 'text-white/40 hover:text-white/80'}`}
+                                    ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20'
+                                    : 'text-white/30 hover:text-white'}`}
                         >
                             {etapa}
                         </button>
@@ -73,14 +89,13 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
                 </div>
             </div>
 
-            {/* Listado de Clientes (Formato Lista Responsive) */}
-            <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
-                {/* Header de la Lista (Solo Desktop) */}
-                <div className="hidden lg:grid grid-cols-12 gap-4 px-8 py-4 bg-enterprise-50 border-b border-enterprise-100 items-center">
-                    <div className="col-span-4 text-[9px] font-black text-enterprise-400 uppercase tracking-widest">Empresa / Contacto</div>
-                    <div className="col-span-2 text-[9px] font-black text-enterprise-400 uppercase tracking-widest text-center">Etapa CRM</div>
-                    <div className="col-span-2 text-[9px] font-black text-enterprise-400 uppercase tracking-widest text-center">Plaza</div>
-                    <div className="col-span-3 text-[9px] font-black text-enterprise-400 uppercase tracking-widest">Segmento</div>
+            {/* High-Density Pipeline List */}
+            <div className="bg-white rounded-[2.5rem] shadow-premium border border-enterprise-100 overflow-hidden">
+                <div className="hidden lg:grid grid-cols-12 gap-4 px-8 py-4 bg-enterprise-950 text-white border-b border-white/5 items-center">
+                    <div className="col-span-4 text-[7.5px] font-black uppercase tracking-[0.3em] opacity-40 italic">Identidad de Cuenta / Contacto</div>
+                    <div className="col-span-2 text-[7.5px] font-black uppercase tracking-[0.3em] opacity-40 italic text-center">Fase del Ciclo de Vida</div>
+                    <div className="col-span-2 text-[7.5px] font-black uppercase tracking-[0.3em] opacity-40 italic text-center">Hub Regional</div>
+                    <div className="col-span-3 text-[7.5px] font-black uppercase tracking-[0.3em] opacity-40 italic">Clasificación de Segmento</div>
                     <div className="col-span-1"></div>
                 </div>
 

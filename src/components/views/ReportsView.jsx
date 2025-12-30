@@ -366,56 +366,73 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-20 print:p-0">
-            {/* Header Pro */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 print:hidden">
-                <div className="flex items-center gap-4">
-                    <div className="bg-enterprise-950 p-3 rounded-xl shadow-xl shadow-enterprise-900/10">
-                        <BarChart3 className="text-white" size={24} />
+        <div className="space-y-6 animate-premium-fade pb-20 px-4 print:p-0">
+            {/* NEXUS INTELLIGENCE HUB - REPORTS HEADER */}
+            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden group print:hidden">
+                <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-brand-orange/10 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute -left-10 -top-10 w-48 h-48 bg-brand-orange/5 blur-3xl rounded-full" />
+
+                <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500">
+                            <BarChart3 size={28} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-3">
+                                Analytics <span className="text-brand-orange">Nexus</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            </h1>
+                            <div className="flex items-center gap-3 mt-2 text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
+                                <span>Matrices de Impacto de Medios</span>
+                                <span className="w-1 h-1 bg-white/20 rounded-full" />
+                                <span className="text-brand-orange/80">Datos Sincronizados: {new Date().toLocaleDateString()}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-xl font-black text-enterprise-950 tracking-tighter uppercase italic italic-brand">Reportería Corporativa</h2>
-                        <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5">Control de Resultados con Totales y Matrices</p>
+
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => handleExportExcel('current')}
+                            className="w-12 h-12 bg-white/5 border border-white/10 text-white rounded-xl flex items-center justify-center hover:bg-white hover:text-enterprise-950 transition-all group/btn"
+                            title="Exportar Vista Actual"
+                        >
+                            <Download size={20} className="group-hover/btn:translate-y-0.5 transition-transform" />
+                        </button>
+                        <button
+                            onClick={() => handleExportExcel('all')}
+                            className="w-12 h-12 bg-white/5 border border-white/10 text-brand-orange rounded-xl flex items-center justify-center hover:bg-brand-orange hover:text-white transition-all group/btn"
+                            title="Exportar Matriz Global"
+                        >
+                            <Globe size={20} className="group-hover/btn:rotate-180 transition-transform duration-700" />
+                        </button>
+                        <button
+                            onClick={() => window.print()}
+                            className="px-8 py-3.5 bg-brand-orange text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-brand-orange/90 transition-all shadow-xl shadow-brand-orange/20 active:scale-95"
+                        >
+                            <Printer size={16} strokeWidth={2.5} />
+                            Imprimir Reporte
+                        </button>
                     </div>
-                </div>
-                <div className="flex flex-wrap gap-2 w-full lg:w-auto">
-                    <button
-                        onClick={() => handleExportExcel('current')}
-                        className="flex-1 bg-white border border-gray-100 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm"
-                        title="Exportar solo la vista actual"
-                    >
-                        <Download size={12} /> EXCEL (ACTUAL)
-                    </button>
-                    <button
-                        onClick={() => handleExportExcel('all')}
-                        className="flex-1 bg-white border border-red-100 text-brand-orange px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-50 transition-all shadow-sm"
-                        title="Exportar todos los reportes en pestañas separadas"
-                    >
-                        <Globe size={12} /> EXCEL (TODO)
-                    </button>
-                    <button onClick={() => window.print()} className="flex-1 bg-[#111111] text-white px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#FF5900] transition-all shadow-xl active:scale-95">
-                        <Printer size={12} /> IMPRIMIR
-                    </button>
                 </div>
             </div>
 
-            {/* Menu de Nav de Reportes */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:flex lg:flex-wrap gap-2 print:hidden bg-white p-3 rounded-[2rem] shadow-xl border border-gray-100">
+            {/* Dashboard Navigation Matrix */}
+            <div className="flex flex-wrap gap-2 print:hidden bg-enterprise-950 p-2 rounded-[2rem] shadow-premium border border-white/5">
                 {[
-                    { id: 'ventas-mes', label: 'Ventas por Mes', icon: Calendar },
-                    { id: 'ventas-canal', label: 'Ventas por Canal', icon: Tv },
-                    { id: 'ventas-ciudad', label: 'Ventas por Ciudad', icon: Globe },
-                    { id: 'control-cierres', label: 'Control de Cierres', icon: Briefcase },
-                    { id: 'resumen-clientes', label: 'Resumen Pipeline', icon: FileText },
-                    { id: 'cobranza-periodo', label: 'Cobranza / Facturas', icon: DollarSign },
+                    { id: 'ventas-mes', label: 'Matriz Mensual', icon: Calendar },
+                    { id: 'ventas-canal', label: 'Densidad por Canal', icon: Tv },
+                    { id: 'ventas-ciudad', label: 'Hubs Regionales', icon: Globe },
+                    { id: 'control-cierres', label: 'Log de Cierres', icon: Briefcase },
+                    { id: 'resumen-clientes', label: 'Valuación de Pipeline', icon: FileText },
+                    { id: 'cobranza-periodo', label: 'Cobranza', icon: DollarSign },
                 ].map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setSeccionReporte(tab.id)}
-                        className={`flex items-center justify-center lg:justify-start gap-2 px-3 py-3 rounded-xl text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all w-full lg:w-auto
+                        className={`flex items-center gap-3 px-6 py-3 rounded-[1.2rem] text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300
                             ${seccionReporte === tab.id
-                                ? 'bg-brand-orange text-white shadow-lg shadow-orange-500/20'
-                                : 'text-enterprise-400 hover:text-enterprise-950 hover:bg-enterprise-50 border border-transparent hover:border-enterprise-100'}`}
+                                ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20'
+                                : 'text-white/40 hover:text-white'}`}
                     >
                         <tab.icon size={14} className={seccionReporte === tab.id ? 'text-white' : 'text-brand-orange'} />
                         {tab.label}

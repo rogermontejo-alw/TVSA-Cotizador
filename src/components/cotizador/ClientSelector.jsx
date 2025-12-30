@@ -5,23 +5,19 @@ const ClientSelector = ({ clientes = [], clienteSeleccionado, setClienteSeleccio
 
     if (compactRow) {
         return (
-            <div className="bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[68px]">
-                <div className="bg-enterprise-950 px-3 py-1.5 flex items-center justify-between">
-                    <span className="text-[8px] font-black text-white/70 uppercase tracking-[0.2em] italic">Comercial Identity</span>
-                    {selectedClient && (
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-[7px] font-black text-brand-orange uppercase bg-brand-orange/10 px-1.5 rounded-full">{selectedClient.segmento || 'GENERAL'}</span>
-                        </div>
-                    )}
+            <div className="bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all">
+                <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between">
+                    <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Identidad Comercial</span>
+                    <ShieldCheck size={10} className="text-brand-orange" />
                 </div>
-                <div className="px-3 flex-1 flex items-center bg-white relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-orange">
-                        <User size={12} />
+                <div className="px-4 flex-1 flex items-center bg-white relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-orange">
+                        <User size={14} />
                     </div>
                     <select
                         value={clienteSeleccionado || ''}
                         onChange={(e) => setClienteSeleccionado(e.target.value)}
-                        className="w-full bg-transparent pl-5 pr-4 py-2 text-[10px] font-black text-enterprise-950 outline-none appearance-none cursor-pointer uppercase truncate"
+                        className="w-full bg-transparent pl-7 pr-4 py-2 text-[10px] font-black text-enterprise-950 outline-none appearance-none cursor-pointer uppercase truncate tracking-tight"
                     >
                         <option value="" disabled>SELECCIONAR CLIENTE CORPORATIVO...</option>
                         {clientes
@@ -33,7 +29,7 @@ const ClientSelector = ({ clientes = [], clienteSeleccionado, setClienteSeleccio
                                 </option>
                             ))}
                     </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-enterprise-500 pointer-events-none">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-enterprise-300 pointer-events-none group-hover:text-brand-orange transition-colors">
                         <ChevronDown size={14} />
                     </div>
                 </div>
@@ -47,10 +43,10 @@ const ClientSelector = ({ clientes = [], clienteSeleccionado, setClienteSeleccio
             <div className="bg-enterprise-950 px-6 py-4 flex items-center justify-between">
                 <h2 className="text-white text-[10px] font-black flex items-center gap-2 uppercase tracking-tight italic">
                     <User size={14} className="text-brand-orange" />
-                    Commercial Identity
+                    Identidad Comercial
                 </h2>
                 <div className="bg-white/10 px-2 py-0.5 rounded-full">
-                    <span className="text-[8px] font-black text-white/70 uppercase tracking-widest leading-none">Unified Identity</span>
+                    <span className="text-[8px] font-black text-white/70 uppercase tracking-widest leading-none">Identidad Unificada</span>
                 </div>
             </div>
 
@@ -82,16 +78,16 @@ const ClientSelector = ({ clientes = [], clienteSeleccionado, setClienteSeleccio
                         <div className="p-3 bg-enterprise-50 rounded-xl border border-enterprise-100 space-y-1">
                             <div className="flex items-center gap-2 text-[8px] font-black text-enterprise-600 uppercase tracking-widest">
                                 <Briefcase size={10} className="text-brand-orange" />
-                                Agreement
+                                Acuerdo
                             </div>
                             <p className="text-[10px] font-black text-enterprise-950 uppercase tracking-tight truncate">
-                                {selectedClient.tipo_acuerdo?.replace(/_/g, ' ') || 'LIST PRICE'}
+                                {selectedClient.tipo_acuerdo?.replace(/_/g, ' ') || 'PRECIO LISTA'}
                             </p>
                         </div>
                         <div className="p-3 bg-enterprise-50 rounded-xl border border-enterprise-100 space-y-1">
                             <div className="flex items-center gap-2 text-[8px] font-black text-enterprise-600 uppercase tracking-widest">
                                 <ShieldCheck size={10} className="text-brand-orange" />
-                                Segment
+                                Segmento
                             </div>
                             <p className="text-[10px] font-black text-enterprise-950 uppercase tracking-tight truncate">
                                 {selectedClient.segmento || 'GENERAL'}

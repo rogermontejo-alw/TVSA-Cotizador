@@ -34,7 +34,7 @@ const PriceListView = ({ clientes, productos, calcularPrecioUnitario }) => {
                         className="w-full h-full bg-white border border-enterprise-100 rounded-3xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-enterprise-950 hover:border-brand-orange transition-all shadow-premium group"
                     >
                         <Download size={16} className="text-enterprise-300 group-hover:text-brand-orange" />
-                        Export Pipeline (PDF)
+                        Exportar Tarifario (PDF)
                     </button>
                 </div>
             </div>
@@ -42,24 +42,24 @@ const PriceListView = ({ clientes, productos, calcularPrecioUnitario }) => {
             {/* Matrix Controls */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="bg-white p-5 rounded-3xl border border-enterprise-100 shadow-premium flex flex-col justify-center">
-                    <span className="text-[9px] font-black text-brand-orange uppercase tracking-widest mb-2 ml-1">Account Visibility</span>
+                    <span className="text-[9px] font-black text-brand-orange uppercase tracking-widest mb-2 ml-1">Visibilidad de Cuenta</span>
                     <select
                         value={clienteSel}
                         onChange={(e) => setClienteSel(e.target.value)}
                         className="w-full bg-enterprise-50 border border-enterprise-100 rounded-2xl px-4 py-3 text-xs font-black text-enterprise-950 outline-none focus:border-brand-orange transition-all"
                     >
-                        <option value="">-- SELECT CLIENT PROFILE --</option>
+                        <option value="">-- SELECCIONAR PERFIL DE CLIENTE --</option>
                         {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre_empresa.toUpperCase()}</option>)}
                     </select>
                 </div>
                 <div className="bg-white p-5 rounded-3xl border border-enterprise-100 shadow-premium flex flex-col justify-center">
-                    <span className="text-[9px] font-black text-enterprise-400 uppercase tracking-widest mb-2 ml-1">Asset Filter</span>
+                    <span className="text-[9px] font-black text-enterprise-400 uppercase tracking-widest mb-2 ml-1">Filtro de Activos</span>
                     <div className="relative group">
                         <input
                             type="text"
                             value={busqueda}
                             onChange={(e) => setBusqueda(e.target.value)}
-                            placeholder="SEARCH BY CHANNEL OR ASSET TYPE..."
+                            placeholder="BUSCAR POR CANAL O TIPO DE ACTIVO..."
                             className="w-full bg-enterprise-50 border border-enterprise-100 rounded-2xl pl-10 pr-4 py-3 text-xs font-black text-enterprise-950 outline-none focus:border-brand-orange transition-all placeholder:text-enterprise-300"
                         />
                         <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-enterprise-300 group-focus-within:text-brand-orange transition-colors" />
@@ -75,12 +75,12 @@ const PriceListView = ({ clientes, productos, calcularPrecioUnitario }) => {
                             <div className="w-1.5 h-6 bg-brand-orange rounded-full" />
                             <div>
                                 <h4 className="text-xs font-black text-enterprise-950 uppercase italic">{activeClient?.nombre_empresa}</h4>
-                                <p className="text-[8px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5">{activeClient?.segmento} • {activeClient?.plaza} Region</p>
+                                <p className="text-[8px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5">{activeClient?.segmento} • Región {activeClient?.plaza}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[9px] font-black text-enterprise-600 uppercase tracking-widest">Active Agreement</span>
+                            <span className="text-[9px] font-black text-enterprise-600 uppercase tracking-widest">Acuerdo Activo</span>
                         </div>
                     </div>
 
@@ -90,11 +90,11 @@ const PriceListView = ({ clientes, productos, calcularPrecioUnitario }) => {
                             <table className="w-full text-left border-collapse">
                                 <thead className="bg-enterprise-950">
                                     <tr>
-                                        <th className="px-6 py-4 text-[9px] font-black text-white/40 uppercase tracking-widest">Signal / Region</th>
-                                        <th className="px-6 py-4 text-[9px] font-black text-white/40 uppercase tracking-widest">Asset Details</th>
-                                        <th className="px-6 py-4 text-[9px] font-black text-white/40 uppercase tracking-widest text-center">Standard Valuation</th>
-                                        <th className="px-6 py-4 text-[9px] font-black text-brand-orange uppercase tracking-widest text-center bg-white/5">Strategic Net</th>
-                                        <th className="px-6 py-4 text-[9px] font-black text-emerald-400 uppercase tracking-widest text-center">Benefit</th>
+                                        <th className="px-6 py-4 text-[9px] font-black text-white/40 uppercase tracking-widest">Señal / Región</th>
+                                        <th className="px-6 py-4 text-[9px] font-black text-white/40 uppercase tracking-widest">Detalles del Activo</th>
+                                        <th className="px-6 py-4 text-[9px] font-black text-white/40 uppercase tracking-widest text-center">Valuación Estándar</th>
+                                        <th className="px-6 py-4 text-[9px] font-black text-brand-orange uppercase tracking-widest text-center bg-white/5">Neto Estratégico</th>
+                                        <th className="px-6 py-4 text-[9px] font-black text-emerald-400 uppercase tracking-widest text-center">Beneficio</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-enterprise-50">
@@ -141,9 +141,9 @@ const PriceListView = ({ clientes, productos, calcularPrecioUnitario }) => {
                     <div className="w-20 h-20 bg-enterprise-50 rounded-full flex items-center justify-center mb-6">
                         <Search className="text-enterprise-200" size={32} />
                     </div>
-                    <h4 className="text-xs font-black text-enterprise-950 uppercase italic tracking-widest">Active Pipeline Visualization</h4>
+                    <h4 className="text-xs font-black text-enterprise-950 uppercase italic tracking-widest">Visualización de Pipeline Activo</h4>
                     <p className="text-[10px] font-bold text-enterprise-400 uppercase tracking-widest max-w-xs mt-3 leading-loose italic">
-                        Select a strategic partner profile to visualize active negotiated tariffs and corporate portfolio availability.
+                        Seleccione un perfil de socio estratégico para visualizar las tarifas negociadas activas y la disponibilidad del portafolio corporativo.
                     </p>
                 </div>
             )}

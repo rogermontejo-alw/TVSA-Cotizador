@@ -46,13 +46,13 @@ const LoginView = () => {
                         </div>
                         <div className="h-10 w-px bg-white/10" />
                         <div className="space-y-0.5">
-                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-brand-orange">Security Protocol</p>
+                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-brand-orange">Protocolo de Seguridad</p>
                             <p className="text-xl font-black tracking-tighter uppercase italic italic-brand text-white/90">Televisa <span className="text-white/30 not-italic">Univision</span></p>
                         </div>
                     </div>
 
                     <div className="space-y-4">
-                        <h2 className="text-[11px] font-black uppercase tracking-[0.6em] text-white/30">Enterprise Intelligence Node</h2>
+                        <h2 className="text-[11px] font-black uppercase tracking-[0.6em] text-white/30">Nodo de Inteligencia Empresarial</h2>
                         <h1 className="text-6xl font-black tracking-tight leading-[0.95] uppercase text-white">
                             Media<br />
                             <span className="text-transparent bg-clip-text bg-univision-gradient italic italic-brand">Intelligence</span>
@@ -65,11 +65,11 @@ const LoginView = () => {
                     <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/5">
                         <div className="space-y-1">
                             <span className="block text-3xl font-black text-white italic tracking-tighter">0.1ms</span>
-                            <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Response Global Latency</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Latencia Global de Respuesta</span>
                         </div>
                         <div className="space-y-1">
                             <span className="block text-3xl font-black text-white italic tracking-tighter">256-AES</span>
-                            <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Encryption Protocol</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Protocolo de Cifrado</span>
                         </div>
                     </div>
                 </div>
@@ -78,7 +78,7 @@ const LoginView = () => {
                 <div className="absolute bottom-12 left-20 flex items-center gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-brand-orange animate-pulse shadow-[0_0_8px_rgba(255,89,0,0.6)]" />
                     <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">
-                        Corporate Infrastructure • v{APP_CONFIG.VERSION}
+                        Infraestructura Corporativa • v{APP_CONFIG.VERSION}
                     </p>
                 </div>
             </div>
@@ -99,7 +99,7 @@ const LoginView = () => {
                                 <h1 className="text-xl font-black text-enterprise-950 uppercase italic italic-brand tracking-tighter">
                                     Televisa <span className="text-brand-orange not-italic">Univision</span>
                                 </h1>
-                                <p className="text-[10px] font-black text-enterprise-400 uppercase tracking-[0.3em]">Commercial Intelligence</p>
+                                <p className="text-[10px] font-black text-enterprise-400 uppercase tracking-[0.3em]">Inteligencia Comercial</p>
                             </div>
                         </div>
 

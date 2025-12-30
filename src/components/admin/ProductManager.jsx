@@ -366,7 +366,7 @@ const ProductManager = ({
                     <h2 className="text-2xl font-black text-enterprise-950 uppercase italic italic-brand tracking-tighter leading-none mb-2">Catálogo de Activos</h2>
                     <p className="text-[10px] font-black text-enterprise-400 uppercase tracking-[0.3em] flex items-center gap-2">
                         <Layers size={14} className="text-brand-orange" />
-                        Inventory Pricing Engine
+                        Motor de Tarifas de Inventario
                     </p>
                 </div>
 
@@ -503,14 +503,14 @@ const ProductManager = ({
                                         {selectedIds.length === productosFiltrados.length ? <CheckSquare size={16} /> : <Square size={16} />}
                                     </button>
                                 </th>
-                                <th className="px-6 py-6 opacity-80 w-28 text-center">Status</th>
+                                <th className="px-6 py-6 opacity-80 w-28 text-center">Estado</th>
                                 <th className="px-8 py-6 opacity-80 min-w-[180px]">Canal</th>
                                 <th className="px-4 py-6 opacity-80 w-20">Tipo</th>
                                 <th className="px-4 py-6 opacity-80 w-24 text-center">Tiempo</th>
                                 <th className="px-6 py-6 opacity-80 w-36">Horario</th>
                                 <th className="px-8 py-6 opacity-80 w-44 text-center">Región</th>
                                 <th className="px-8 py-6 text-right opacity-80 min-w-[140px]">Tarifa Base</th>
-                                <th className="px-8 py-6 text-center opacity-80 w-32 sticky right-0 bg-enterprise-950 z-10">Tuning</th>
+                                <th className="px-8 py-6 text-center opacity-80 w-32 sticky right-0 bg-enterprise-950 z-10">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-enterprise-50">
@@ -532,7 +532,7 @@ const ProductManager = ({
                                                 : 'bg-enterprise-50 text-enterprise-400 border border-enterprise-200 hover:bg-emerald-500 hover:text-white hover:border-emerald-500'
                                                 }`}
                                         >
-                                            {p.activo ? <><CheckCircle2 size={12} /> Live</> : <><PowerOff size={12} /> Hold</>}
+                                            {p.activo ? <><CheckCircle2 size={12} /> Activo</> : <><PowerOff size={12} /> Pausa</>}
                                         </button>
                                     </td>
                                     <td className="px-8 py-6">
