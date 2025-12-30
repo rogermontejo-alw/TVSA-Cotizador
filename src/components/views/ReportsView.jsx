@@ -22,8 +22,9 @@ import { formatMXN } from '../../utils/formatters';
 
 const MISSING_DATA_CHAR = '-';
 
-const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterContracts = [] }) => {
+const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterContracts = [], contratosEjecucion = [] }) => {
     const [seccionReporte, setSeccionReporte] = useState('ventas-mes');
+    const [subCorte, setSubCorte] = useState('pipeline'); // 'pipeline' o 'ejecucion'
 
     // 📅 Periodo
     const hoy = new Date();
@@ -41,17 +42,43 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         }
     };
 
-    // 📊 Cotizaciones Ganadas en el rango
-    const ganadas = useMemo(() => {
-        return (cotizaciones || []).filter(q => {
-            if (q.estatus !== 'ganada') return false;
-            const fechaQ = new Date(q.fecha_cierre_real || q.created_at || q.fecha);
-            const start = new Date(fechaInicio);
-            const end = new Date(fechaFin);
-            end.setHours(23, 59, 59, 999);
-            return fechaQ >= start && fechaQ <= end;
-        });
-    }, [cotizaciones, fechaInicio, fechaFin]);
+    // 📊 Datos para Reportes (Basados en el subCorte)
+    const datosFinancierosTotal = useMemo(() => {
+        if (subCorte === 'pipeline') {
+            return (cotizaciones || []).filter(q => {
+                if (q.estatus !== 'ganada') return false;
+                const fechaQ = new Date(q.fecha_cierre_real || q.created_at || q.fecha);
+                const start = new Date(fechaInicio);
+                const end = new Date(fechaFin);
+                end.setHours(23, 59, 59, 999);
+                return fechaQ >= start && fechaQ <= end;
+            }).map(q => ({
+                id: q.id,
+                cliente_id: q.cliente_id,
+                fecha: q.fecha_cierre_real || q.created_at,
+                monto: parseFloat(q.subtotalGeneral || q.total / 1.16) || 0,
+                folio: q.folio,
+                mc_id: q.mc_id,
+                tipo: 'Pipeline'
+            }));
+        } else {
+            return (contratosEjecucion || []).filter(ce => {
+                const fechaE = new Date(ce.fecha_inicio_pauta);
+                const start = new Date(fechaInicio);
+                const end = new Date(fechaFin);
+                end.setHours(23, 59, 59, 999);
+                return fechaE >= start && fechaE <= end;
+            }).map(ce => ({
+                id: ce.id,
+                cliente_id: ce.master_contracts?.cliente_id,
+                fecha: ce.fecha_inicio_pauta,
+                monto: parseFloat(ce.monto_ejecucion) || 0,
+                folio: ce.numero_contrato,
+                mc_id: ce.mc_id,
+                tipo: 'Ejecución'
+            }));
+        }
+    }, [cotizaciones, contratosEjecucion, subCorte, fechaInicio, fechaFin]);
 
     // 1. REPORTE: Ventas por Mes (Corte Mensual Matrix: Clientes x Meses)
     const matrizMensual = useMemo(() => {
@@ -60,13 +87,12 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const mesesVisibles = new Set();
         const totalesPorMes = {};
 
-        ganadas.forEach(q => {
-            const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
-            const fechaQ = new Date(q.fecha_cierre_real || q.created_at || q.fecha);
-            const mesIdx = fechaQ.getMonth();
-            const mesNombre = mesesNombres[mesIdx];
-            const cId = q.cliente_id;
-            const monto = parseFloat(q.subtotalGeneral || q.total / 1.16) || 0;
+        datosFinancierosTotal.forEach(item => {
+            const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
+            const fechaItem = new Date(item.fecha);
+            const mesIdx = fechaItem.getMonth();
+            const cId = item.cliente_id;
+            const monto = item.monto;
 
             mesesVisibles.add(mesIdx);
             if (!clienteMap[cId]) {
@@ -76,7 +102,6 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             totalesPorMes[mesIdx] = (totalesPorMes[mesIdx] || 0) + monto;
         });
 
-        // Ordenar meses visibles
         const mesesColumnas = Array.from(mesesVisibles).sort((a, b) => a - b);
         const filas = Object.values(clienteMap).map(c => ({
             nombre: c.nombre,
@@ -87,7 +112,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const granTotal = Object.values(totalesPorMes).reduce((a, b) => a + b, 0);
 
         return { mesesColumnas, mesesNombres, filas, totalesPorMes, granTotal };
-    }, [ganadas, clientes]);
+    }, [datosFinancierosTotal, clientes]);
 
     // 2. REPORTE: Ventas por Canal (Matriz)
     const matrizCanales = useMemo(() => {
@@ -95,27 +120,44 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const plazasSet = new Set();
         const totalesPorPlaza = {};
 
-        ganadas.forEach(q => {
-            const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
+        datosFinancierosTotal.forEach(item => {
+            const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
             const pPlaza = cliente?.plaza || 'Mérida';
             plazasSet.add(pPlaza);
 
-            // 1. Pauta tradicional
-            (q.items || []).forEach(item => {
-                const canal = item.producto?.canal || 'Otros';
-                if (!canalesMap[canal]) canalesMap[canal] = {};
-                const montoItem = (item.subtotal || 0);
-                canalesMap[canal][pPlaza] = (canalesMap[canal][pPlaza] || 0) + montoItem;
-                totalesPorPlaza[pPlaza] = (totalesPorPlaza[pPlaza] || 0) + montoItem;
-            });
+            // Intentar obtener la cotización original para el desglose
+            let q = null;
+            if (subCorte === 'pipeline') {
+                q = (cotizaciones || []).find(c => c.id === item.id);
+            } else {
+                const ce = (contratosEjecucion || []).find(e => e.id === item.id);
+                q = (cotizaciones || []).find(c => c.id === ce?.cotizacion_id);
+            }
 
-            // 2. VIX
-            const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
-            if (costoVIX > 0) {
-                const canalVIX = 'VIX';
-                if (!canalesMap[canalVIX]) canalesMap[canalVIX] = {};
-                canalesMap[canalVIX][pPlaza] = (canalesMap[canalVIX][pPlaza] || 0) + costoVIX;
-                totalesPorPlaza[pPlaza] = (totalesPorPlaza[pPlaza] || 0) + costoVIX;
+            if (q) {
+                // 1. Pauta tradicional
+                (q.items || []).forEach(i => {
+                    const canal = i.producto?.canal || 'Otros';
+                    if (!canalesMap[canal]) canalesMap[canal] = {};
+                    const montoItem = (i.subtotal || 0);
+                    canalesMap[canal][pPlaza] = (canalesMap[canal][pPlaza] || 0) + montoItem;
+                    totalesPorPlaza[pPlaza] = (totalesPorPlaza[pPlaza] || 0) + montoItem;
+                });
+
+                // 2. VIX
+                const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
+                if (costoVIX > 0) {
+                    const canalVIX = 'VIX';
+                    if (!canalesMap[canalVIX]) canalesMap[canalVIX] = {};
+                    canalesMap[canalVIX][pPlaza] = (canalesMap[canalVIX][pPlaza] || 0) + costoVIX;
+                    totalesPorPlaza[pPlaza] = (totalesPorPlaza[pPlaza] || 0) + costoVIX;
+                }
+            } else {
+                // Fallback si no hay cotización vinculada (ej: facturas manuales en el futuro?)
+                const canal = 'Sin Clasificar';
+                if (!canalesMap[canal]) canalesMap[canal] = {};
+                canalesMap[canal][pPlaza] = (canalesMap[canal][pPlaza] || 0) + item.monto;
+                totalesPorPlaza[pPlaza] = (totalesPorPlaza[pPlaza] || 0) + item.monto;
             }
         });
 
@@ -129,7 +171,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const granTotal = Object.values(totalesPorPlaza).reduce((a, b) => a + b, 0);
 
         return { plazas, filas, totalesPorPlaza, granTotal };
-    }, [ganadas, clientes]);
+    }, [datosFinancierosTotal, clientes, cotizaciones, contratosEjecucion, subCorte]);
 
     // 3. REPORTE: Ventas por Ciudad (Matriz)
     const matrizCiudad = useMemo(() => {
@@ -137,11 +179,11 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const plazasSet = new Set();
         const totalesPorPlaza = {};
 
-        ganadas.forEach(q => {
-            const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
+        datosFinancierosTotal.forEach(item => {
+            const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
             const plaza = cliente?.plaza || 'Mérida';
-            const cId = q.cliente_id;
-            const monto = parseFloat(q.subtotalGeneral || q.total / 1.16) || 0;
+            const cId = item.cliente_id;
+            const monto = item.monto;
 
             plazasSet.add(plaza);
             if (!clienteMap[cId]) {
@@ -161,7 +203,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const granTotal = Object.values(totalesPorPlaza).reduce((a, b) => a + b, 0);
 
         return { plazas, filas, totalesPorPlaza, granTotal };
-    }, [ganadas, clientes]);
+    }, [datosFinancierosTotal, clientes]);
 
     const getReportData = (id) => {
         let headers = [];
@@ -196,20 +238,22 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             ]);
             rows.push(['TOTAL CIUDAD', ...matrizCiudad.plazas.map(p => matrizCiudad.totalesPorPlaza[p] || 0), matrizCiudad.granTotal]);
         } else if (id === 'control-cierres') {
-            title = "CONTROL ADMINISTRATIVO DE CIERRES";
-            headers = ['Fecha Cierre', 'Cliente', 'Folio', 'Master Contract', 'Orden', 'Factura', 'Inversion Neta'];
-            rows = ganadas.map(q => {
+            title = "CONTROL ADMINISTRATIVO DE CIERRES Y EJECUCIONES";
+            headers = ['F. Cierre', 'F. Pauta', 'Cliente', 'Folio Cotz', 'Nº Contrato', 'M. Contract', 'Factura', 'Monto'];
+            rows = (cotizaciones || []).filter(q => q.estatus === 'ganada').map(q => {
                 const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
-                const registroCobranza = (cobranza || []).find(cob => String(cob.cotizacion_id) === String(q.id));
-                const mc = (masterContracts || []).find(m => String(m.id) === String(q.mc_id));
+                const ce = (contratosEjecucion || []).find(e => String(e.cotizacion_id) === String(q.id));
+                const registroCobranza = (cobranza || []).find(cob => String(cob.cotizacion_id) === String(q.id) || String(cob.contrato_ejecucion_id) === String(ce?.id));
+                const mc = (masterContracts || []).find(m => String(m.id) === String(q.mc_id) || String(m.id) === String(ce?.mc_id));
                 return [
                     new Date(q.fecha_cierre_real || q.created_at).toLocaleDateString('es-MX'),
+                    ce ? new Date(ce.fecha_inicio_pauta).toLocaleDateString('es-MX') : 'PENDIENTE',
                     cliente?.nombre_empresa || 'S/N',
                     q.folio || q.id,
-                    mc ? (mc.numero_mc || mc.numero_contrato || mc.folio || 'VINCULADO') : 'FALTA',
-                    q.numero_contrato || 'FALTA',
+                    ce?.numero_contrato || q.numero_contrato || 'FALTA',
+                    mc ? (mc.numero_mc || mc.numero_contrato || 'VINCULADO') : 'FALTA',
                     registroCobranza?.numero_factura || 'FALTA',
-                    parseFloat(q.subtotalGeneral || q.total / 1.16) || 0
+                    parseFloat(ce?.monto_ejecucion || q.subtotalGeneral || q.total / 1.16) || 0
                 ];
             });
         } else if (id === 'resumen-clientes') {
@@ -417,27 +461,46 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             </div>
 
             {/* Dashboard Navigation Matrix */}
-            <div className="flex flex-wrap gap-2 print:hidden bg-enterprise-950 p-2 rounded-[2rem] shadow-premium border border-white/5">
-                {[
-                    { id: 'ventas-mes', label: 'Matriz Mensual', icon: Calendar },
-                    { id: 'ventas-canal', label: 'Densidad por Canal', icon: Tv },
-                    { id: 'ventas-ciudad', label: 'Hubs Regionales', icon: Globe },
-                    { id: 'control-cierres', label: 'Log de Cierres', icon: Briefcase },
-                    { id: 'resumen-clientes', label: 'Valuación de Pipeline', icon: FileText },
-                    { id: 'cobranza-periodo', label: 'Cobranza', icon: DollarSign },
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setSeccionReporte(tab.id)}
-                        className={`flex items-center gap-3 px-6 py-3 rounded-[1.2rem] text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300
-                            ${seccionReporte === tab.id
-                                ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20'
-                                : 'text-white/40 hover:text-white'}`}
-                    >
-                        <tab.icon size={14} className={seccionReporte === tab.id ? 'text-white' : 'text-brand-orange'} />
-                        {tab.label}
-                    </button>
-                ))}
+            <div className="flex flex-col gap-4 print:hidden">
+                <div className="flex flex-wrap gap-2 bg-enterprise-950 p-2 rounded-[2rem] shadow-premium border border-white/5">
+                    {[
+                        { id: 'ventas-mes', label: 'Matriz Regional', icon: Calendar },
+                        { id: 'ventas-canal', label: 'Densidad por Canal', icon: Tv },
+                        { id: 'ventas-ciudad', label: 'Hubs Regionales', icon: Globe },
+                        { id: 'control-cierres', label: 'Log de Operaciones', icon: Briefcase },
+                        { id: 'resumen-clientes', label: 'Valuación Pipeline', icon: FileText },
+                        { id: 'cobranza-periodo', label: 'Recuperación / Cobro', icon: DollarSign },
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setSeccionReporte(tab.id)}
+                            className={`flex items-center gap-3 px-6 py-3 rounded-[1.2rem] text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300
+                                ${seccionReporte === tab.id
+                                    ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20'
+                                    : 'text-white/40 hover:text-white'}`}
+                        >
+                            <tab.icon size={14} className={seccionReporte === tab.id ? 'text-white' : 'text-brand-orange'} />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {['ventas-mes', 'ventas-canal', 'ventas-ciudad'].includes(seccionReporte) && (
+                    <div className="flex gap-2 p-1 bg-enterprise-100 rounded-xl w-fit self-center">
+                        <button
+                            onClick={() => setSubCorte('pipeline')}
+                            className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${subCorte === 'pipeline' ? 'bg-enterprise-950 text-white shadow-lg' : 'text-enterprise-400'}`}
+                        >
+                            Log Comercial (Won)
+                        </button>
+                        <button
+                            onClick={() => setSubCorte('ejecucion')}
+                            className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${subCorte === 'ejecucion' ? 'bg-brand-orange text-white shadow-lg' : 'text-enterprise-400'}`}
+                        >
+                            Log Financiero (Pauta)
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Selector de Período Compacto */}

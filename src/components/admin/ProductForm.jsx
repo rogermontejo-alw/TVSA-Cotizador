@@ -154,6 +154,7 @@ const ProductForm = ({ onSave, onCancel, productoEdicion = null, plazasOficiales
                         <input
                             required
                             type="number"
+                            inputMode="decimal"
                             step="0.01"
                             placeholder="0.00"
                             value={formData.costo_base}

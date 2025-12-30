@@ -62,6 +62,7 @@ const ParametersPanel = ({
                             <span className="text-[10px] font-black text-brand-orange">$</span>
                             <input
                                 type="number"
+                                inputMode="decimal"
                                 value={presupuesto}
                                 onChange={(e) => setPresupuesto(e.target.value)}
                                 placeholder="MXN..."
@@ -72,6 +73,7 @@ const ParametersPanel = ({
                             <Calendar size={12} className="text-brand-orange shrink-0" />
                             <input
                                 type="number"
+                                inputMode="numeric"
                                 value={duracionDias}
                                 onChange={(e) => setDuracionDias(e.target.value)}
                                 placeholder="30"

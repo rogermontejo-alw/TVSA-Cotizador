@@ -13,7 +13,8 @@ export const useDatabase = (session) => {
         descuentosVolumen: [],
         metasComerciales: [],
         perfil: null,
-        perfiles: []
+        perfiles: [],
+        contratosEjecucion: []
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -32,9 +33,10 @@ export const useDatabase = (session) => {
                 supabase.from('condiciones_cliente').select('*'),
                 supabase.from('cotizaciones').select('*').order('created_at', { ascending: false }),
                 supabase.from('descuentos_volumen').select('*'),
-                supabase.from('cobranza').select('*, cotizaciones(folio, monto_total, numero_contrato, cliente_id, mc_id, clientes(nombre_empresa))'),
+                supabase.from('cobranza').select('*, contratos_ejecucion(numero_contrato), cotizaciones(folio, monto_total, numero_contrato, cliente_id, mc_id, clientes(nombre_empresa))'),
                 supabase.from('metas_comerciales').select('*').order('anio', { ascending: false }).order('mes', { ascending: false }),
                 supabase.from('perfiles').select('*'),
+                supabase.from('contratos_ejecucion').select('*, cotizaciones(folio, monto_total), master_contracts(numero_mc)'),
                 supabase.auth.getUser().then(async ({ data: { user } }) => {
                     if (!user) return { data: null };
                     const { data: profile } = await supabase.from('perfiles').select('*').eq('id', user.id).maybeSingle();
@@ -54,6 +56,7 @@ export const useDatabase = (session) => {
                 { data: cobranza },
                 { data: metas },
                 { data: perfiles },
+                { data: contratosEjecucion },
                 resPerfil
             ] = results;
 
@@ -80,6 +83,7 @@ export const useDatabase = (session) => {
                 paquetesVIX: paquetesVix || [],
                 configuracion: configObj,
                 masterContracts: masterContracts || [],
+                contratosEjecucion: contratosEjecucion || [],
                 condicionesCliente: (condiciones || []).map(c => ({
                     ...c,
                     clienteId: c.cliente_id,
@@ -155,11 +159,28 @@ export const useDatabase = (session) => {
                 error = result.error;
             } else {
                 const cleanedData = cleanObject(payload);
-                // Si hay ID, usamos upsert para asegurar que se cree si no existe (importante para perfiles)
-                if (cleanedData.id) {
-                    const result = await supabase.from(tabla).upsert(cleanedData).select();
-                    resData = result.data;
-                    error = result.error;
+                // Si hay ID, intentamos un UPDATE parcial que es más seguro para campos NOT NULL
+                if (cleanedData[onConflict]) {
+                    const { data: updateData, error: updateError } = await supabase
+                        .from(tabla)
+                        .update(cleanedData)
+                        .eq(onConflict, cleanedData[onConflict])
+                        .select();
+
+                    if (updateError) {
+                        // Si falla el update (puede ser RLS o error de esquema), probamos upsert como fallback
+                        const result = await supabase.from(tabla).upsert(cleanedData, { onConflict }).select();
+                        resData = result.data;
+                        error = result.error;
+                    } else if (!updateData || updateData.length === 0) {
+                        // Si no hubo error pero no se actualizó nada (registro no existe, ej. Perfiles nuevos)
+                        const result = await supabase.from(tabla).upsert(cleanedData, { onConflict }).select();
+                        resData = result.data;
+                        error = result.error;
+                    } else {
+                        resData = updateData;
+                        error = updateError;
+                    }
                 } else {
                     const result = await supabase.from(tabla).insert(cleanedData).select();
                     resData = result.data;

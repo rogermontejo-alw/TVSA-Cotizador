@@ -71,7 +71,8 @@ const App = () => {
     productos,
     condicionesCliente,
     paquetesVIX,
-    metasComerciales
+    metasComerciales,
+    contratosEjecucion
   } = dbData;
 
   const [comparar, setComparar] = useState([]);
@@ -190,6 +191,7 @@ const App = () => {
             perfiles={dbData.perfiles}
             limpiarTabla={limpiarTabla}
             masterContracts={masterContracts}
+            contratosEjecucion={contratosEjecucion}
             calcularPrecioUnitario={cotizacionState.calcularPrecioUnitario}
             onLogout={handleLogout}
           />
@@ -248,6 +250,7 @@ const App = () => {
             historial={historial}
             clientes={clientes}
             cobranza={dbData.cobranza}
+            contratosEjecucion={dbData.contratosEjecucion}
             metasComerciales={metasComerciales}
             setVistaActual={setVistaActual}
             actualizarDashboard={cargarDatos}
@@ -261,6 +264,8 @@ const App = () => {
         return (
           <CobranzaView
             cobranza={dbData.cobranza}
+            clientes={clientes}
+            contratosEjecucion={dbData.contratosEjecucion}
             onSave={guardarRegistro}
             setMensaje={setMensajeAdmin}
           />
@@ -301,8 +306,10 @@ const App = () => {
             clientes={clientes}
             cotizaciones={historial}
             cobranza={dbData.cobranza}
+            contratosEjecucion={dbData.contratosEjecucion}
             onSaveMC={guardarRegistro}
             onSaveQuote={guardarRegistro}
+            onSaveContrato={guardarRegistro}
             setMensaje={setMensajeAdmin}
           />
         );
@@ -314,6 +321,7 @@ const App = () => {
             clientes={clientes}
             cobranza={dbData.cobranza}
             masterContracts={masterContracts}
+            contratosEjecucion={dbData.contratosEjecucion}
           />
         );
       default:

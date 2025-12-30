@@ -49,16 +49,11 @@ const HistoryView = ({
     }, [historial, busqueda, filtroEstatus]);
 
     const handleUpdateStatus = async (quote, newStatus) => {
-        if (newStatus === 'ganada' && !cierreData.numero_contrato) {
-            setMensaje({ tipo: 'error', texto: 'Contrato requerido.' });
-            return;
-        }
         setIsUpdating(true);
         try {
             const payload = { id: quote.id, estatus: newStatus };
             if (newStatus === 'ganada') {
-                payload.numero_contrato = parseInt(cierreData.numero_contrato);
-                payload.mc_id = cierreData.mc_id || null;
+                payload.fecha_cierre_real = new Date().toISOString();
             }
             const success = await onSaveQuote('cotizaciones', payload);
             if (success) {
@@ -190,21 +185,18 @@ const HistoryView = ({
             {confirmingStatus && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-enterprise-950/80 backdrop-blur-sm animate-premium-fade">
                     <div className="bg-white w-full max-w-xs rounded-2xl p-6 shadow-2xl border border-enterprise-100">
-                        <h3 className="text-center text-[10px] font-black text-enterprise-950 uppercase italic tracking-widest mb-4">Estatus del Pipeline: {confirmingStatus.status}</h3>
-                        {confirmingStatus.status === 'ganada' && (
-                            <div className="space-y-3 mb-6">
-                                <input
-                                    type="number"
-                                    value={cierreData.numero_contrato}
-                                    onChange={(e) => setCierreData({ ...cierreData, numero_contrato: e.target.value })}
-                                    className="w-full h-10 px-4 bg-enterprise-50 rounded-xl text-[10px] font-black outline-none placeholder:text-enterprise-300"
-                                    placeholder="REF. CONTRATO..."
-                                />
-                            </div>
-                        )}
+                        <h3 className="text-center text-[10px] font-black text-enterprise-950 uppercase italic tracking-widest mb-6">
+                            ¿Marcar como {confirmingStatus.status.toUpperCase()}?
+                        </h3>
                         <div className="grid grid-cols-2 gap-2">
                             <button onClick={() => setConfirmingStatus(null)} className="h-9 text-[9px] font-black uppercase text-enterprise-400 hover:bg-enterprise-50 rounded-lg">Abortar</button>
-                            <button onClick={() => handleUpdateStatus(confirmingStatus.quote, confirmingStatus.status)} className="h-9 bg-enterprise-950 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-orange">Confirmar</button>
+                            <button
+                                onClick={() => handleUpdateStatus(confirmingStatus.quote, confirmingStatus.status)}
+                                disabled={isUpdating}
+                                className="h-9 bg-enterprise-950 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-orange disabled:opacity-50"
+                            >
+                                {isUpdating ? 'Procesando...' : 'Confirmar'}
+                            </button>
                         </div>
                     </div>
                 </div>

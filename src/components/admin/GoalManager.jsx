@@ -61,6 +61,7 @@ const GoalManager = ({ metas, onSaveGoal, onRemoveGoal }) => {
                         <label className="text-[10px] font-black text-enterprise-400 uppercase ml-2 tracking-widest">Año Fiscal</label>
                         <input
                             type="number"
+                            inputMode="numeric"
                             value={anio}
                             onChange={(e) => setAnio(e.target.value)}
                             className="w-full bg-enterprise-50 border border-enterprise-100 rounded-2xl px-4 py-3 text-sm font-black focus:ring-1 focus:ring-brand-orange/20 outline-none shadow-sm"
@@ -70,6 +71,7 @@ const GoalManager = ({ metas, onSaveGoal, onRemoveGoal }) => {
                         <label className="text-[10px] font-black text-enterprise-400 uppercase ml-2 tracking-widest">Meta de Ingreso (MXN)</label>
                         <input
                             type="number"
+                            inputMode="decimal"
                             value={monto}
                             onChange={(e) => setMonto(e.target.value)}
                             placeholder="Ej: 1500000"

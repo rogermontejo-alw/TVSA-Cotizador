@@ -73,6 +73,7 @@ const SelectedProducts = ({
                                             </button>
                                             <input
                                                 type="number"
+                                                inputMode="numeric"
                                                 value={ps.cantidad || 0}
                                                 onFocus={(e) => e.target.select()}
                                                 onChange={(e) => {

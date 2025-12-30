@@ -7,7 +7,7 @@ import {
 import { formatMXN } from '../../utils/formatters';
 import { supabase } from '../../lib/supabase';
 
-const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
+const CobranzaView = ({ cobranza = [], clientes = [], contratosEjecucion = [], onSave, setMensaje }) => {
     const [busqueda, setBusqueda] = useState('');
     const [filtroEstatus, setFiltroEstatus] = useState('todos');
     const [editingId, setEditingId] = useState(null);
@@ -20,16 +20,19 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
         estatus_pago: 'pendiente',
         monto_facturado: '',
         cliente_id_manual: '',
+        contrato_ejecucion_id: '',
         notas: ''
     });
 
     const filtrados = (cobranza || []).filter(c => {
         // Soporte para facturas vinculadas a cotizacion o directas (si se implementa cliente_id)
         const clienteNom = c.cotizaciones?.clientes?.nombre_empresa || c.clientes?.nombre_empresa || 'Cliente Desconocido';
+        const matchingExecution = (contratosEjecucion || []).find(ce => ce.id === c.contrato_ejecucion_id);
         const matchesBusqueda =
             (c.cotizaciones?.folio || '').toLowerCase().includes(busqueda.toLowerCase()) ||
             clienteNom.toLowerCase().includes(busqueda.toLowerCase()) ||
-            (c.numero_factura || '').toLowerCase().includes(busqueda.toLowerCase());
+            (c.numero_factura || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+            (matchingExecution?.numero_contrato || '').toLowerCase().includes(busqueda.toLowerCase());
 
         const matchesEstatus = filtroEstatus === 'todos' || c.estatus_pago === filtroEstatus;
 
@@ -71,12 +74,11 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
         }
 
         const payload = {
-            // Nota: En el esquema actual, se requiere cotizacion_id. 
-            // Si no hay, informamos o permitimos nulo si la DB lo deja.
             numero_factura: formData.numero_factura,
             monto_facturado: parseFloat(formData.monto_facturado),
             fecha_programada_cobro: formData.fecha_programada_cobro || null,
             estatus_pago: formData.estatus_pago,
+            contrato_ejecucion_id: formData.contrato_ejecucion_id || null,
             notas: formData.notas
         };
 
@@ -268,14 +270,39 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-enterprise-400 uppercase tracking-widest ml-1">Seleccionar Cliente</label>
                                 <select
+                                    required
                                     value={formData.cliente_id_manual}
-                                    onChange={e => setFormData({ ...formData, cliente_id_manual: e.target.value })}
-                                    className="w-full p-4 bg-enterprise-50 border border-enterprise-100 rounded-2xl font-bold text-sm outline-none focus:ring-1 focus:ring-brand-orange/20 appearance-none"
+                                    onChange={e => setFormData({ ...formData, cliente_id_manual: e.target.value, contrato_ejecucion_id: '' })}
+                                    className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none appearance-none uppercase shadow-inner"
                                 >
-                                    <option value="">Elegir empresa...</option>
-                                    {clientes.map(c => (
-                                        <option key={c.id} value={c.id}>{c.nombre_empresa}</option>
-                                    ))}
+                                    <option value="">Seleccionar Socio...</option>
+                                    {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre_empresa}</option>)}
+                                </select>
+
+                                <select
+                                    value={formData.contrato_ejecucion_id}
+                                    onChange={e => {
+                                        const exec = (contratosEjecucion || []).find(ce => String(ce.id) === String(e.target.value));
+                                        setFormData({
+                                            ...formData,
+                                            contrato_ejecucion_id: e.target.value,
+                                            monto_facturado: exec ? exec.monto_ejecucion : formData.monto_facturado
+                                        });
+                                    }}
+                                    className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none appearance-none uppercase shadow-inner"
+                                >
+                                    <option value="">Vincular a Contrato Ejecución (Opcional)</option>
+                                    {(contratosEjecucion || [])
+                                        .filter(ce => {
+                                            if (!formData.cliente_id_manual) return true;
+                                            // Encontrar el MC para este CE y validar cliente
+                                            return String(ce.master_contracts?.cliente_id) === String(formData.cliente_id_manual);
+                                        })
+                                        .map(ce => (
+                                            <option key={ce.id} value={ce.id}>
+                                                {ce.numero_contrato} ({formatMXN(ce.monto_ejecucion)})
+                                            </option>
+                                        ))}
                                 </select>
                             </div>
 
@@ -294,6 +321,7 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
                                     <label className="text-[10px] font-black text-enterprise-400 uppercase tracking-widest ml-1">Monto Subtotal</label>
                                     <input
                                         type="number"
+                                        inputMode="decimal"
                                         placeholder="0.00"
                                         value={formData.monto_facturado}
                                         onChange={e => setFormData({ ...formData, monto_facturado: e.target.value })}
@@ -383,7 +411,7 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
                                         </td>
                                         <td className="px-6 py-5">
                                             <p className="text-xs font-black text-enterprise-950 uppercase truncate max-w-[180px]">{clienteNom}</p>
-                                            <p className="text-[9px] font-bold text-enterprise-400">Contrato: {item.cotizaciones?.numero_contrato || 'S/N'}</p>
+                                            <p className="text-[9px] font-bold text-enterprise-400">Contrato: {item.contratos_ejecucion?.numero_contrato || item.cotizaciones?.numero_contrato || 'S/N'}</p>
                                         </td>
                                         <td className="px-6 py-5">
                                             {isEditing ? (
