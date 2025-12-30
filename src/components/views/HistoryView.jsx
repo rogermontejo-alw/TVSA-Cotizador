@@ -14,7 +14,7 @@ const HistoryView = ({
     setMensaje
 }) => {
     const [busqueda, setBusqueda] = useState('');
-    const [filtroVix, setFiltroVix] = useState('todos');
+    const [filtroEstatus, setFiltroEstatus] = useState('todos');
     const [confirmingStatus, setConfirmingStatus] = useState(null);
     const [isUpdating, setIsUpdating] = useState(false);
 
@@ -43,10 +43,10 @@ const HistoryView = ({
             const idCotz = (cotz.id || '').toLowerCase();
             const query = busqueda.toLowerCase();
             const matchesSearch = nombreCliente.includes(query) || idCotz.includes(query);
-            const matchesVix = filtroVix === 'todos' || (filtroVix === 'vix' && cotz.paqueteVIX?.nombre !== 'Ninguno') || (filtroVix === 'no_vix' && (!cotz.paqueteVIX || cotz.paqueteVIX.nombre === 'Ninguno'));
-            return matchesSearch && matchesVix;
+            const matchesEstatus = filtroEstatus === 'todos' || cotz.estatus === filtroEstatus;
+            return matchesSearch && matchesEstatus;
         });
-    }, [historial, busqueda, filtroVix]);
+    }, [historial, busqueda, filtroEstatus]);
 
     const handleUpdateStatus = async (quote, newStatus) => {
         if (newStatus === 'ganada' && !cierreData.numero_contrato) {
@@ -81,7 +81,7 @@ const HistoryView = ({
                             <FileText size={28} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-3">
+                            <h1 className="text-xl md:text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-3">
                                 Pipeline <span className="text-brand-orange">Histórico</span>
                                 <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                             </h1>
@@ -105,13 +105,14 @@ const HistoryView = ({
                             />
                         </div>
                         <select
-                            value={filtroVix}
-                            onChange={(e) => setFiltroVix(e.target.value)}
+                            value={filtroEstatus}
+                            onChange={(e) => setFiltroEstatus(e.target.value)}
                             className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[9px] font-black text-white uppercase tracking-widest outline-none cursor-pointer hover:bg-white/10 transition-all appearance-none text-center"
                         >
-                            <option value="todos" className="bg-enterprise-950">TODOS LOS ACTIVOS</option>
-                            <option value="vix" className="bg-enterprise-950">SOLO VIX</option>
-                            <option value="no_vix" className="bg-enterprise-950">SOLO LINEAL</option>
+                            <option value="todos" className="bg-enterprise-950">TODOS LOS ESTATUS</option>
+                            <option value="enviada" className="bg-enterprise-950">SOLO ENVIADAS</option>
+                            <option value="ganada" className="bg-enterprise-950">SOLO GANADAS</option>
+                            <option value="perdida" className="bg-enterprise-950">SOLO PERDIDAS</option>
                         </select>
                     </div>
                 </div>

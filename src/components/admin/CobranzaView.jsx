@@ -140,108 +140,110 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
     return (
         <div className="space-y-6 pb-24 animate-premium-fade max-w-7xl mx-auto px-4 md:px-0 overflow-hidden">
             {/* NEXUS COLLECTIONS STATION - MAIN HEADER */}
-            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden group">
+            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-4 md:p-6 shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-brand-orange/10 via-transparent to-transparent pointer-events-none" />
                 <div className="absolute -left-10 -top-10 w-48 h-48 bg-brand-orange/5 blur-3xl rounded-full" />
 
-                <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-6">
-                    <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500">
-                            <DollarSign size={28} strokeWidth={2.5} />
+                <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                    <div className="flex items-center gap-4 md:gap-5">
+                        <div className="w-12 h-12 md:w-14 md:h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500 flex-shrink-0">
+                            <DollarSign size={24} className="md:w-7 md:h-7" strokeWidth={2.5} />
                         </div>
-                        <div>
-                            <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-3">
-                                Nexus de <span className="text-brand-orange">Cobranza</span>
-                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <div className="min-w-0">
+                            <h1 className="text-lg md:text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex flex-wrap items-center gap-2 md:gap-3">
+                                <span className="whitespace-nowrap capitalize italic italic-brand">Nexus de</span>
+                                <span className="text-brand-orange whitespace-nowrap capitalize italic italic-brand">Cobranza</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse hidden xs:block" />
                             </h1>
-                            <div className="flex items-center gap-3 mt-2 text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
-                                <span>Garantía de Ingresos</span>
-                                <span className="w-1 h-1 bg-white/20 rounded-full" />
-                                <span className="text-brand-orange/80">Cuentas por Cobrar: {filtrados.length}</span>
+                            <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-1.5 md:mt-2 text-[7px] md:text-[9px] font-black text-white/40 uppercase tracking-[0.2em] md:tracking-[0.3em]">
+                                <span className="whitespace-nowrap capitalize italic italic-brand">Garantía de Ingresos</span>
+                                <span className="w-1 h-1 bg-white/20 rounded-full hidden xs:block" />
+                                <span className="text-brand-orange/80 whitespace-nowrap capitalize italic italic-brand">Documentos: {filtrados.length}</span>
                             </div>
                         </div>
                     </div>
 
                     <button
                         onClick={() => setIsShowManualForm(true)}
-                        className="w-full lg:w-auto px-8 py-3.5 bg-brand-orange text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-brand-orange/90 transition-all shadow-xl shadow-brand-orange/20 active:scale-95 group/btn"
+                        className="w-full lg:w-auto px-6 py-3 bg-brand-orange text-white rounded-xl font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-3 hover:bg-brand-orange/90 transition-all shadow-xl active:scale-95 group/btn"
                     >
                         <Plus size={16} strokeWidth={3} className="group-hover/btn:rotate-90 transition-transform duration-300" />
-                        Desplegar Nueva Factura
+                        Nueva Factura
                     </button>
                 </div>
             </div>
+
             {/* Premium Intelligence Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white rounded-3xl shadow-premium border border-enterprise-100 overflow-hidden flex flex-col group hover:border-enterprise-900 transition-all duration-500">
-                    <div className="bg-enterprise-950 px-4 py-2 flex items-center justify-between">
-                        <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Portafolio Activo</span>
-                        <Building2 size={12} className="text-brand-orange" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                <div className="bg-white rounded-2xl md:rounded-3xl shadow-premium border border-enterprise-100 overflow-hidden flex flex-col group hover:border-enterprise-900 transition-all duration-500">
+                    <div className="bg-enterprise-950 px-3 md:px-4 py-2 flex items-center justify-between">
+                        <span className="text-[7px] md:text-[7.5px] font-black text-white uppercase tracking-widest italic">Portafolio Activo</span>
+                        <Building2 size={10} className="text-brand-orange" />
                     </div>
-                    <div className="p-5">
-                        <h4 className="text-xl font-black text-enterprise-950 tracking-tighter">{formatMXN(stats.total)}</h4>
-                        <p className="text-[7.5px] font-black text-enterprise-300 uppercase italic mt-1 tracking-widest">Exposición Bruta</p>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-3xl shadow-premium border border-enterprise-100 overflow-hidden flex flex-col group hover:border-emerald-500 transition-all duration-500">
-                    <div className="bg-emerald-500 px-4 py-2 flex items-center justify-between">
-                        <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Activos Recuperados</span>
-                        <CheckCircle2 size={12} className="text-white" />
-                    </div>
-                    <div className="p-5">
-                        <h4 className="text-xl font-black text-emerald-600 tracking-tighter">{formatMXN(stats.cobrado)}</h4>
-                        <p className="text-[7.5px] font-black text-emerald-400 uppercase italic mt-1 tracking-widest">Cobranza Verificada</p>
+                    <div className="p-3 md:p-5">
+                        <h4 className="text-sm md:text-xl font-black text-enterprise-950 tracking-tighter">{formatMXN(stats.total)}</h4>
+                        <p className="text-[6.5px] md:text-[7.5px] font-black text-enterprise-300 uppercase italic mt-1 tracking-widest">Exposición Bruta</p>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-3xl shadow-premium border border-enterprise-100 overflow-hidden flex flex-col group hover:border-brand-magenta transition-all duration-500">
-                    <div className="bg-brand-magenta px-4 py-2 flex items-center justify-between">
-                        <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Exposición de Riesgo</span>
-                        <AlertCircle size={12} className="text-white" />
+                <div className="bg-white rounded-2xl md:rounded-3xl shadow-premium border border-enterprise-100 overflow-hidden flex flex-col group hover:border-emerald-500 transition-all duration-500">
+                    <div className="bg-emerald-500 px-3 md:px-4 py-2 flex items-center justify-between">
+                        <span className="text-[7px] md:text-[7.5px] font-black text-white uppercase tracking-widest italic">Activos Recuperados</span>
+                        <CheckCircle2 size={10} className="text-white" />
                     </div>
-                    <div className="p-5">
-                        <h4 className="text-xl font-black text-brand-magenta tracking-tighter">{formatMXN(stats.vencido)}</h4>
-                        <p className="text-[7.5px] font-black text-brand-magenta/60 uppercase italic mt-1 tracking-widest">Saldo Vencido</p>
+                    <div className="p-3 md:p-5">
+                        <h4 className="text-sm md:text-xl font-black text-emerald-600 tracking-tighter">{formatMXN(stats.cobrado)}</h4>
+                        <p className="text-[6.5px] md:text-[7.5px] font-black text-emerald-400 uppercase italic mt-1 tracking-widest">Cobranza Verificada</p>
                     </div>
                 </div>
 
-                <div className="bg-enterprise-950 rounded-3xl shadow-2xl border border-white/5 overflow-hidden flex flex-col group hover:border-brand-orange transition-all duration-500">
-                    <div className="bg-brand-orange px-4 py-2 flex items-center justify-between">
-                        <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Log de Actividad</span>
-                        <Clock size={12} className="text-white" />
+                <div className="bg-white rounded-2xl md:rounded-3xl shadow-premium border border-enterprise-100 overflow-hidden flex flex-col group hover:border-brand-magenta transition-all duration-500">
+                    <div className="bg-brand-magenta px-3 md:px-4 py-2 flex items-center justify-between">
+                        <span className="text-[7px] md:text-[7.5px] font-black text-white uppercase tracking-widest italic">Exposición de Riesgo</span>
+                        <AlertCircle size={10} className="text-white" />
                     </div>
-                    <div className="p-5">
-                        <h4 className="text-xl font-black text-white tracking-tighter">{filtrados.length}</h4>
-                        <p className="text-[7.5px] font-black text-white/40 uppercase italic mt-1 tracking-widest">Unidades Documentadas</p>
+                    <div className="p-3 md:p-5">
+                        <h4 className="text-sm md:text-xl font-black text-brand-magenta tracking-tighter">{formatMXN(stats.vencido)}</h4>
+                        <p className="text-[6.5px] md:text-[7.5px] font-black text-brand-magenta/60 uppercase italic mt-1 tracking-widest">Saldo Vencido</p>
+                    </div>
+                </div>
+
+                <div className="bg-enterprise-950 rounded-2xl md:rounded-3xl shadow-2xl border border-white/5 overflow-hidden flex flex-col group hover:border-brand-orange transition-all duration-500">
+                    <div className="bg-brand-orange px-3 md:px-4 py-2 flex items-center justify-between">
+                        <span className="text-[7px] md:text-[7.5px] font-black text-white uppercase tracking-widest italic">Log de Actividad</span>
+                        <Clock size={10} className="text-white" />
+                    </div>
+                    <div className="p-3 md:p-5">
+                        <h4 className="text-sm md:text-xl font-black text-white tracking-tighter">{filtrados.length}</h4>
+                        <p className="text-[6.5px] md:text-[7.5px] font-black text-white/40 uppercase italic mt-1 tracking-widest">Unidades Documentadas</p>
                     </div>
                 </div>
             </div>
 
             {/* Filters & Actions Hub */}
-            <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-3 rounded-[2rem] border border-enterprise-100 shadow-premium">
+            <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-2 md:p-3 rounded-2xl md:rounded-[2rem] border border-enterprise-100 shadow-premium">
                 <div className="flex-1 relative group w-full">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-enterprise-400 group-focus-within:text-brand-orange transition-colors" size={14} />
                     <input
                         type="text"
-                        placeholder="BUSCAR IDENTIDAD DE CUENTA O FACTURA..."
+                        placeholder="Buscar cliente o factura..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-enterprise-50 border border-enterprise-100/50 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-inner outline-none focus:bg-white focus:border-brand-orange/50 transition-all placeholder:text-enterprise-300"
+                        className="w-full pl-10 pr-4 py-3 bg-enterprise-50 border border-enterprise-100/50 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest shadow-inner outline-none focus:bg-white focus:border-brand-orange/50 transition-all placeholder:text-enterprise-300"
                     />
                 </div>
 
-                <div className="flex bg-enterprise-950 rounded-xl p-1 w-full md:w-fit shadow-xl border border-white/5">
+                <div className="flex bg-enterprise-950 rounded-xl p-1 w-full md:w-fit shadow-xl border border-white/5 overflow-x-auto no-scrollbar">
                     {['todos', 'pendiente', 'programado', 'cobrado'].map(estatus => (
                         <button
                             key={estatus}
                             onClick={() => setFiltroEstatus(estatus)}
-                            className={`flex-1 md:flex-none px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] whitespace-nowrap transition-all duration-300
+                            className={`flex-1 md:flex-none px-4 md:px-5 py-2 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-[0.1em] transition-all duration-300 whitespace-nowrap
                                 ${filtroEstatus === estatus
                                     ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20'
                                     : 'text-white/30 hover:text-white'}`}
                         >
-                            {estatus}
+                            {estatus === 'todos' ? 'TODOS' : estatus.toUpperCase()}
                         </button>
                     ))}
                 </div>
@@ -464,27 +466,27 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
                         const clienteNom = item.cotizaciones?.clientes?.nombre_empresa || item.clientes?.nombre_empresa || 'Cliente S/N';
 
                         return (
-                            <div key={item.id} className={`p-6 transition-colors ${isEditing ? 'bg-brand-orange/5' : ''}`}>
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="flex flex-col gap-1">
-                                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[7px] font-black uppercase w-fit shadow-sm ${info.color}`}>
+                            <div key={item.id} className={`p-5 transition-colors ${isEditing ? 'bg-brand-orange/5' : ''}`}>
+                                <div className="flex justify-between items-start gap-4 mb-4">
+                                    <div className="flex-1 min-w-0">
+                                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[7px] font-black uppercase shadow-sm mb-3 ${info.color}`}>
                                             {info.icon} {info.label}
                                         </div>
-                                        <h3 className="font-black text-enterprise-950 uppercase text-[12px] leading-tight mt-2">{clienteNom}</h3>
-                                        <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-1">
+                                        <h3 className="font-black text-enterprise-950 uppercase text-[11px] leading-tight truncate">{clienteNom}</h3>
+                                        <p className="text-[8.5px] font-bold text-enterprise-400 uppercase tracking-widest mt-1">
                                             {item.cotizaciones?.folio || 'Manual'} • Contrato: {item.cotizaciones?.numero_contrato || 'S/N'}
                                         </p>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-sm font-black text-enterprise-950">{formatMXN(item.monto_facturado)}</p>
-                                        <p className="text-[8px] font-bold text-enterprise-300 uppercase tracking-tighter">Subtotal</p>
+                                    <div className="text-right flex-shrink-0">
+                                        <p className="text-sm font-black text-enterprise-950 tracking-tighter">{formatMXN(item.monto_facturado)}</p>
+                                        <p className="text-[7px] font-black text-enterprise-300 uppercase tracking-widest leading-none mt-1">Neto</p>
                                     </div>
                                 </div>
 
                                 {isEditing ? (
-                                    <div className="grid grid-cols-2 gap-4 mt-6 p-6 bg-enterprise-50 rounded-2xl border border-brand-orange/20 shadow-xl">
-                                        <div className="col-span-2">
-                                            <label className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest mb-2 block">Estatus</label>
+                                    <div className="space-y-4 mt-6 p-4 bg-enterprise-50 rounded-2xl border border-brand-orange/20 shadow-xl">
+                                        <div>
+                                            <label className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest mb-1.5 block ml-1">Estado de Pago</label>
                                             <select
                                                 value={formData.estatus_pago}
                                                 onChange={e => setFormData({ ...formData, estatus_pago: e.target.value })}
@@ -495,66 +497,64 @@ const CobranzaView = ({ cobranza = [], clientes = [], onSave, setMensaje }) => {
                                                 <option value="cobrado">Cobrado</option>
                                             </select>
                                         </div>
-                                        <div>
-                                            <label className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest mb-2 block">Factura</label>
-                                            <input
-                                                type="text"
-                                                value={formData.numero_factura}
-                                                onChange={e => setFormData({ ...formData, numero_factura: e.target.value })}
-                                                className="w-full p-3 bg-white border border-enterprise-100 rounded-xl text-[10px] font-black outline-none focus:ring-1 focus:ring-brand-orange/20"
-                                            />
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest mb-1.5 block ml-1">Nº Factura</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.numero_factura}
+                                                    onChange={e => setFormData({ ...formData, numero_factura: e.target.value })}
+                                                    className="w-full p-3 bg-white border border-enterprise-100 rounded-xl text-[10px] font-black outline-none focus:ring-1 focus:ring-brand-orange/20"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest mb-1.5 block ml-1">Fecha Compromiso</label>
+                                                <input
+                                                    type="date"
+                                                    value={formData.fecha_programada_cobro}
+                                                    onChange={e => setFormData({ ...formData, fecha_programada_cobro: e.target.value })}
+                                                    className="w-full p-3 bg-white border border-enterprise-100 rounded-xl text-[10px] font-black outline-none focus:ring-1 focus:ring-brand-orange/20"
+                                                />
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest mb-2 block">Fecha Programada</label>
-                                            <input
-                                                type="date"
-                                                value={formData.fecha_programada_cobro}
-                                                onChange={e => setFormData({ ...formData, fecha_programada_cobro: e.target.value })}
-                                                className="w-full p-3 bg-white border border-enterprise-100 rounded-xl text-[10px] font-black outline-none focus:ring-1 focus:ring-brand-orange/20"
-                                            />
-                                        </div>
-                                        <div className="col-span-2 flex gap-3 pt-3">
-                                            <button onClick={() => handleSave(item.id)} className="flex-1 py-3 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase shadow-lg shadow-emerald-500/20">Guardar</button>
-                                            <button onClick={() => setEditingId(null)} className="flex-1 py-3 bg-enterprise-200 text-enterprise-600 rounded-xl text-[9px] font-black uppercase">Cancelar</button>
+                                        <div className="flex gap-2 pt-2">
+                                            <button onClick={() => handleSave(item.id)} className="flex-1 h-10 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">Guardar</button>
+                                            <button onClick={() => setEditingId(null)} className="flex-1 h-10 bg-enterprise-200 text-enterprise-600 rounded-xl text-[9px] font-black uppercase active:scale-95 transition-all">Cancelar</button>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-enterprise-50">
-                                        <div className="flex gap-6">
+                                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-enterprise-50">
+                                        <div className="flex gap-4">
                                             <div>
-                                                <p className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest">Factura</p>
-                                                <p className="text-[10px] font-black text-enterprise-950 uppercase">{item.numero_factura || '--'}</p>
+                                                <p className="text-[7.5px] font-black text-enterprise-400 uppercase tracking-widest leading-none mb-1">Factura</p>
+                                                <p className="text-[9.5px] font-black text-enterprise-950 uppercase">{item.numero_factura || '--'}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest">Fecha Pago</p>
-                                                <p className="text-[10px] font-black text-enterprise-950">
-                                                    {item.fecha_programada_cobro ? new Date(item.fecha_programada_cobro).toLocaleDateString() : '--'}
+                                                <p className="text-[7.5px] font-black text-enterprise-400 uppercase tracking-widest leading-none mb-1">Compromiso</p>
+                                                <p className="text-[9.5px] font-black text-enterprise-950">
+                                                    {item.fecha_programada_cobro ? new Date(item.fecha_programada_cobro).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' }) : '--'}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
-                                            <div className="flex gap-2">
-                                                {item.url_archivo_pdf ? (
-                                                    <a href={item.url_archivo_pdf} target="_blank" rel="noreferrer" className="p-3 bg-brand-orange/10 text-brand-orange rounded-xl flex items-center gap-2 border border-brand-orange/10 transition-all hover:bg-brand-orange hover:text-white">
-                                                        <FileText size={18} />
-                                                        <span className="text-[9px] font-black uppercase">PDF</span>
-                                                    </a>
-                                                ) : (
-                                                    <label className={`p-3 bg-enterprise-50 text-enterprise-400 rounded-xl hover:bg-brand-orange/10 hover:text-brand-orange transition-all cursor-pointer flex items-center gap-2 border border-enterprise-100 hover:border-brand-orange/20 ${uploadingId === item.id ? 'animate-pulse' : ''}`}>
-                                                        <input
-                                                            type="file"
-                                                            accept=".pdf"
-                                                            className="hidden"
-                                                            onChange={(e) => handleFileUpload(e, item.id)}
-                                                            disabled={uploadingId === item.id}
-                                                        />
-                                                        <Upload size={18} />
-                                                        <span className="text-[9px] font-black uppercase">Subir</span>
-                                                    </label>
-                                                )}
-                                            </div>
-                                            <button onClick={() => handleEdit(item)} className="p-3 text-enterprise-400 bg-enterprise-50 hover:bg-enterprise-950 hover:text-white rounded-xl transition-all border border-enterprise-100 hover:border-enterprise-950">
-                                                <Edit3 size={18} />
+                                            {item.url_archivo_pdf ? (
+                                                <a href={item.url_archivo_pdf} target="_blank" rel="noreferrer" className="w-10 h-10 bg-brand-orange/10 text-brand-orange rounded-xl flex items-center justify-center transition-all hover:bg-brand-orange hover:text-white border border-brand-orange/10 shadow-sm">
+                                                    <FileText size={16} />
+                                                </a>
+                                            ) : (
+                                                <label className={`w-10 h-10 bg-enterprise-50 text-enterprise-400 rounded-xl hover:bg-brand-orange/10 hover:text-brand-orange transition-all cursor-pointer flex items-center justify-center border border-enterprise-100 hover:border-brand-orange/20 shadow-sm ${uploadingId === item.id ? 'animate-pulse' : ''}`}>
+                                                    <input
+                                                        type="file"
+                                                        accept=".pdf"
+                                                        className="hidden"
+                                                        onChange={(e) => handleFileUpload(e, item.id)}
+                                                        disabled={uploadingId === item.id}
+                                                    />
+                                                    <Upload size={16} />
+                                                </label>
+                                            )}
+                                            <button onClick={() => handleEdit(item)} className="w-10 h-10 bg-enterprise-50 text-enterprise-400 hover:bg-enterprise-950 hover:text-white rounded-xl flex items-center justify-center transition-all border border-enterprise-100 hover:border-enterprise-950 shadow-sm">
+                                                <Edit3 size={16} />
                                             </button>
                                         </div>
                                     </div>

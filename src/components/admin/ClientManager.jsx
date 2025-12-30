@@ -33,24 +33,25 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
     return (
         <div className="space-y-6 animate-premium-fade px-4">
             {/* NEXUS IDENTITY STATION - CLIENT MANAGER */}
-            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden group">
+            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-4 md:p-6 shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-brand-orange/10 via-transparent to-transparent pointer-events-none" />
                 <div className="absolute -left-10 -top-10 w-48 h-48 bg-brand-orange/5 blur-3xl rounded-full" />
 
                 <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-6">
-                    <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500">
-                            <Users size={28} strokeWidth={2.5} />
+                    <div className="flex items-center gap-4 md:gap-5 w-full lg:w-auto">
+                        <div className="w-12 h-12 md:w-14 md:h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500 flex-shrink-0">
+                            <Users size={24} className="md:w-7 md:h-7" strokeWidth={2.5} />
                         </div>
-                        <div>
-                            <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-3">
-                                Nexus de <span className="text-brand-orange">Identidad</span>
-                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                        <div className="min-w-0">
+                            <h1 className="text-lg md:text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex flex-wrap items-center gap-2 md:gap-3">
+                                <span className="whitespace-nowrap">Nexus de</span>
+                                <span className="text-brand-orange whitespace-nowrap">Identidad</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse hidden md:block" />
                             </h1>
-                            <div className="flex items-center gap-3 mt-2 text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
-                                <span>Registro Maestro de Entidades v2.0</span>
-                                <span className="w-1 h-1 bg-white/20 rounded-full" />
-                                <span className="text-brand-orange/80">Entidades Sincronizadas: {clientesFiltrados.length}</span>
+                            <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-1.5 md:mt-2 text-[7px] md:text-[9px] font-black text-white/40 uppercase tracking-[0.2em] md:tracking-[0.3em]">
+                                <span className="whitespace-nowrap">Registro Maestro v2.0</span>
+                                <span className="w-1 h-1 bg-white/20 rounded-full hidden xs:block" />
+                                <span className="text-brand-orange/80 whitespace-nowrap">Sincronizadas: {clientesFiltrados.length}</span>
                             </div>
                         </div>
                     </div>
@@ -60,15 +61,15 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-brand-orange transition-colors" size={14} />
                             <input
                                 type="text"
-                                placeholder="BUSCAR SOCIO, CONTACTO O PLAZA..."
+                                placeholder="BUSCAR SOCIO, CONTACTO..."
                                 value={busqueda}
                                 onChange={(e) => setBusqueda(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-white uppercase tracking-widest outline-none focus:bg-white/10 focus:border-brand-orange transition-all placeholder:text-white/20"
+                                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] md:text-[10px] font-black text-white uppercase tracking-widest outline-none focus:bg-white/10 focus:border-brand-orange transition-all placeholder:text-white/20"
                             />
                         </div>
                         <button
                             onClick={onNew}
-                            className="w-full md:w-auto px-8 py-3 bg-brand-orange text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-brand-orange/90 transition-all shadow-xl shadow-brand-orange/20 active:scale-95 group/btn"
+                            className="w-full md:w-auto px-6 md:px-8 py-3 bg-brand-orange text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-brand-orange/90 transition-all shadow-xl shadow-brand-orange/20 active:scale-95 group/btn"
                         >
                             <UserCircle size={16} strokeWidth={3} className="group-hover/btn:rotate-12 transition-transform" />
                             Nuevo Cliente
@@ -78,17 +79,17 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
             </div>
 
             {/* Navigation & Lifecycle Filters */}
-            <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-3 rounded-[2rem] border border-enterprise-100 shadow-premium">
-                <div className="flex items-center gap-4 ml-2">
-                    <Activity size={16} className="text-brand-orange" />
-                    <span className="text-[10px] font-black text-enterprise-950 uppercase tracking-widest italic">Filtros de Ciclo de Vida:</span>
+            <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-3 rounded-2xl md:rounded-[2rem] border border-enterprise-100 shadow-premium">
+                <div className="flex items-center gap-3 md:gap-4 ml-0 md:ml-2 w-full md:w-auto">
+                    <Activity size={16} className="text-brand-orange flex-shrink-0" />
+                    <span className="text-[9px] md:text-[10px] font-black text-enterprise-950 uppercase tracking-widest italic whitespace-nowrap">Ciclo de Vida:</span>
                 </div>
-                <div className="flex bg-enterprise-950 rounded-xl p-1 w-full md:w-fit shadow-xl border border-white/5">
+                <div className="flex bg-enterprise-950 rounded-xl p-1 w-full md:w-fit shadow-xl border border-white/5 overflow-x-auto no-scrollbar">
                     {['activo', 'inactivo', 'todos'].map(st => (
                         <button
                             key={st}
                             onClick={() => setFiltroEstatus(st)}
-                            className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] whitespace-nowrap transition-all duration-300
+                            className={`flex-1 md:flex-none px-4 md:px-6 py-2 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-[0.1em] whitespace-nowrap transition-all duration-300
                                 ${filtroEstatus === st
                                     ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20'
                                     : 'text-white/30 hover:text-white'}`}
@@ -205,71 +206,75 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
                 {/* Mobile Card View */}
                 <div className="lg:hidden divide-y divide-enterprise-50">
                     {clientesFiltrados.length > 0 ? clientesFiltrados.map(c => (
-                        <div key={c.id} className={`p-6 space-y-4 ${c.estatus === 'inactivo' ? 'opacity-50' : ''}`}>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-enterprise-950 rounded-xl flex items-center justify-center text-white font-black text-sm border-2 border-white shadow-lg">
+                        <div key={c.id} className={`p-5 space-y-4 ${c.estatus === 'inactivo' ? 'opacity-50 grayscale' : ''}`}>
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-10 h-10 bg-enterprise-950 rounded-xl flex items-center justify-center text-white font-black text-sm border-2 border-white shadow-lg flex-shrink-0">
                                         {c.nombre_empresa?.charAt(0).toUpperCase()}
                                     </div>
-                                    <div>
-                                        <span className="block text-xs font-black text-enterprise-950 uppercase tracking-tight">{c.nombre_empresa}</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`w-1.5 h-1.5 rounded-full ${c.estatus === 'activo' ? 'bg-emerald-500' : 'bg-brand-orange'}`} />
-                                            <span className="text-[8px] font-black text-enterprise-400 uppercase">ID:{c.id.slice(0, 6)}</span>
+                                    <div className="min-w-0">
+                                        <h3 className="text-xs font-black text-enterprise-950 uppercase tracking-tight truncate">{c.nombre_empresa}</h3>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <div className={`w-1.5 h-1.5 rounded-full ${c.estatus === 'activo' ? 'bg-emerald-500' : 'bg-brand-orange'}`} />
+                                            <span className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest leading-none">ID-{c.id.slice(0, 6)}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex gap-1.5">
+                                <div className="flex gap-1.5 flex-shrink-0">
                                     <button
                                         onClick={() => onEdit(c)}
-                                        className="w-9 h-9 flex items-center justify-center bg-enterprise-50 text-enterprise-500 rounded-lg active:bg-enterprise-900 active:text-white transition-all shadow-sm"
+                                        className="w-9 h-9 flex items-center justify-center bg-enterprise-50 text-enterprise-500 rounded-lg active:bg-enterprise-900 active:text-white transition-all shadow-sm border border-enterprise-100"
                                     >
                                         <Edit3 size={14} />
                                     </button>
                                     <button
                                         onClick={() => onToggleEstatus({ ...c, estatus: c.estatus === 'activo' ? 'inactivo' : 'activo' })}
-                                        className={`w-9 h-9 flex items-center justify-center rounded-lg active:scale-95 transition-all shadow-sm ${c.estatus === 'activo' ? 'bg-enterprise-50 text-enterprise-500 active:bg-brand-orange active:text-white' : 'bg-emerald-50 text-emerald-600 active:bg-emerald-600 active:text-white'}`}
+                                        className={`w-9 h-9 flex items-center justify-center rounded-lg active:scale-95 transition-all shadow-sm border ${c.estatus === 'activo' ? 'bg-enterprise-50 text-enterprise-500 active:bg-brand-orange active:text-white' : 'bg-emerald-50 border-emerald-100 text-emerald-600 active:bg-emerald-600 active:text-white'}`}
                                     >
                                         <Activity size={14} />
                                     </button>
-                                    <button
-                                        onClick={() => { if (window.confirm('¿Eliminar Entidad?')) onEliminar(c.id); }}
-                                        className="w-9 h-9 flex items-center justify-center bg-brand-orange/5 text-brand-orange rounded-lg active:bg-brand-magenta active:text-white transition-all"
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-enterprise-50">
-                                <div>
-                                    <p className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest mb-1">Contacto</p>
-                                    <div className="flex items-center gap-1.5 text-enterprise-700 font-bold text-[10px]">
-                                        <User size={10} className="text-brand-orange" />
-                                        {c.nombre_contacto || 'No asignado'}
+
+                            <div className="grid grid-cols-2 gap-4 pt-3 border-t border-enterprise-50">
+                                <div className="min-w-0">
+                                    <p className="text-[7.5px] font-black text-enterprise-400 uppercase tracking-widest mb-1">Contacto</p>
+                                    <div className="flex items-center gap-1.5 text-enterprise-700 font-bold text-[9px] truncate">
+                                        <User size={10} className="text-brand-orange flex-shrink-0" />
+                                        <span className="truncate">{c.nombre_contacto || 'POR DEFINIR'}</span>
                                     </div>
                                 </div>
-                                <div>
-                                    <p className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest mb-1">Ubicación</p>
-                                    <div className="flex items-center gap-1.5 text-enterprise-950 font-bold text-[10px] uppercase">
-                                        <MapPin size={10} className="text-brand-orange" />
-                                        {c.plaza}
+                                <div className="min-w-0">
+                                    <p className="text-[7.5px] font-black text-enterprise-400 uppercase tracking-widest mb-1">Ubicación</p>
+                                    <div className="flex items-center gap-1.5 text-enterprise-950 font-bold text-[9px] uppercase truncate">
+                                        <MapPin size={10} className="text-brand-orange flex-shrink-0" />
+                                        <span className="truncate">{c.plaza}</span>
                                     </div>
                                 </div>
-                                <div className="col-span-2">
-                                    <p className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest mb-1">Acuerdo Comercial</p>
-                                    <div className="flex items-center gap-1.5">
-                                        <ShieldCheck size={10} className="text-emerald-500" />
-                                        <span className="text-[9px] font-black text-enterprise-700 uppercase tracking-widest">
+                                <div className="col-span-2 min-w-0">
+                                    <p className="text-[7.5px] font-black text-enterprise-400 uppercase tracking-widest mb-1">Acuerdo Comercial</p>
+                                    <div className="flex items-center gap-1.5 truncate">
+                                        <ShieldCheck size={10} className="text-emerald-500 flex-shrink-0" />
+                                        <span className="text-[8.5px] font-black text-enterprise-700 uppercase tracking-widest truncate">
                                             {c.tipo_acuerdo?.replace(/_/g, ' ') || 'PRECIO LISTA'}
                                         </span>
                                     </div>
                                 </div>
                             </div>
+
+                            <div className="flex items-center justify-end pt-2">
+                                <button
+                                    onClick={() => { if (window.confirm('¿Eliminar Entidad?')) onEliminar(c.id); }}
+                                    className="p-1 px-2 text-[8px] font-black text-brand-orange uppercase tracking-widest hover:text-brand-magenta transition-colors"
+                                >
+                                    Eliminar Registro
+                                </button>
+                            </div>
                         </div>
                     )) : (
                         <div className="py-20 text-center">
                             <Users size={32} className="mx-auto text-enterprise-100 mb-4" />
-                            <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-widest italic">Sin registros</p>
+                            <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-widest italic tracking-[0.3em]">Sin registros</p>
                         </div>
                     )}
                 </div>

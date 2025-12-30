@@ -359,105 +359,119 @@ const ProductManager = ({
     };
 
     return (
-        <div className="space-y-6 animate-premium-fade">
+        <div className="space-y-6 animate-premium-fade px-4 md:px-0">
             {/* Header / Engine Controls */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                    <h2 className="text-2xl font-black text-enterprise-950 uppercase italic italic-brand tracking-tighter leading-none mb-2">Catálogo de Activos</h2>
-                    <p className="text-[10px] font-black text-enterprise-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                        <Layers size={14} className="text-brand-orange" />
-                        Motor de Tarifas de Inventario
-                    </p>
-                </div>
+            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-4 md:p-6 shadow-2xl relative overflow-hidden group mb-8">
+                <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-brand-orange/10 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute -left-10 -top-10 w-48 h-48 bg-brand-orange/5 blur-3xl rounded-full" />
 
-                <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-80 group">
-                        <input
-                            type="text"
-                            placeholder="Canal, Medio o Región..."
-                            value={busqueda}
-                            onChange={(e) => setBusqueda(e.target.value)}
-                            className="premium-input pl-11 h-12 text-sm shadow-sm border border-enterprise-100 bg-white focus:ring-1 focus:ring-brand-orange/20"
-                        />
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-enterprise-300 group-focus-within:text-brand-orange transition-colors" size={18} />
+                <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                    <div className="flex items-center gap-4 md:gap-5 w-full lg:w-auto">
+                        <div className="w-12 h-12 md:w-14 md:h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500 flex-shrink-0">
+                            <Layers size={24} className="md:w-7 md:h-7" strokeWidth={2.5} />
+                        </div>
+                        <div className="min-w-0">
+                            <h2 className="text-lg md:text-2xl font-black text-white tracking-tighter uppercase italic italic-brand leading-none flex flex-wrap items-center gap-2 md:gap-3">
+                                <span className="whitespace-nowrap italic italic-brand capitalize">Catálogo de</span>
+                                <span className="text-brand-orange whitespace-nowrap italic italic-brand capitalize">Activos</span>
+                            </h2>
+                            <p className="text-[7.5px] md:text-[10px] font-black text-white/40 uppercase tracking-[0.2em] md:tracking-[0.3em] flex items-center gap-2 mt-1.5 md:mt-2">
+                                <Activity size={12} className="text-brand-orange" />
+                                Motor de Tarifas de Inventario
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="flex bg-enterprise-950 p-1 rounded-xl shadow-lg border border-white/5">
-                        <button
-                            onClick={() => setFiltroPlaza('TODAS')}
-                            className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all
-                                ${filtroPlaza === 'TODAS'
-                                    ? 'bg-brand-orange text-white shadow-md'
-                                    : 'text-enterprise-400 hover:text-white'}`}
-                        >
-                            Todas
-                        </button>
-                        {plazasUnicas.slice(0, 3).map(p => (
+                    <div className="flex flex-col md:flex-row items-center gap-4 w-full lg:w-auto">
+                        <div className="relative flex-1 w-full md:w-64 group">
+                            <input
+                                type="text"
+                                placeholder="Buscar medio o región..."
+                                value={busqueda}
+                                onChange={(e) => setBusqueda(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] md:text-[10px] font-black text-white uppercase tracking-widest outline-none focus:bg-white/10 focus:border-brand-orange transition-all placeholder:text-white/20"
+                            />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-brand-orange transition-colors" size={14} />
+                        </div>
+
+                        <div className="flex bg-enterprise-950 rounded-xl p-1 w-full md:w-fit shadow-xl border border-white/5 overflow-x-auto no-scrollbar">
                             <button
-                                key={p}
-                                onClick={() => setFiltroPlaza(p)}
-                                className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all
-                                    ${filtroPlaza === p
-                                        ? 'bg-brand-orange text-white shadow-md'
-                                        : 'text-enterprise-400 hover:text-white'}`}
+                                onClick={() => setFiltroPlaza('TODAS')}
+                                className={`flex-1 md:flex-none px-4 md:px-5 py-2 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-[0.1em] whitespace-nowrap transition-all duration-300
+                                    ${filtroPlaza === 'TODAS'
+                                        ? 'bg-brand-orange text-white shadow-lg'
+                                        : 'text-white/30 hover:text-white'}`}
                             >
-                                {p}
+                                Todas
                             </button>
-                        ))}
-                        {plazasUnicas.length > 3 && (
-                            <select
-                                value={plazasUnicas.includes(filtroPlaza) && plazasUnicas.indexOf(filtroPlaza) >= 3 ? filtroPlaza : ''}
-                                onChange={(e) => setFiltroPlaza(e.target.value)}
-                                className="bg-transparent text-enterprise-400 text-[9px] font-black uppercase tracking-widest px-2 outline-none cursor-pointer hover:text-white"
+                            {plazasUnicas.slice(0, 2).map(p => (
+                                <button
+                                    key={p}
+                                    onClick={() => setFiltroPlaza(p)}
+                                    className={`flex-1 md:flex-none px-4 md:px-5 py-2 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-[0.1em] whitespace-nowrap transition-all duration-300
+                                        ${filtroPlaza === p
+                                            ? 'bg-brand-orange text-white shadow-lg'
+                                            : 'text-white/30 hover:text-white'}`}
+                                >
+                                    {p}
+                                </button>
+                            ))}
+                            {plazasUnicas.length > 2 && (
+                                <select
+                                    value={plazasUnicas.includes(filtroPlaza) && plazasUnicas.indexOf(filtroPlaza) >= 2 ? filtroPlaza : ''}
+                                    onChange={(e) => setFiltroPlaza(e.target.value)}
+                                    className="bg-transparent text-white/30 text-[8px] md:text-[9px] font-black uppercase tracking-widest px-2 outline-none cursor-pointer hover:text-white"
+                                >
+                                    <option value="" disabled>Más...</option>
+                                    {plazasUnicas.slice(2).map(p => (
+                                        <option key={p} value={p} className="bg-enterprise-950 text-white">{p}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                            <button
+                                onClick={() => { setProductoEditando(null); setShowForm(true); }}
+                                className="flex-1 md:flex-none h-11 px-6 bg-brand-orange text-white rounded-xl font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-3 hover:bg-brand-orange/90 transition-all shadow-xl active:scale-95"
                             >
-                                <option value="" disabled>Más...</option>
-                                {plazasUnicas.slice(3).map(p => (
-                                    <option key={p} value={p} className="bg-enterprise-950 text-white">{p}</option>
-                                ))}
-                            </select>
-                        )}
+                                <Plus size={16} /> Activo
+                            </button>
+
+                            <button
+                                onClick={handleNormalizeMerida}
+                                className="h-11 w-11 bg-white/5 border border-white/10 text-brand-orange rounded-xl flex items-center justify-center hover:bg-white/10 transition-all shadow-lg group relative flex-shrink-0"
+                                title="Normalizar Mérida"
+                            >
+                                <Wand2 size={16} />
+                            </button>
+                        </div>
                     </div>
-
-                    <button
-                        onClick={() => { setProductoEditando(null); setShowForm(true); }}
-                        className="h-12 px-6 bg-enterprise-950 text-white rounded-2xl font-black uppercase tracking-widest text-[9px] flex items-center gap-3 hover:bg-brand-orange transition-all shadow-lg active:scale-95"
-                    >
-                        <Plus size={16} /> Nuevo Activo
-                    </button>
-
-                    <button
-                        onClick={handleNormalizeMerida}
-                        className="h-12 w-12 bg-white text-brand-orange border border-brand-orange/20 rounded-2xl flex items-center justify-center hover:bg-brand-orange hover:text-white transition-all shadow-lg group relative"
-                        title="Normalizar Datos (Mérida)"
-                    >
-                        <Wand2 size={18} />
-                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-enterprise-950 text-white text-[8px] font-black py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap uppercase tracking-widest pointer-events-none">
-                            Limpiar Mérida
-                        </span>
-                    </button>
                 </div>
             </div>
 
             {/* Selección Rápida por Plaza */}
-            <div className="flex flex-wrap items-center gap-3">
-                <span className="text-[9px] font-black text-enterprise-400 uppercase tracking-widest mr-2">Selección Rápida:</span>
-                {plazasUnicas.map(plaza => {
-                    const idsThisPlaza = productosFiltrados.filter(p => p.plaza === plaza).map(p => p.id);
-                    const isSelected = idsThisPlaza.length > 0 && idsThisPlaza.every(id => selectedIds.includes(id));
+            <div className="flex flex-wrap items-center gap-2 md:gap-3 bg-white p-4 rounded-2xl md:rounded-3xl border border-enterprise-100 shadow-premium overflow-x-auto no-scrollbar">
+                <span className="text-[7px] md:text-[9px] font-black text-enterprise-400 uppercase tracking-widest mr-2 whitespace-nowrap">Rápida:</span>
+                <div className="flex flex-wrap gap-2">
+                    {plazasUnicas.map(plaza => {
+                        const idsThisPlaza = productosFiltrados.filter(p => p.plaza === plaza).map(p => p.id);
+                        const isSelected = idsThisPlaza.length > 0 && idsThisPlaza.every(id => selectedIds.includes(id));
 
-                    return (
-                        <button
-                            key={plaza}
-                            onClick={() => selectByPlaza(plaza)}
-                            className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${isSelected
-                                ? 'bg-brand-orange text-white border-brand-orange shadow-lg shadow-brand-orange/20'
-                                : 'bg-white text-enterprise-400 border-enterprise-100 hover:border-brand-orange hover:text-brand-orange shadow-sm'
-                                }`}
-                        >
-                            <MapPin size={10} className="inline mr-2" /> {plaza}
-                        </button>
-                    );
-                })}
+                        return (
+                            <button
+                                key={plaza}
+                                onClick={() => selectByPlaza(plaza)}
+                                className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[7px] md:text-[9px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${isSelected
+                                    ? 'bg-brand-orange text-white border-brand-orange shadow-lg'
+                                    : 'bg-enterprise-50 text-enterprise-400 border-enterprise-100 hover:border-brand-orange hover:text-brand-orange shadow-sm'
+                                    }`}
+                            >
+                                <MapPin size={9} className="inline mr-1 md:mr-2" /> {plaza}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Acciones Masivas */}
@@ -599,52 +613,50 @@ const ProductManager = ({
                 {/* Mobile view */}
                 <div className="lg:hidden divide-y divide-enterprise-50">
                     {productosFiltrados.length > 0 ? productosFiltrados.map((p) => (
-                        <div key={p.id} className={`p-5 space-y-4 ${!p.activo ? 'bg-enterprise-50/30' : ''} ${selectedIds.includes(p.id) ? 'bg-brand-orange/5' : ''}`}>
-                            <div className="flex justify-between items-start">
-                                <div className="flex items-center gap-3">
-                                    <button onClick={() => toggleSelection(p.id)} className={selectedIds.includes(p.id) ? 'text-brand-orange' : 'text-enterprise-200'}>
+                        <div key={p.id} className={`p-5 space-y-4 ${!p.activo ? 'bg-enterprise-50/30 grayscale opacity-60' : ''} ${selectedIds.includes(p.id) ? 'bg-brand-orange/5' : ''}`}>
+                            <div className="flex justify-between items-start gap-4">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <button onClick={() => toggleSelection(p.id)} className={`flex-shrink-0 ${selectedIds.includes(p.id) ? 'text-brand-orange' : 'text-enterprise-200'}`}>
                                         {selectedIds.includes(p.id) ? <CheckSquare size={18} /> : <Square size={18} />}
                                     </button>
-                                    <div className="w-10 h-10 bg-enterprise-950 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                    <div className="w-10 h-10 bg-enterprise-950 rounded-xl flex items-center justify-center text-white shadow-lg flex-shrink-0">
                                         <Tv size={18} className="text-brand-orange" />
                                     </div>
-                                    <div>
-                                        <h4 className="text-[11px] font-black text-enterprise-950 uppercase">{p.canal}</h4>
-                                        <p className="text-[9px] font-bold text-enterprise-500 uppercase tracking-widest">{p.tipo}</p>
+                                    <div className="min-w-0">
+                                        <h4 className="text-[11px] font-black text-enterprise-950 uppercase truncate">{p.canal}</h4>
+                                        <p className="text-[8px] font-bold text-enterprise-500 uppercase tracking-widest mt-0.5">{p.tipo} • {p.plaza}</p>
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <button onClick={() => handleEdit(p)} className="p-2 text-enterprise-400"><Edit3 size={14} /></button>
-                                    <button onClick={() => handleDelete(p)} className="p-2 text-enterprise-300"><Trash2 size={14} /></button>
+                                <div className="flex gap-1.5 flex-shrink-0">
+                                    <button onClick={() => handleEdit(p)} className="w-9 h-9 flex items-center justify-center bg-enterprise-50 text-enterprise-400 hover:bg-enterprise-950 hover:text-white rounded-lg transition-all border border-enterprise-100"><Edit3 size={14} /></button>
+                                    <button onClick={() => handleDelete(p)} className="w-9 h-9 flex items-center justify-center bg-enterprise-50 text-enterprise-300 hover:bg-brand-magenta hover:text-white rounded-lg transition-all border border-enterprise-100"><Trash2 size={14} /></button>
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between bg-enterprise-50/50 p-4 rounded-2xl border border-enterprise-100/50">
-                                <div className="flex flex-col gap-2">
+                            <div className="flex items-center justify-between bg-enterprise-50/50 p-3 rounded-xl border border-enterprise-100/50">
+                                <div className="flex flex-col gap-1.5 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <span className="px-2 py-0.5 bg-white text-[8px] font-black text-enterprise-600 rounded-md uppercase tracking-wider border border-enterprise-100">
-                                            {p.tipo}
-                                        </span>
-                                        <span className="text-[10px] font-black text-enterprise-950">{p.duracion}</span>
+                                        <span className="text-[9px] font-black text-enterprise-950 truncate">{p.duracion}</span>
                                         <span className="text-enterprise-300">|</span>
-                                        <span className="text-[9px] font-bold text-brand-orange uppercase">{p.horario}</span>
+                                        <span className="text-[8px] font-bold text-brand-orange uppercase truncate">{p.horario}</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <MapPin size={10} className="text-enterprise-300" />
-                                        <span className="text-[9px] font-black text-enterprise-400 uppercase tracking-widest">{p.plaza}</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className={`w-1.5 h-1.5 rounded-full ${p.activo ? 'bg-emerald-500' : 'bg-enterprise-300'}`} />
+                                        <span className="text-[7.5px] font-black text-enterprise-400 uppercase tracking-widest">{p.activo ? 'Activo' : 'En Pausa'}</span>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <span className="text-sm font-black text-enterprise-950 tabular-nums">
+                                <div className="text-right flex-shrink-0">
+                                    <span className="text-sm font-black text-enterprise-950 tabular-nums tracking-tighter">
                                         {formatMXN(p.costo_base, 0)}
                                     </span>
+                                    <p className="text-[7.5px] font-black text-enterprise-300 uppercase italic tracking-widest mt-0.5">Base</p>
                                 </div>
                             </div>
                         </div>
                     )) : (
                         <div className="py-20 text-center">
                             <AlertCircle size={32} className="mx-auto text-enterprise-100 mb-4" />
-                            <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-widest italic">No se hallaron activos</p>
+                            <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-widest italic tracking-[0.3em]">No se hallaron activos</p>
                         </div>
                     )}
                 </div>
