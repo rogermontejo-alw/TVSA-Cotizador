@@ -1,6 +1,6 @@
 export const APP_CONFIG = {
-    VERSION: '1.3.15',
+    VERSION: import.meta.env.APP_VERSION,
     SYSTEM_NAME: 'Commercial Suite',
     ORGANIZATION: 'TelevisaUnivision MID',
-    FULL_VERSION_LABEL: 'V1.3.15 Corporate'
+    FULL_VERSION_LABEL: `V${import.meta.env.APP_VERSION} Corporate`
 };

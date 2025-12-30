@@ -1,9 +1,10 @@
-import { defineConfig } from 'vite' // <--- ¡Esto resuelve "defineConfig is not defined"!
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import packageJson from './package.json'
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  // ** IMPORTANTE: Esta base asegura que GitHub Pages encuentre los archivos estáticos **
-
   plugins: [react()],
+  define: {
+    'import.meta.env.APP_VERSION': JSON.stringify(packageJson.version),
+  },
 })
