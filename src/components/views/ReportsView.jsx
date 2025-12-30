@@ -43,23 +43,28 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
     };
 
     // 📊 Datos para Reportes (Basados en el subCorte)
+    const ganadas = useMemo(() => {
+        return (cotizaciones || []).filter(q => {
+            if (q.estatus !== 'ganada') return false;
+            const fechaQ = new Date(q.fecha_cierre_real || q.created_at || q.fecha);
+            const start = new Date(fechaInicio);
+            const end = new Date(fechaFin);
+            end.setHours(23, 59, 59, 999);
+            return fechaQ >= start && fechaQ <= end;
+        });
+    }, [cotizaciones, fechaInicio, fechaFin]);
+
     const datosFinancierosTotal = useMemo(() => {
         if (subCorte === 'pipeline') {
-            return (cotizaciones || []).filter(q => {
-                if (q.estatus !== 'ganada') return false;
-                const fechaQ = new Date(q.fecha_cierre_real || q.created_at || q.fecha);
-                const start = new Date(fechaInicio);
-                const end = new Date(fechaFin);
-                end.setHours(23, 59, 59, 999);
-                return fechaQ >= start && fechaQ <= end;
-            }).map(q => ({
+            return ganadas.map(q => ({
                 id: q.id,
                 cliente_id: q.cliente_id,
                 fecha: q.fecha_cierre_real || q.created_at,
                 monto: parseFloat(q.subtotalGeneral || q.total / 1.16) || 0,
-                folio: q.folio,
+                folio_referencia: q.folio,
                 mc_id: q.mc_id,
-                tipo: 'Pipeline'
+                tipo: 'Pipeline',
+                original: q
             }));
         } else {
             return (contratosEjecucion || []).filter(ce => {
@@ -70,15 +75,16 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 return fechaE >= start && fechaE <= end;
             }).map(ce => ({
                 id: ce.id,
-                cliente_id: ce.master_contracts?.cliente_id,
+                cliente_id: ce.master_contracts?.cliente_id || ce.cotizaciones?.cliente_id,
                 fecha: ce.fecha_inicio_pauta,
                 monto: parseFloat(ce.monto_ejecucion) || 0,
-                folio: ce.numero_contrato,
+                folio_referencia: ce.numero_contrato,
                 mc_id: ce.mc_id,
-                tipo: 'Ejecución'
+                tipo: 'Ejecución',
+                original: ce
             }));
         }
-    }, [cotizaciones, contratosEjecucion, subCorte, fechaInicio, fechaFin]);
+    }, [ganadas, contratosEjecucion, subCorte, fechaInicio, fechaFin]);
 
     // 1. REPORTE: Ventas por Mes (Corte Mensual Matrix: Clientes x Meses)
     const matrizMensual = useMemo(() => {
@@ -238,22 +244,25 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             ]);
             rows.push(['TOTAL CIUDAD', ...matrizCiudad.plazas.map(p => matrizCiudad.totalesPorPlaza[p] || 0), matrizCiudad.granTotal]);
         } else if (id === 'control-cierres') {
-            title = "CONTROL ADMINISTRATIVO DE CIERRES Y EJECUCIONES";
-            headers = ['F. Cierre', 'F. Pauta', 'Cliente', 'Folio Cotz', 'Nº Contrato', 'M. Contract', 'Factura', 'Monto'];
-            rows = (cotizaciones || []).filter(q => q.estatus === 'ganada').map(q => {
-                const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
-                const ce = (contratosEjecucion || []).find(e => String(e.cotizacion_id) === String(q.id));
-                const registroCobranza = (cobranza || []).find(cob => String(cob.cotizacion_id) === String(q.id) || String(cob.contrato_ejecucion_id) === String(ce?.id));
-                const mc = (masterContracts || []).find(m => String(m.id) === String(q.mc_id) || String(m.id) === String(ce?.mc_id));
+            title = subCorte === 'pipeline' ? "CONTROL ADMINISTRATIVO DE CIERRES (COMMERCIAL)" : "CONTROL ADMINISTRATIVO DE EJECUCIONES (FINANCIAL)";
+            headers = ['Fecha Ref', 'Cliente', 'Folio Cotz', 'Nº Contrato', 'M. Contract', 'Factura', 'Monto'];
+            rows = datosFinancierosTotal.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).map(item => {
+                const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
+                const q = subCorte === 'pipeline' ? item.original : (cotizaciones || []).find(c => c.id === item.original?.cotizacion_id);
+                const ce = subCorte === 'ejecucion' ? item.original : (contratosEjecucion || []).find(e => e.cotizacion_id === item.id);
+                const registroCobranza = (cobranza || []).find(cob => (q && String(cob.cotizacion_id) === String(q.id)) || (ce && String(cob.contrato_ejecucion_id) === String(ce.id)));
+                const mc = (masterContracts || []).find(m => String(m.id) === String(item.mc_id) || (q && String(m.id) === String(q.mc_id)));
+
+                const numContrato = ce?.numero_contrato || q?.numero_contrato;
+
                 return [
-                    new Date(q.fecha_cierre_real || q.created_at).toLocaleDateString('es-MX'),
-                    ce ? new Date(ce.fecha_inicio_pauta).toLocaleDateString('es-MX') : 'PENDIENTE',
+                    new Date(item.fecha).toLocaleDateString('es-MX'),
                     cliente?.nombre_empresa || 'S/N',
-                    q.folio || q.id,
-                    ce?.numero_contrato || q.numero_contrato || 'FALTA',
+                    q?.folio || '-',
+                    numContrato || 'FALTA',
                     mc ? (mc.numero_mc || mc.numero_contrato || 'VINCULADO') : 'FALTA',
                     registroCobranza?.numero_factura || 'FALTA',
-                    parseFloat(ce?.monto_ejecucion || q.subtotalGeneral || q.total / 1.16) || 0
+                    item.monto
                 ];
             });
         } else if (id === 'resumen-clientes') {
@@ -485,7 +494,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     ))}
                 </div>
 
-                {['ventas-mes', 'ventas-canal', 'ventas-ciudad'].includes(seccionReporte) && (
+                {['ventas-mes', 'ventas-canal', 'ventas-ciudad', 'control-cierres'].includes(seccionReporte) && (
                     <div className="flex gap-2 p-1 bg-enterprise-100 rounded-xl w-fit self-center">
                         <button
                             onClick={() => setSubCorte('pipeline')}
@@ -678,75 +687,90 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     <>
                         <div className="p-6 md:p-8 border-b border-enterprise-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-enterprise-950 text-white">
                             <div>
-                                <h3 className="text-lg font-black tracking-tighter uppercase italic italic-brand">Control Administrativo de Cierres</h3>
+                                <h3 className="text-lg font-black tracking-tighter uppercase italic italic-brand">
+                                    {subCorte === 'pipeline' ? 'Control Administrativo de Cierres' : 'Control Administrativo de Ejecuciones'}
+                                </h3>
                                 <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5 italic">Folios, Contratos y Master Contracts</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-[9px] font-black uppercase text-brand-orange tracking-widest">Cierres en Periodo</p>
-                                <p className="text-2xl font-black">{ganadas.length}</p>
+                                <p className="text-[9px] font-black uppercase text-brand-orange tracking-widest">
+                                    {subCorte === 'pipeline' ? 'Cierres en Periodo' : 'Contratos en Periodo'}
+                                </p>
+                                <p className="text-2xl font-black">{datosFinancierosTotal.length}</p>
                             </div>
                         </div>
                         <div className="overflow-x-auto custom-scrollbar">
                             <table className="w-full text-left border-collapse min-w-[900px]">
                                 <thead>
                                     <tr className="bg-slate-50 border-b border-gray-200">
-                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Fecha Cierre</th>
+                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Fecha {subCorte === 'pipeline' ? 'Cierre' : 'Pauta'}</th>
                                         <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Cliente / Empresa</th>
                                         <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Folio Cotz</th>
                                         <th className="py-4 px-6 text-[9px] font-black text-slate-500 uppercase tracking-widest border-r border-gray-200">Master Contract</th>
-                                        <th className="py-4 px-6 text-[9px] font-black text-emerald-600 uppercase tracking-widest border-r border-gray-200">Orden</th>
+                                        <th className="py-4 px-6 text-[9px] font-black text-emerald-600 uppercase tracking-widest border-r border-gray-200">Orden / Contrato</th>
                                         <th className="py-4 px-6 text-[9px] font-black text-blue-600 uppercase tracking-widest border-r border-gray-200">Factura</th>
                                         <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Inversión Neta</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {ganadas.sort((a, b) => new Date(b.fecha_cierre_real) - new Date(a.fecha_cierre_real)).map((q, i) => {
-                                        const cliente = (clientes || []).find(c => String(c.id) === String(q.cliente_id));
+                                    {datosFinancierosTotal.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).map((item, i) => {
+                                        const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
+
+                                        // Extraer datos originales para detalles
+                                        const q = subCorte === 'pipeline' ? item.original : (cotizaciones || []).find(c => c.id === item.original?.cotizacion_id);
+                                        const ce = subCorte === 'ejecucion' ? item.original : (contratosEjecucion || []).find(e => e.cotizacion_id === item.id);
+
+                                        const regCob = (cobranza || []).find(cob =>
+                                            (q && String(cob.cotizacion_id) === String(q.id)) ||
+                                            (ce && String(cob.contrato_ejecucion_id) === String(ce.id))
+                                        );
+
+                                        const mc = (masterContracts || []).find(m =>
+                                            String(m.id) === String(item.mc_id) ||
+                                            (q && String(m.id) === String(q.mc_id)) ||
+                                            (ce && String(m.id) === String(ce.mc_id))
+                                        );
+
                                         return (
                                             <tr key={i} className="hover:bg-slate-50/50">
                                                 <td className="py-4 px-6 text-[10px] font-bold text-gray-400 border-r border-gray-100">
-                                                    {new Date(q.fecha_cierre_real || q.created_at).toLocaleDateString('es-MX')}
+                                                    {new Date(item.fecha).toLocaleDateString('es-MX')}
                                                 </td>
                                                 <td className="py-4 px-6 border-r border-gray-100 font-black text-[10px] text-slate-900 uppercase">
                                                     {cliente?.nombre_empresa || 'S/N'}
                                                 </td>
                                                 <td className="py-4 px-6 border-r border-gray-100 text-[10px] font-bold text-brand-orange uppercase tracking-tighter">
-                                                    {q.folio || q.id}
+                                                    {q?.folio || '-'}
                                                 </td>
                                                 <td className="py-4 px-6 border-r border-gray-100 text-center">
-                                                    {(() => {
-                                                        const mc = (masterContracts || []).find(m => String(m.id) === String(q.mc_id));
-                                                        return (
-                                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${mc ? 'bg-slate-100 text-slate-600' : 'bg-red-50 text-red-400'}`}>
-                                                                {mc ? (mc.numero_mc || mc.numero_contrato || mc.folio || 'VINCULADO') : 'FALTA'}
-                                                            </span>
-                                                        );
-                                                    })()}
-                                                </td>
-                                                <td className="py-4 px-6 border-r border-gray-100 text-center">
-                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${q.numero_contrato ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-400'}`}>
-                                                        {q.numero_contrato || 'FALTA'}
+                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${mc ? 'bg-slate-100 text-slate-600' : 'bg-red-50 text-red-400'}`}>
+                                                        {mc ? (mc.numero_mc || mc.numero_contrato || 'VINCULADO') : 'FALTA'}
                                                     </span>
                                                 </td>
                                                 <td className="py-4 px-6 border-r border-gray-100 text-center">
                                                     {(() => {
-                                                        const regCob = (cobranza || []).find(cob => String(cob.cotizacion_id) === String(q.id));
+                                                        const numContrato = ce?.numero_contrato || q?.numero_contrato;
                                                         return (
-                                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${regCob?.numero_factura ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-400'}`}>
-                                                                {regCob?.numero_factura || 'FALTA'}
+                                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${numContrato ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-400'}`}>
+                                                                {numContrato || 'FALTA'}
                                                             </span>
                                                         );
                                                     })()}
                                                 </td>
+                                                <td className="py-4 px-6 border-r border-gray-100 text-center">
+                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${regCob?.numero_factura ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-400'}`}>
+                                                        {regCob?.numero_factura || 'FALTA'}
+                                                    </span>
+                                                </td>
                                                 <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900">
-                                                    {formatMXN(q.subtotalGeneral || q.total / 1.16)}
+                                                    {formatMXN(item.monto)}
                                                 </td>
                                             </tr>
                                         );
                                     })}
-                                    {ganadas.length === 0 && (
+                                    {datosFinancierosTotal.length === 0 && (
                                         <tr>
-                                            <td colSpan="6" className="py-20 text-center text-[10px] font-black text-gray-300 uppercase italic tracking-widest">Sin ventas ganadas en este periodo</td>
+                                            <td colSpan="7" className="py-20 text-center text-[10px] font-black text-gray-300 uppercase italic tracking-widest">Sin registros en este periodo</td>
                                         </tr>
                                     )}
                                 </tbody>
