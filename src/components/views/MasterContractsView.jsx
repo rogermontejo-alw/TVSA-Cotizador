@@ -35,13 +35,18 @@ const MasterContractsView = ({
     });
 
     const [executionData, setExecutionData] = useState({
+        cliente_id: '',
         mc_id: '',
         cotizacion_id: '',
         numero_contrato: '',
         monto_ejecucion: '',
         fecha_inicio_pauta: '',
+        fecha_fin_pauta: '',
         notas: ''
     });
+
+    const [isLinkingQuote, setIsLinkingQuote] = useState(false);
+    const [targetExecution, setTargetExecution] = useState(null);
 
     const enrichedMCs = useMemo(() => {
         return (masterContracts || []).map(mc => {
@@ -98,16 +103,36 @@ const MasterContractsView = ({
         e.preventDefault();
         const success = await onSaveContrato('contratos_ejecucion', executionData);
         if (success) {
-            setMensaje({ tipo: 'exito', texto: 'Contrato de ejecución vinculado correctamente' });
+            setMensaje({ tipo: 'exito', texto: 'Contrato de registro creado correctamente' });
             setIsExecuting(false);
             setExecutionData({
+                cliente_id: '',
                 mc_id: '',
                 cotizacion_id: '',
                 numero_contrato: '',
                 monto_ejecucion: '',
                 fecha_inicio_pauta: '',
+                fecha_fin_pauta: '',
                 notas: ''
             });
+        }
+    };
+
+    const handleLinkQuoteAction = async (quoteId) => {
+        const quote = cotizaciones.find(q => q.id === quoteId);
+        if (!quote || !targetExecution) return;
+
+        const payload = {
+            ...targetExecution,
+            cotizacion_id: quoteId,
+            monto_ejecucion: quote.subtotalGeneral || quote.total / 1.16
+        };
+
+        const success = await onSaveContrato('contratos_ejecucion', payload);
+        if (success) {
+            setMensaje({ tipo: 'exito', texto: 'Cotización vinculada al contrato con éxito' });
+            setIsLinkingQuote(false);
+            setTargetExecution(null);
         }
     };
 
@@ -209,7 +234,23 @@ const MasterContractsView = ({
                     </div>
 
                     <button
-                        onClick={() => setIsCreating(true)}
+                        onClick={() => {
+                            if (activeTab === 'mcs') {
+                                setIsCreating(true);
+                            } else {
+                                setExecutionData({
+                                    cliente_id: '',
+                                    mc_id: '',
+                                    cotizacion_id: '',
+                                    numero_contrato: '',
+                                    monto_ejecucion: '',
+                                    fecha_inicio_pauta: '',
+                                    fecha_fin_pauta: '',
+                                    notas: ''
+                                });
+                                setIsExecuting(true);
+                            }
+                        }}
                         className="w-full lg:w-auto px-8 py-3.5 bg-white text-enterprise-950 rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-brand-orange hover:text-white transition-all shadow-xl active:scale-95 group/btn"
                     >
                         <Plus size={16} strokeWidth={3} className="group-hover/btn:rotate-90 transition-transform duration-300" />
@@ -332,7 +373,23 @@ const MasterContractsView = ({
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <span className="text-[9px] font-black text-enterprise-400 uppercase italic">Folio {ce.cotizaciones?.folio}</span>
+                                                {ce.cotizacion_id ? (
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-[9px] font-black text-emerald-600 uppercase italic flex items-center gap-1">
+                                                            <CheckCircle2 size={10} /> Folio {ce.cotizaciones?.folio}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => {
+                                                            setTargetExecution(ce);
+                                                            setIsLinkingQuote(true);
+                                                        }}
+                                                        className="px-3 py-1 bg-brand-orange/10 text-brand-orange rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-brand-orange hover:text-white transition-all"
+                                                    >
+                                                        Vincular Folio
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
@@ -426,39 +483,85 @@ const MasterContractsView = ({
             {/* Modal: Vincular Ejecución (Contrato Individual) */}
             {isExecuting && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-enterprise-950/80 backdrop-blur-sm animate-premium-fade">
-                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl border border-white">
+                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl border border-white max-h-[90vh] overflow-y-auto custom-scrollbar">
                         <div className="flex items-center gap-3 mb-8">
-                            <Calculator className="text-brand-orange" size={20} />
+                            <div className="w-10 h-10 bg-brand-orange rounded-xl flex items-center justify-center text-white shadow-lg">
+                                <Calculator size={20} strokeWidth={3} />
+                            </div>
                             <h3 className="text-[12px] font-black text-enterprise-950 uppercase italic tracking-widest">Formalizar Contrato</h3>
                         </div>
 
                         <form onSubmit={handleSaveExecution} className="space-y-5">
                             <div className="space-y-1.5">
-                                <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Vincular a Convenio</label>
+                                <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2 tracking-widest">Socio Comercial</label>
                                 <select
                                     required
-                                    value={executionData.mc_id}
-                                    onChange={(e) => setExecutionData({ ...executionData, mc_id: e.target.value })}
-                                    className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none appearance-none uppercase"
+                                    value={executionData.cliente_id}
+                                    onChange={(e) => setExecutionData({ ...executionData, cliente_id: e.target.value, mc_id: '' })}
+                                    className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none appearance-none uppercase shadow-inner"
                                 >
-                                    <option value="">Elegir Convenio / Master Contract...</option>
-                                    {enrichedMCs.map(mc => (
-                                        <option key={mc.id} value={mc.id}>{mc.cliente?.nombre_empresa} ({mc.numero_mc})</option>
-                                    ))}
+                                    <option value="">Seleccionar Socio...</option>
+                                    {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre_empresa}</option>)}
                                 </select>
                             </div>
 
+                            {executionData.cliente_id && (
+                                <div className="space-y-1.5 animate-premium-fade">
+                                    <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2 tracking-widest">Seleccionar Convenio</label>
+                                    <select
+                                        required
+                                        value={executionData.mc_id}
+                                        onChange={(e) => setExecutionData({ ...executionData, mc_id: e.target.value })}
+                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none appearance-none uppercase shadow-inner"
+                                    >
+                                        <option value="">Elegir Convenio Activo...</option>
+                                        {enrichedMCs
+                                            .filter(m => String(m.cliente_id) === String(executionData.cliente_id))
+                                            .map(mc => (
+                                                <option key={mc.id} value={mc.id}>
+                                                    {mc.numero_mc} (Disp: {formatMXN(mc.saldoDisponible, 0)})
+                                                </option>
+                                            ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* MINI DASHBOARD DE APOYO VISUAL */}
+                            {executionData.mc_id && (
+                                <div className="p-4 bg-enterprise-950 rounded-2xl space-y-3 shadow-xl border border-white/10 animate-premium-fade">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-[7px] font-black text-white/40 uppercase tracking-widest mb-1">Saldo Disponible</p>
+                                            <p className="text-[11px] font-black text-emerald-400 leading-none">
+                                                {formatMXN(enrichedMCs.find(m => m.id === executionData.mc_id)?.saldoDisponible)}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[7px] font-black text-white/40 uppercase tracking-widest mb-1">Vigencia</p>
+                                            <p className="text-[9px] font-black text-brand-orange leading-none uppercase">
+                                                Al {new Date(enrichedMCs.find(m => m.id === executionData.mc_id)?.fecha_fin).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full transition-all duration-1000 ${enrichedMCs.find(m => m.id === executionData.mc_id)?.porcentajeConsumo > 90 ? 'bg-error' : 'bg-emerald-500'}`}
+                                            style={{ width: `${Math.min(enrichedMCs.find(m => m.id === executionData.mc_id)?.porcentajeConsumo, 100)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="space-y-1.5">
-                                <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Seleccionar Pipeline Won</label>
+                                <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2 tracking-widest text-brand-orange">Vincular Cotización Folio (Opcional)</label>
                                 <select
-                                    required
                                     value={executionData.cotizacion_id}
                                     onChange={(e) => handleSelectQuote(e.target.value)}
-                                    className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none appearance-none uppercase"
+                                    className="w-full h-11 px-4 bg-brand-orange/5 border border-brand-orange/20 rounded-xl text-[10px] font-black outline-none appearance-none uppercase italic"
                                 >
-                                    <option value="">Elegir Cotización Ganada...</option>
+                                    <option value="">Vincular Folio Ganado...</option>
                                     {enrichedMCs.find(mc => mc.id === executionData.mc_id)?.cotizacionesDisponibles.map(q => (
-                                        <option key={q.id} value={q.id}>{q.folio} - {formatMXN(q.subtotalGeneral || q.total / 1.16)}</option>
+                                        <option key={q.id} value={q.id}>{q.folio} - {formatMXN(q.subtotalGeneral || q.total / 1.16, 0)}</option>
                                     ))}
                                 </select>
                             </div>
@@ -472,37 +575,106 @@ const MasterContractsView = ({
                                         placeholder="CTR-..."
                                         value={executionData.numero_contrato}
                                         onChange={(e) => setExecutionData({ ...executionData, numero_contrato: e.target.value.toUpperCase() })}
-                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none uppercase"
+                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none uppercase shadow-inner"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Monto a Vincular</label>
+                                    <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Valor Contrato ($)</label>
                                     <input
                                         type="number"
                                         required
                                         value={executionData.monto_ejecucion}
                                         onChange={(e) => setExecutionData({ ...executionData, monto_ejecucion: e.target.value })}
-                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none"
+                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none shadow-inner"
                                     />
                                 </div>
                             </div>
 
-                            <div className="space-y-1.5">
-                                <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Fecha Inicio Pauta</label>
-                                <input
-                                    type="date"
-                                    required
-                                    value={executionData.fecha_inicio_pauta}
-                                    onChange={(e) => setExecutionData({ ...executionData, fecha_inicio_pauta: e.target.value })}
-                                    className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none"
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Inicio Pauta</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={executionData.fecha_inicio_pauta}
+                                        onChange={(e) => setExecutionData({ ...executionData, fecha_inicio_pauta: e.target.value })}
+                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none shadow-inner"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Fin Pauta</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={executionData.fecha_fin_pauta}
+                                        onChange={(e) => setExecutionData({ ...executionData, fecha_fin_pauta: e.target.value })}
+                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none shadow-inner"
+                                    />
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 pt-4">
-                                <button type="button" onClick={() => setIsExecuting(false)} className="h-12 text-[9px] font-black uppercase tracking-widest text-enterprise-400">Descartar</button>
-                                <button type="submit" className="h-12 bg-brand-orange text-white rounded-xl text-[9px] font-black uppercase tracking-[.2em] shadow-xl shadow-brand-orange/20 active:scale-95 transition-all">Sellar Contrato</button>
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-enterprise-50">
+                                <button type="button" onClick={() => setIsExecuting(false)} className="h-12 text-[9px] font-black uppercase tracking-widest text-enterprise-400 hover:text-error transition-colors">Abortar</button>
+                                <button type="submit" className="h-12 bg-enterprise-950 text-white rounded-xl text-[9px] font-black uppercase tracking-[.2em] shadow-xl hover:bg-brand-orange active:scale-95 transition-all">Crear Contrato</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal: Vincular Cotización (Opción A) */}
+            {isLinkingQuote && targetExecution && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-enterprise-950/80 backdrop-blur-sm animate-premium-fade">
+                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl border border-white">
+                        <div className="flex items-center gap-3 mb-8">
+                            <FileText className="text-brand-orange" size={24} />
+                            <div>
+                                <h3 className="text-[12px] font-black text-enterprise-950 uppercase italic tracking-widest leading-none">Vincular Folio</h3>
+                                <p className="text-[7px] font-bold text-enterprise-400 uppercase tracking-widest mt-1">Para CTR: {targetExecution.numero_contrato}</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2 tracking-widest">Pipeline Won Disponible</label>
+                                <div className="grid gap-2">
+                                    {(() => {
+                                        // Encontrar el cliente del contrato a través del MC
+                                        const mc = masterContracts.find(m => String(m.id) === String(targetExecution.mc_id));
+                                        const qDisponibles = cotizaciones.filter(q =>
+                                            String(q.cliente_id) === String(mc?.cliente_id) &&
+                                            q.estatus === 'ganada' &&
+                                            !(contratosEjecucion || []).some(ce => String(ce.cotizacion_id) === String(q.id))
+                                        );
+
+                                        return qDisponibles.length > 0 ? qDisponibles.map(q => (
+                                            <button
+                                                key={q.id}
+                                                onClick={() => handleLinkQuoteAction(q.id)}
+                                                className="w-full p-4 bg-enterprise-50 border border-enterprise-100 rounded-2xl text-left hover:border-brand-orange group transition-all"
+                                            >
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-enterprise-950 uppercase">{q.folio}</p>
+                                                        <p className="text-[8px] font-bold text-enterprise-400 uppercase mt-1">{new Date(q.created_at).toLocaleDateString()}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] font-black text-brand-orange italic">{formatMXN(q.subtotalGeneral || q.total / 1.16, 0)}</p>
+                                                        <ArrowRight size={14} className="ml-auto mt-1 text-enterprise-200 group-hover:text-brand-orange group-hover:translate-x-1 transition-all" />
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        )) : (
+                                            <div className="py-10 text-center border-2 border-dashed border-enterprise-100 rounded-3xl">
+                                                <p className="text-[8px] font-black text-enterprise-300 uppercase tracking-widest italic">No hay folios 'Won' pendientes</p>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+
+                            <button onClick={() => { setIsLinkingQuote(false); setTargetExecution(null); }} className="w-full h-12 text-[9px] font-black uppercase tracking-widest text-enterprise-400">Cancelar vinculación</button>
+                        </div>
                     </div>
                 </div>
             )}
