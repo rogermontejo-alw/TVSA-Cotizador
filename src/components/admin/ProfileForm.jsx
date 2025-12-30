@@ -11,6 +11,8 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
         telefono: '',
         puesto: 'Asesor Comercial',
         email: '',
+        iniciales: '',
+        codigo_ciudad: 'MID',
         newPassword: '',
         confirmPassword: ''
     });
@@ -24,6 +26,8 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
             telefono: user.telefono || '',
             puesto: user.puesto || 'Asesor Comercial',
             email: user.email || '',
+            iniciales: user.iniciales || '',
+            codigo_ciudad: user.codigo_ciudad || 'MID',
             newPassword: '',
             confirmPassword: ''
         });
@@ -38,6 +42,8 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
             telefono: '',
             puesto: 'Asesor Comercial',
             email: '',
+            iniciales: '',
+            codigo_ciudad: 'MID',
             newPassword: '',
             confirmPassword: ''
         });
@@ -84,6 +90,8 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
                 telefono: userFormData.telefono,
                 puesto: userFormData.puesto,
                 email: userFormData.email, // Guardamos el email en la DB para el directorio
+                iniciales: userFormData.iniciales.toUpperCase(),
+                codigo_ciudad: userFormData.codigo_ciudad.toUpperCase(),
                 id: selectedUser?.id // Si es nuevo, esto es undefined
             };
 
@@ -197,15 +205,25 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
                                             />
                                         </div>
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Teléfono Directo</label>
-                                        <div className="relative">
-                                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Iniciales (Folios)</label>
                                             <input
-                                                type="tel"
-                                                value={userFormData.telefono}
-                                                onChange={(e) => setUserFormData({ ...userFormData, telefono: e.target.value })}
-                                                className="w-full p-3.5 pl-12 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-xl transition-all font-bold outline-none text-sm"
+                                                type="text"
+                                                value={userFormData.iniciales}
+                                                onChange={(e) => setUserFormData({ ...userFormData, iniciales: e.target.value.slice(0, 5) })}
+                                                placeholder="EJ. RAM"
+                                                className="w-full p-3.5 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-xl transition-all font-bold outline-none text-sm uppercase"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Matriz (MID)</label>
+                                            <input
+                                                type="text"
+                                                value={userFormData.codigo_ciudad}
+                                                onChange={(e) => setUserFormData({ ...userFormData, codigo_ciudad: e.target.value.slice(0, 5) })}
+                                                placeholder="EJ. MID"
+                                                className="w-full p-3.5 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-xl transition-all font-bold outline-none text-sm uppercase"
                                             />
                                         </div>
                                     </div>

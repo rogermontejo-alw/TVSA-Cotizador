@@ -210,6 +210,7 @@ const CotizadorView = ({
                     configuracion={configuracion}
                     onSaveClient={onSaveClient}
                     masterContracts={masterContracts}
+                    perfil={data.perfil}
                     setMensaje={setMensajeAdmin}
                 />
             )}

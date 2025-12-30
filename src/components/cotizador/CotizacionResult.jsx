@@ -13,6 +13,7 @@ const CotizacionResult = ({
     mostrarPropuesta,
     onSaveClient,
     masterContracts = [],
+    perfil = null,
     setMensaje
 }) => {
     const [confirmingStage, setConfirmingStage] = useState(null);
@@ -86,7 +87,18 @@ const CotizacionResult = ({
             const payload = {
                 id: isNew ? undefined : cotizacion.id,
                 cliente_id: cliente.id,
-                folio: cotizacion.folio || (isNew ? `FOL-${Math.floor(100000 + Math.random() * 900000)}` : cotizacion.id),
+                folio: cotizacion.folio || (() => {
+                    const initials = (perfil?.iniciales || 'TV').toUpperCase();
+                    const city = (perfil?.codigo_ciudad || 'MID').toUpperCase();
+                    const now = new Date();
+                    const dateStr = now.getFullYear().toString() +
+                        (now.getMonth() + 1).toString().padStart(2, '0') +
+                        now.getDate().toString().padStart(2, '0') +
+                        now.getHours().toString().padStart(2, '0') +
+                        now.getMinutes().toString().padStart(2, '0');
+                    const random = Math.random().toString(36).substring(2, 4).toUpperCase();
+                    return `${initials}${city}-${dateStr}${random}`;
+                })(),
                 monto_total: cotizacion.total || 0,
                 dias_campana: cotizacion.diasCampana || 30,
                 paquete_vix: !!cotizacion.paqueteVIX,
