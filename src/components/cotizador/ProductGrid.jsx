@@ -1,28 +1,30 @@
 import React, { useMemo, useState } from 'react';
-import { Search, Plus, Tv, Layers, Zap } from 'lucide-react';
+import { Plus, Tv, Layers, Zap, MapPin, ChevronDown } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
 const ProductGrid = ({
     productos = [],
     productosSeleccionados = [],
     plazaSeleccionada = '',
+    setPlazaSeleccionada, // Prop to update global plaza if needed
     clienteSeleccionado = null,
     calcularPrecioUnitario,
     agregarProducto
 }) => {
-    const [busqueda, setBusqueda] = useState('');
     const [filtroCanal, setFiltroCanal] = useState('');
     const [filtroHorario, setFiltroHorario] = useState('');
     const [filtroTipo, setFiltroTipo] = useState('');
 
     const options = useMemo(() => {
-        const available = productos.filter(p => !productosSeleccionados.some(ps => ps.id === p.id) && (plazaSeleccionada === '' || p.plaza === plazaSeleccionada));
+        // available for listing filters
+        const available = productos.filter(p => !productosSeleccionados.some(ps => ps.id === p.id));
         return {
+            plazas: [...new Set(available.map(p => p.plaza))].sort(),
             canales: [...new Set(available.map(p => p.canal))].sort(),
             horarios: [...new Set(available.map(p => p.horario))].sort(),
             tipos: [...new Set(available.map(p => p.tipo))].sort()
         };
-    }, [productos, productosSeleccionados, plazaSeleccionada]);
+    }, [productos, productosSeleccionados]);
 
     const productosFiltrados = useMemo(() => {
         return productos.filter(p =>
@@ -31,18 +33,13 @@ const ProductGrid = ({
             (plazaSeleccionada === '' || p.plaza === plazaSeleccionada) &&
             (filtroCanal === '' || p.canal === filtroCanal) &&
             (filtroHorario === '' || p.horario === filtroHorario) &&
-            (filtroTipo === '' || p.tipo === filtroTipo) &&
-            (
-                p.canal.toLowerCase().includes(busqueda.toLowerCase()) ||
-                p.tipo.toLowerCase().includes(busqueda.toLowerCase()) ||
-                p.horario.toLowerCase().includes(busqueda.toLowerCase())
-            )
+            (filtroTipo === '' || p.tipo === filtroTipo)
         );
-    }, [productos, busqueda, productosSeleccionados, plazaSeleccionada, filtroCanal, filtroHorario, filtroTipo]);
+    }, [productos, productosSeleccionados, plazaSeleccionada, filtroCanal, filtroHorario, filtroTipo]);
 
     return (
         <div className="bg-white rounded-2xl shadow-premium border border-enterprise-100 flex flex-col overflow-hidden animate-premium-fade w-full h-[450px]">
-            {/* Header / Search Area */}
+            {/* Header / Filter Area - Reordered: Plaza, Canal, Tipo, Horario */}
             <div className="bg-enterprise-950 p-3 space-y-2 shrink-0">
                 <div className="flex items-center justify-between">
                     <div>
@@ -55,7 +52,21 @@ const ProductGrid = ({
                     <span className="text-[9px] font-black text-white/70">{productosFiltrados.length}</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className="grid grid-cols-2 gap-1.5 relative">
+                    {/* PLAZA FILTER (Replacing Search) */}
+                    <div className="relative">
+                        <select
+                            value={plazaSeleccionada}
+                            onChange={(e) => setPlazaSeleccionada(e.target.value)}
+                            className="w-full h-7 bg-white/10 border border-white/20 rounded pl-7 pr-2 font-black text-white text-[8px] appearance-none outline-none focus:border-brand-orange/50 transition-all"
+                        >
+                            <option value="" className="bg-enterprise-900">ALL PLAZAS</option>
+                            {options.plazas.map(p => <option key={p} value={p} className="bg-enterprise-900">{p.toUpperCase()}</option>)}
+                        </select>
+                        <MapPin size={9} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-brand-orange" />
+                        <ChevronDown size={8} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+                    </div>
+
                     <select
                         value={filtroCanal}
                         onChange={(e) => setFiltroCanal(e.target.value)}
@@ -65,14 +76,6 @@ const ProductGrid = ({
                         {options.canales.map(c => <option key={c} value={c} className="bg-enterprise-900">{c.toUpperCase()}</option>)}
                     </select>
                     <select
-                        value={filtroHorario}
-                        onChange={(e) => setFiltroHorario(e.target.value)}
-                        className="h-7 bg-white/10 border border-white/20 rounded px-2 font-black text-white text-[8px] appearance-none outline-none"
-                    >
-                        <option value="" className="bg-enterprise-900">TIME</option>
-                        {options.horarios.map(h => <option key={h} value={h} className="bg-enterprise-900">{h.toUpperCase()}</option>)}
-                    </select>
-                    <select
                         value={filtroTipo}
                         onChange={(e) => setFiltroTipo(e.target.value)}
                         className="h-7 bg-white/10 border border-white/20 rounded px-2 font-black text-white text-[8px] appearance-none outline-none"
@@ -80,20 +83,18 @@ const ProductGrid = ({
                         <option value="" className="bg-enterprise-900">TYPE</option>
                         {options.tipos.map(t => <option key={t} value={t} className="bg-enterprise-900">{t.toUpperCase()}</option>)}
                     </select>
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={busqueda}
-                            onChange={(e) => setBusqueda(e.target.value)}
-                            placeholder="SEARCH..."
-                            className="w-full h-7 bg-white/10 border border-white/20 rounded pl-7 pr-2 font-black text-white text-[8px] outline-none placeholder:text-white/40"
-                        />
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/50" size={9} />
-                    </div>
+                    <select
+                        value={filtroHorario}
+                        onChange={(e) => setFiltroHorario(e.target.value)}
+                        className="h-7 bg-white/10 border border-white/20 rounded px-2 font-black text-white text-[8px] appearance-none outline-none"
+                    >
+                        <option value="" className="bg-enterprise-900">TIME</option>
+                        {options.horarios.map(h => <option key={h} value={h} className="bg-enterprise-900">{h.toUpperCase()}</option>)}
+                    </select>
                 </div>
             </div>
 
-            {/* Catalog Grid - Flex Grow */}
+            {/* Catalog Grid */}
             <div className="overflow-y-auto p-2 space-y-1 custom-scrollbar bg-enterprise-50/30 flex-1">
                 {productosFiltrados.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center opacity-30">
@@ -148,9 +149,8 @@ const ProductGrid = ({
                 )}
             </div>
 
-            {/* Performance Footer */}
             <div className="bg-enterprise-950 px-3 py-1.5 flex justify-between items-center text-white/60 border-t border-white/5 shrink-0">
-                <span className="text-[6px] font-black uppercase tracking-widest italic">Live Status</span>
+                <span className="text-[6px] font-black uppercase tracking-widest italic">Live Inventory Status</span>
                 <span className="text-[6px] font-black uppercase tracking-widest">Master 2025</span>
             </div>
         </div>

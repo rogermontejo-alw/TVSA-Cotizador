@@ -75,9 +75,13 @@ const SelectedProducts = ({
                                             </button>
                                             <input
                                                 type="number"
-                                                value={ps.cantidad}
-                                                onChange={(e) => actualizarCantidad(ps.id, e.target.value)}
-                                                className="w-5 bg-transparent text-center font-black text-[8px] text-enterprise-950 outline-none"
+                                                value={ps.cantidad || 0}
+                                                onFocus={(e) => e.target.select()}
+                                                onChange={(e) => {
+                                                    const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                                                    actualizarCantidad(ps.id, val);
+                                                }}
+                                                className="w-8 bg-transparent text-center font-black text-[8px] text-enterprise-950 outline-none"
                                             />
                                             <button
                                                 onClick={() => actualizarCantidad(ps.id, ps.cantidad + 1)}
