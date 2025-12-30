@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
     Users, DollarSign, TrendingUp, Zap, RefreshCw, BarChart3,
     CheckCircle2, PieChart, Activity, Target, Tv, Globe,
-    ChevronRight, ArrowUpRight, Calculator, Briefcase, Clock,
+    ChevronDown, ChevronRight, ArrowUpRight, Calculator, Briefcase, Clock,
     AlertCircle, Flame, ShieldCheck, ArrowRight, Wallet
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
@@ -31,33 +31,41 @@ const KPINode = ({ title, value, subtext, icon: Icon, colorClass, isCurrency = t
     </div>
 );
 
-const FunnelStep = ({ label, value, icon: Icon, next = true, color = "brand-orange" }) => {
+const FunnelStep = ({ label, value, icon: Icon, index, total, color = "brand-orange" }) => {
     const colorClasses = {
         'brand-orange': 'bg-brand-orange shadow-brand-orange/20',
         'blue-600': 'bg-blue-600 shadow-blue-600/20',
         'emerald-500': 'bg-emerald-500 shadow-emerald-500/20'
     };
     const activeColor = colorClasses[color] || 'bg-enterprise-950 shadow-enterprise-950/20';
+    const isLast = index === total - 1;
 
     return (
-        <div className="flex flex-col xl:flex-row items-center gap-2 xl:gap-0 flex-1 w-full min-w-0">
-            <div className="flex-1 w-full bg-white border border-enterprise-100 p-3 sm:p-4 rounded-2xl flex items-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-all">
+        <div className="relative flex-1 w-full min-w-0">
+            <div className={`
+                bg-white border border-enterprise-100 p-3 sm:p-4 rounded-2xl flex items-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-all relative
+                ${!isLast ? 'pr-10 sm:pr-12' : ''}
+            `}>
                 <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg text-white shadow-enterprise-900/10 ${activeColor}`}>
                     <Icon size={18} className="sm:w-5 sm:h-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <p className="text-[7.5px] sm:text-[8px] font-black text-enterprise-400 uppercase tracking-widest leading-none mb-1 truncate">{label}</p>
-                    <p className="text-xs sm:text-sm font-black text-enterprise-950 italic truncate">{formatMXN(value, 0)}</p>
+                    <p className="text-[7.5px] sm:text-[8px] font-black text-enterprise-400 uppercase tracking-widest leading-tight mb-1">{label}</p>
+                    <p className="text-xs sm:text-sm font-black text-enterprise-950 italic">{formatMXN(value, 0)}</p>
                 </div>
-            </div>
 
-            {/* Area de flecha - Siempre ocupa espacio para mantener balance */}
-            <div className="w-6 xl:w-12 shrink-0 flex items-center justify-center">
-                {next && (
-                    <>
-                        <ArrowRight className="text-brand-orange ml-2 hidden xl:block" size={24} strokeWidth={3} />
-                        <div className="w-px h-4 bg-brand-orange/30 xl:hidden" />
-                    </>
+                {/* Flecha INCRUSTADA */}
+                {!isLast && (
+                    <div className={`
+                        absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 flex items-center justify-center
+                        ${index === 1 ? 'sm:hidden lg:flex' : ''}
+                    `}>
+                        {/* Desktop/Tablet: Flecha derecha */}
+                        <ArrowRight className="text-brand-orange/30 hidden sm:block" size={18} strokeWidth={3} />
+
+                        {/* Móvil: Chevron abajo */}
+                        <ChevronDown className="text-brand-orange/30 sm:hidden" size={16} strokeWidth={4} />
+                    </div>
                 )}
             </div>
         </div>
@@ -193,7 +201,7 @@ const DashboardView = ({
                                     COMANDO <span className="text-brand-orange">INTELIGENTE</span> NEXUS
                                 </h1>
                                 <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em] mt-2 flex items-center gap-2">
-                                    SISTEMA DE AUDITORÍA FINANCIERA <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> V4.0
+                                    SISTEMA DE AUDITORÍA FINANCIERA <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> V1.8.0
                                 </p>
                             </div>
                         </div>
@@ -222,11 +230,11 @@ const DashboardView = ({
                     <Target size={14} className="text-brand-orange" />
                     <h2 className="text-[9px] sm:text-[10px] font-black text-enterprise-950 uppercase tracking-[0.3em]">Embudo de Conversión Crítica</h2>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-y-2 md:gap-x-4 xl:gap-0">
-                    <FunnelStep label="Oportunidad (Pipeline)" value={stats.totalPipelineValue} icon={Zap} color="blue-600" />
-                    <FunnelStep label="Venta Real (Contratos)" value={stats.totalRealContracted} icon={Briefcase} color="brand-orange" />
-                    <FunnelStep label="Facturado (Emitido)" value={stats.totalBilled} icon={BarChart3} color="enterprise-950" />
-                    <FunnelStep label="Recaudado (Liquidez)" value={stats.totalCollected} icon={Wallet} color="emerald-500" next={false} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <FunnelStep index={0} total={4} label="Oportunidad (Pipeline)" value={stats.totalPipelineValue} icon={Zap} color="blue-600" />
+                    <FunnelStep index={1} total={4} label="Venta Real (Contratos)" value={stats.totalRealContracted} icon={Briefcase} color="brand-orange" />
+                    <FunnelStep index={2} total={4} label="Facturado (Emitido)" value={stats.totalBilled} icon={BarChart3} color="enterprise-950" />
+                    <FunnelStep index={3} total={4} label="Recaudado (Liquidez)" value={stats.totalCollected} icon={Wallet} color="emerald-500" />
                 </div>
             </div>
 
@@ -264,14 +272,6 @@ const DashboardView = ({
                     icon={RefreshCw}
                     colorClass="bg-emerald-500 text-white"
                     subtext="Días para recuperar liquidez"
-                />
-                <KPINode
-                    title="Comisiones Generadas"
-                    value={stats.commissionsGenerated}
-                    icon={DollarSign}
-                    colorClass="bg-indigo-600 text-white"
-                    subtext={`Pendiente cobro: ${formatMXN(stats.commissionsPotential, 0)}`}
-                    trend={15}
                 />
             </div>
 
@@ -460,6 +460,31 @@ const DashboardView = ({
                             )}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            {/* COMISIONAMIENTO (FINAL DE PÁGINA) */}
+            <div className="bg-enterprise-950 rounded-[3rem] p-8 border border-white/5 shadow-2xl relative overflow-hidden">
+                <div className="absolute bottom-0 right-0 w-64 h-64 bg-indigo-600/10 blur-[100px] -mr-32 -mb-32" />
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="flex items-center gap-6">
+                        <div className="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
+                            <DollarSign size={32} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-1">Incentivos y Comisiones</h3>
+                            <h4 className="text-3xl font-black text-white italic tracking-tighter italic-brand">
+                                {formatMXN(stats.commissionsGenerated)}
+                                <span className="text-lg text-white/40 ml-4 font-bold not-italic">GENERADOS ESTE PERIODO</span>
+                            </h4>
+                        </div>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="bg-white/5 border border-white/10 px-8 py-4 rounded-3xl backdrop-blur-xl">
+                            <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-1">Potencial por Cobrar</p>
+                            <p className="text-xl font-black text-indigo-300">{formatMXN(stats.commissionsPotential, 0)}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
