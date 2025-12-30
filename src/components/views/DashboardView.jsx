@@ -55,8 +55,8 @@ const FunnelStep = ({ label, value, icon: Icon, next = true, color = "brand-oran
             <div className="w-6 xl:w-12 shrink-0 flex items-center justify-center">
                 {next && (
                     <>
-                        <ArrowRight className="text-enterprise-200 hidden xl:block" size={16} />
-                        <div className="w-px h-3 bg-enterprise-200 xl:hidden" />
+                        <ArrowRight className="text-brand-orange ml-2 hidden xl:block" size={24} strokeWidth={3} />
+                        <div className="w-px h-4 bg-brand-orange/30 xl:hidden" />
                     </>
                 )}
             </div>
