@@ -32,17 +32,22 @@ const KPINode = ({ title, value, subtext, icon: Icon, colorClass, isCurrency = t
 );
 
 const FunnelStep = ({ label, value, icon: Icon, next = true, color = "brand-orange" }) => (
-    <div className="flex items-center gap-4 flex-1">
-        <div className="flex-1 bg-white border border-enterprise-100 p-4 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md transition-all">
-            <div className={`w-10 h-10 rounded-xl bg-${color} text-white flex items-center justify-center shrink-0 shadow-lg shadow-${color}/20`}>
-                <Icon size={20} />
+    <div className="flex flex-col lg:flex-row items-center gap-1 lg:gap-4 flex-1 w-full">
+        <div className="w-full bg-white border border-enterprise-100 p-3 sm:p-4 rounded-2xl flex items-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-all">
+            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-${color} text-white flex items-center justify-center shrink-0 shadow-lg shadow-${color}/20`}>
+                <Icon size={18} className="sm:w-5 sm:h-5" />
             </div>
-            <div>
-                <p className="text-[8px] font-black text-enterprise-400 uppercase tracking-widest leading-none mb-1">{label}</p>
-                <p className="text-sm font-black text-enterprise-950 italic">{formatMXN(value, 0)}</p>
+            <div className="min-w-0">
+                <p className="text-[7.5px] sm:text-[8px] font-black text-enterprise-400 uppercase tracking-widest leading-none mb-1 truncate">{label}</p>
+                <p className="text-xs sm:text-sm font-black text-enterprise-950 italic">{formatMXN(value, 0)}</p>
             </div>
         </div>
-        {next && <ArrowRight className="text-enterprise-200 shrink-0" size={20} />}
+        {next && (
+            <div className="flex lg:items-center justify-center shrink-0">
+                <ArrowRight className="text-enterprise-200 hidden lg:block" size={20} />
+                <div className="w-px h-2 sm:h-4 bg-enterprise-200 lg:hidden" />
+            </div>
+        )}
     </div>
 );
 
@@ -162,16 +167,16 @@ const DashboardView = ({
         <div className="max-w-[1600px] mx-auto space-y-8 animate-premium-fade pb-20 px-4">
 
             {/* NEXUS COMMAND HEADER */}
-            <div className="sticky top-0 z-[100] pt-4 pb-2 bg-enterprise-50/80 backdrop-blur-md">
-                <div className="bg-enterprise-950 rounded-[2.5rem] p-6 shadow-2xl border border-white/5 relative overflow-hidden">
+            <div className="pt-4 pb-2 bg-enterprise-50">
+                <div className="bg-enterprise-950 rounded-[1.5rem] sm:rounded-[2.5rem] p-4 sm:p-6 shadow-2xl border border-white/5 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-brand-orange/10 to-transparent pointer-events-none" />
                     <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
-                        <div className="flex items-center gap-5">
-                            <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner">
-                                <Activity size={28} strokeWidth={2.5} />
+                        <div className="flex items-center gap-3 sm:gap-5">
+                            <div className="w-10 h-10 sm:w-14 sm:h-14 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-brand-orange shadow-inner">
+                                <Activity size={20} className="sm:w-7 sm:h-7" strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-black text-white uppercase italic leading-none tracking-tighter">
+                                <h1 className="text-lg sm:text-2xl font-black text-white uppercase italic leading-none tracking-tighter">
                                     COMANDO <span className="text-brand-orange">INTELIGENTE</span> NEXUS
                                 </h1>
                                 <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em] mt-2 flex items-center gap-2">
@@ -199,12 +204,12 @@ const DashboardView = ({
             </div>
 
             {/* THE CONVERSION FUNNEL (EXPERT FLOW) */}
-            <div className="bg-enterprise-950/5 p-8 rounded-[3rem] border border-enterprise-100 shadow-inner">
-                <div className="flex items-center gap-3 mb-8 ml-2">
-                    <Target size={16} className="text-brand-orange" />
-                    <h2 className="text-[10px] font-black text-enterprise-950 uppercase tracking-[0.3em]">Embudo de Conversión Crítica</h2>
+            <div className="bg-enterprise-950/5 p-5 sm:p-8 rounded-[2rem] sm:rounded-[3rem] border border-enterprise-100 shadow-inner">
+                <div className="flex items-center gap-3 mb-6 sm:mb-8 ml-1">
+                    <Target size={14} className="text-brand-orange" />
+                    <h2 className="text-[9px] sm:text-[10px] font-black text-enterprise-950 uppercase tracking-[0.3em]">Embudo de Conversión Crítica</h2>
                 </div>
-                <div className="flex flex-col lg:flex-row gap-4">
+                <div className="flex flex-col lg:flex-row gap-2 lg:gap-4">
                     <FunnelStep label="Oportunidad (Pipeline)" value={stats.totalPipelineValue} icon={Zap} color="blue-600" />
                     <FunnelStep label="Contrato (Venta Real)" value={stats.totalRealContracted} icon={Briefcase} color="brand-orange" />
                     <FunnelStep label="Facturado (Emitido)" value={stats.totalBilled} icon={BarChart3} color="enterprise-950" />
