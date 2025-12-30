@@ -297,6 +297,12 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         } else if (id === 'resumen-clientes') {
             title = "PIPELINE Y EFECTIVIDAD POR CUENTA ($)";
             headers = ['Cuenta', 'Plaza', 'Valor Abiertas', 'Valor Ganadas', 'Valor Perdidas', 'Venta Acumulada'];
+
+            let totalAbiertas = 0;
+            let totalGanadas = 0;
+            let totalPerdidas = 0;
+            let totalAcumulada = 0;
+
             rows = (clientes || []).map(c => {
                 const cCotz = (cotizaciones || []).filter(q => String(q.cliente_id) === String(c.id));
 
@@ -311,8 +317,15 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
                 if (valAbiertas === 0 && valGanadas === 0 && valPerdidas === 0) return null;
 
+                totalAbiertas += valAbiertas;
+                totalGanadas += valGanadas;
+                totalPerdidas += valPerdidas;
+                totalAcumulada += valGanadas;
+
                 return [c.nombre_empresa, c.plaza, valAbiertas, valGanadas, valPerdidas, valGanadas];
             }).filter(Boolean);
+
+            rows.push(['TOTAL GENERAL', '-', totalAbiertas, totalGanadas, totalPerdidas, totalAcumulada]);
         } else if (id === 'cobranza-periodo') {
             title = "REPORTE DE COBRANZA Y FACTURACIÓN";
             headers = ['F. Programada', 'Cliente', 'Factura', 'Monto', 'Estado', 'F. Pago Real', 'Notas'];
@@ -403,15 +416,22 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
             // Data Rows
             rows.forEach(row => {
+                const isTotalRow = String(row[0]).startsWith('TOTAL');
                 rowXml += `<Row>`;
                 row.forEach((cell, cellIdx) => {
                     const header = headers[cellIdx];
                     // Identificamos columnas que NO deben ser moneda aunque sean números
-                    const isTextCol = ["Orden", "Factura", "Folio", "Folio Cotz", "Master Contract"].includes(header);
+                    const isTextCol = ["Orden", "Factura", "Folio", "Folio Cotz", "Master Contract", "Cuenta", "Plaza"].includes(header);
 
                     const isNum = !isNaN(cell) && typeof cell !== 'boolean' && cell !== '' && !isTextCol;
                     const type = isNum ? 'Number' : 'String';
-                    const style = isNum ? ' ss:StyleID="Currency"' : '';
+
+                    let styleID = "";
+                    if (isTotalRow) {
+                        styleID = isNum ? ' ss:StyleID="Header"' : ' ss:StyleID="Header"'; // O podrías crear un estilo Total
+                    } else if (isNum) {
+                        styleID = ' ss:StyleID="Currency"';
+                    }
 
                     // Limpieza de caracteres especiales para XML
                     const cleanVal = String(cell)
@@ -421,7 +441,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                         .replace(/"/g, '&quot;')
                         .replace(/'/g, '&apos;');
 
-                    rowXml += `<Cell${style}><Data ss:Type="${type}">${isNum ? cell : cleanVal}</Data></Cell>`;
+                    rowXml += `<Cell${styleID}><Data ss:Type="${type}">${isNum ? cell : cleanVal}</Data></Cell>`;
                 });
                 rowXml += `</Row>`;
             });
@@ -846,34 +866,58 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {(clientes || []).map(c => {
-                                        const cCotz = (cotizaciones || []).filter(q => String(q.cliente_id) === String(c.id));
-                                        const abiertas = cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada').length;
-                                        const cGanadas = cCotz.filter(q => q.estatus === 'ganada').length;
-                                        const perdidas = cCotz.filter(q => q.estatus === 'perdida').length;
-                                        const monto = cCotz.filter(q => q.estatus === 'ganada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+                                    {(() => {
+                                        let tAbiertas = 0;
+                                        let tGanadas = 0;
+                                        let tPerdidas = 0;
+                                        let tAcumulada = 0;
 
-                                        if (abiertas === 0 && cGanadas === 0 && perdidas === 0) return null;
+                                        const rows = (clientes || []).map(c => {
+                                            const cCotz = (cotizaciones || []).filter(q => String(q.cliente_id) === String(c.id));
+                                            const valAbiertas = cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+                                            const valGanadas = cCotz.filter(q => q.estatus === 'ganada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+                                            const valPerdidas = cCotz.filter(q => q.estatus === 'perdida').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+
+                                            if (valAbiertas === 0 && valGanadas === 0 && valPerdidas === 0) return null;
+
+                                            tAbiertas += valAbiertas;
+                                            tGanadas += valGanadas;
+                                            tPerdidas += valPerdidas;
+                                            tAcumulada += valGanadas;
+
+                                            return (
+                                                <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
+                                                    <td className="py-4 px-6 sticky left-0 bg-white z-10">
+                                                        <p className="text-[10px] font-black text-slate-900 uppercase">{c.nombre_empresa}</p>
+                                                        <p className="text-[8px] font-bold text-gray-300 uppercase tracking-widest italic">{c.plaza}</p>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center font-bold text-[10px] text-blue-600">
+                                                        {formatMXN(valAbiertas)}
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center font-bold text-[10px] text-emerald-600">
+                                                        {formatMXN(valGanadas)}
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center font-bold text-[10px] text-brand-orange">
+                                                        {formatMXN(valPerdidas)}
+                                                    </td>
+                                                    <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900">{formatMXN(valGanadas)}</td>
+                                                </tr>
+                                            );
+                                        }).filter(Boolean);
 
                                         return (
-                                            <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="py-4 px-6 sticky left-0 bg-white z-10">
-                                                    <p className="text-[10px] font-black text-slate-900 uppercase">{c.nombre_empresa}</p>
-                                                    <p className="text-[8px] font-bold text-gray-300 uppercase tracking-widest italic">{c.plaza}</p>
-                                                </td>
-                                                <td className="py-4 px-6 text-center font-bold text-[10px] text-blue-600">
-                                                    {formatMXN(cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0))}
-                                                </td>
-                                                <td className="py-4 px-6 text-center font-bold text-[10px] text-emerald-600">
-                                                    {formatMXN(cCotz.filter(q => q.estatus === 'ganada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0))}
-                                                </td>
-                                                <td className="py-4 px-6 text-center font-bold text-[10px] text-brand-orange">
-                                                    {formatMXN(cCotz.filter(q => q.estatus === 'perdida').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0))}
-                                                </td>
-                                                <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900">{formatMXN(monto)}</td>
-                                            </tr>
+                                            <>
+                                                {rows}
+                                                <tr className="bg-slate-900 text-white font-black">
+                                                    <td className="py-4 px-6 sticky left-0 bg-slate-900 z-10 text-[9px] uppercase tracking-widest italic">TOTAL GENERAL</td>
+                                                    <td className="py-4 px-6 text-center text-[10px]">{formatMXN(tAbiertas)}</td>
+                                                    <td className="py-4 px-6 text-center text-[10px]">{formatMXN(tGanadas)}</td>
+                                                    <td className="py-4 px-6 text-center text-[10px]">{formatMXN(tPerdidas)}</td>
+                                                    <td className="py-4 px-6 text-right text-[10px]">{formatMXN(tAcumulada)}</td>
+                                                </tr>
+                                            </>
                                         );
-                                    }).filter(Boolean)}
+                                    })()}
                                 </tbody>
                             </table>
                         </div>
