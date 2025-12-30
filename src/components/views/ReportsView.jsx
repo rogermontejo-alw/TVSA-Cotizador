@@ -30,15 +30,19 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
     const hoy = new Date();
     const [fechaInicio, setFechaInicio] = useState(new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0]);
     const [fechaFin, setFechaFin] = useState(new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().split('T')[0]);
+    const [ignorarPeriodo, setIgnorarPeriodo] = useState(false);
 
     const establecerRango = (tipo) => {
         const d = new Date();
+        setIgnorarPeriodo(false);
         if (tipo === 'mes') {
             setFechaInicio(new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]);
             setFechaFin(new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0]);
         } else if (tipo === 'año') {
             setFechaInicio(new Date(d.getFullYear(), 0, 1).toISOString().split('T')[0]);
             setFechaFin(new Date(d.getFullYear(), 11, 31).toISOString().split('T')[0]);
+        } else if (tipo === 'todo') {
+            setIgnorarPeriodo(true);
         }
     };
 
@@ -46,13 +50,14 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
     const ganadas = useMemo(() => {
         return (cotizaciones || []).filter(q => {
             if (q.estatus !== 'ganada') return false;
+            if (ignorarPeriodo) return true;
             const fechaQ = new Date(q.fecha_cierre_real || q.created_at || q.fecha);
             const start = new Date(fechaInicio);
             const end = new Date(fechaFin);
             end.setHours(23, 59, 59, 999);
             return fechaQ >= start && fechaQ <= end;
         });
-    }, [cotizaciones, fechaInicio, fechaFin]);
+    }, [cotizaciones, fechaInicio, fechaFin, ignorarPeriodo]);
 
     const datosFinancierosTotal = useMemo(() => {
         if (subCorte === 'pipeline') {
@@ -68,6 +73,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             }));
         } else {
             return (contratosEjecucion || []).filter(ce => {
+                if (ignorarPeriodo) return true;
                 const fechaE = new Date(ce.fecha_inicio_pauta);
                 const start = new Date(fechaInicio);
                 const end = new Date(fechaFin);
@@ -84,7 +90,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 original: ce
             }));
         }
-    }, [ganadas, contratosEjecucion, subCorte, fechaInicio, fechaFin]);
+    }, [ganadas, contratosEjecucion, subCorte, fechaInicio, fechaFin, ignorarPeriodo]);
 
     // 1. REPORTE: Ventas por Mes (Corte Mensual Matrix: Clientes x Meses)
     const matrizMensual = useMemo(() => {
@@ -245,22 +251,45 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             rows.push(['TOTAL CIUDAD', ...matrizCiudad.plazas.map(p => matrizCiudad.totalesPorPlaza[p] || 0), matrizCiudad.granTotal]);
         } else if (id === 'control-cierres') {
             title = subCorte === 'pipeline' ? "CONTROL ADMINISTRATIVO DE CIERRES (COMMERCIAL)" : "CONTROL ADMINISTRATIVO DE CONTRATOS (FINANCIAL)";
-            headers = ['Fecha Ref', 'Cliente', 'Folio Cotz', 'Nº Contrato', 'M. Contract', 'Factura', 'Monto'];
+            headers = ['Fecha Cierre', 'Cliente / Empresa', 'Folio Cotz', 'Master Contract', 'Orden / Contrato', 'Factura', 'Inversión Neta'];
+
             rows = datosFinancierosTotal.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).map(item => {
                 const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
-                const q = subCorte === 'pipeline' ? item.original : (cotizaciones || []).find(c => c.id === item.original?.cotizacion_id);
-                const ce = subCorte === 'ejecucion' ? item.original : (contratosEjecucion || []).find(e => e.cotizacion_id === item.id);
+                const q = subCorte === 'pipeline' ? item.original : (cotizaciones || []).find(c => String(c.id) === String(item.original?.cotizacion_id));
+                const ce = subCorte === 'ejecucion' ? item.original : (contratosEjecucion || []).find(e => String(e.cotizacion_id) === String(item.id));
                 const registroCobranza = (cobranza || []).find(cob => (q && String(cob.cotizacion_id) === String(q.id)) || (ce && String(cob.contrato_ejecucion_id) === String(ce.id)));
-                const mc = (masterContracts || []).find(m => String(m.id) === String(item.mc_id) || (q && String(m.id) === String(q.mc_id)));
+
+                // BÚSQUEDA ULTRA-ROBUSTA DEL MASTER CONTRACT (CONVENIO)
+                let mcEncontrado = (masterContracts || []).find(m =>
+                    (ce && String(m.id) === String(ce.mc_id)) ||
+                    (item.mc_id && String(m.id) === String(item.mc_id)) ||
+                    (q && q.mc_id && String(m.id) === String(q.mc_id))
+                );
+
+                if (!mcEncontrado) {
+                    // Fallback 1: Por ID de Cliente (UUID String comparison)
+                    mcEncontrado = (masterContracts || []).find(m =>
+                        String(m.cliente_id) === String(item.cliente_id) ||
+                        (cliente && String(m.cliente_id) === String(cliente.id))
+                    );
+                }
+
+                if (!mcEncontrado && cliente) {
+                    // Fallback 2: Por Nombre de Empresa (por si hay inconsistencia de IDs)
+                    mcEncontrado = (masterContracts || []).find(m => {
+                        const mName = m.clientes?.nombre_empresa || (Array.isArray(m.clientes) && m.clientes[0]?.nombre_empresa);
+                        return mName && mName.toLowerCase().trim() === cliente.nombre_empresa.toLowerCase().trim();
+                    });
+                }
 
                 const numContrato = ce?.numero_contrato || q?.numero_contrato;
 
                 return [
                     new Date(item.fecha).toLocaleDateString('es-MX'),
-                    cliente?.nombre_empresa || 'S/N',
+                    cliente?.nombre_empresa || 'IDENTIDAD DESCONOCIDA',
                     q?.folio || '-',
-                    numContrato || 'FALTA',
-                    mc ? (mc.numero_mc || mc.numero_contrato || 'VINCULADO') : 'FALTA',
+                    mcEncontrado ? (mcEncontrado.numero_mc || 'VINCULADO') : 'FALTA', // Col 4: Master Contract
+                    numContrato || 'FALTA',                                         // Col 5: Orden / Contrato
                     registroCobranza?.numero_factura || 'FALTA',
                     item.monto
                 ];
@@ -519,13 +548,14 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest">Ajustar Período:</span>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={() => establecerRango('mes')} className="flex-1 md:flex-none px-3 py-1.5 bg-slate-50 rounded-lg text-[7px] sm:text-[8px] font-black uppercase hover:bg-black hover:text-white transition-all border border-slate-100">Mes Actual</button>
-                    <button onClick={() => establecerRango('año')} className="flex-1 md:flex-none px-3 py-1.5 bg-slate-50 rounded-lg text-[7px] sm:text-[8px] font-black uppercase hover:bg-black hover:text-white transition-all border border-slate-100">Año Completo</button>
+                    <button onClick={() => establecerRango('mes')} className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase transition-all border ${!ignorarPeriodo && fechaInicio.includes('-' + (hoy.getMonth() + 1).toString().padStart(2, '0')) ? 'bg-enterprise-950 text-white' : 'bg-slate-50 text-slate-600 hover:bg-black hover:text-white border-slate-100'}`}>Mes Actual</button>
+                    <button onClick={() => establecerRango('año')} className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase transition-all border ${!ignorarPeriodo && fechaInicio.endsWith('-01-01') ? 'bg-enterprise-950 text-white' : 'bg-slate-50 text-slate-600 hover:bg-black hover:text-white border-slate-100'}`}>Año Completo</button>
+                    <button onClick={() => establecerRango('todo')} className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase transition-all border ${ignorarPeriodo ? 'bg-brand-orange text-white border-brand-orange' : 'bg-slate-50 text-slate-600 hover:bg-brand-orange hover:text-white border-slate-100'}`}>Historial Completo</button>
                 </div>
-                <div className="flex items-center gap-2 md:ml-auto">
-                    <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-brand-orange min-w-0" />
+                <div className={`flex items-center gap-2 md:ml-auto transition-opacity ${ignorarPeriodo ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
+                    <input type="date" value={fechaInicio} onChange={(e) => { setFechaInicio(e.target.value); setIgnorarPeriodo(false); }} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-brand-orange min-w-0" />
                     <span className="text-gray-300 font-bold text-[10px]">A</span>
-                    <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-brand-orange min-w-0" />
+                    <input type="date" value={fechaFin} onChange={(e) => { setFechaFin(e.target.value); setIgnorarPeriodo(false); }} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-brand-orange min-w-0" />
                 </div>
             </div>
 
@@ -717,19 +747,36 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                         const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
 
                                         // Extraer datos originales para detalles
-                                        const q = subCorte === 'pipeline' ? item.original : (cotizaciones || []).find(c => c.id === item.original?.cotizacion_id);
-                                        const ce = subCorte === 'ejecucion' ? item.original : (contratosEjecucion || []).find(e => e.cotizacion_id === item.id);
+                                        const q = subCorte === 'pipeline' ? item.original : (cotizaciones || []).find(c => String(c.id) === String(item.original?.cotizacion_id));
+                                        const ce = subCorte === 'ejecucion' ? item.original : (contratosEjecucion || []).find(e => String(e.cotizacion_id) === String(item.id));
 
                                         const regCob = (cobranza || []).find(cob =>
                                             (q && String(cob.cotizacion_id) === String(q.id)) ||
                                             (ce && String(cob.contrato_ejecucion_id) === String(ce.id))
                                         );
 
-                                        const mc = (masterContracts || []).find(m =>
+                                        // BÚSQUEDA ULTRA-ROBUSTA DEL MASTER CONTRACT (CONVENIO)
+                                        let mc = (masterContracts || []).find(m =>
                                             String(m.id) === String(item.mc_id) ||
-                                            (q && String(m.id) === String(q.mc_id)) ||
-                                            (ce && String(m.id) === String(ce.mc_id))
+                                            (q && q.mc_id && String(m.id) === String(q.mc_id)) ||
+                                            (ce && ce.mc_id && String(m.id) === String(ce.mc_id))
                                         );
+
+                                        if (!mc) {
+                                            // Fallback 1: Por ID de Cliente
+                                            mc = (masterContracts || []).find(m =>
+                                                String(m.cliente_id) === String(item.cliente_id) ||
+                                                (cliente && String(m.cliente_id) === String(cliente.id))
+                                            );
+                                        }
+
+                                        if (!mc && cliente) {
+                                            // Fallback 2: Por Nombre de Empresa
+                                            mc = (masterContracts || []).find(m => {
+                                                const mName = m.clientes?.nombre_empresa || (Array.isArray(m.clientes) && m.clientes[0]?.nombre_empresa);
+                                                return mName && mName.toLowerCase().trim() === cliente.nombre_empresa.toLowerCase().trim();
+                                            });
+                                        }
 
                                         return (
                                             <tr key={i} className="hover:bg-slate-50/50">
