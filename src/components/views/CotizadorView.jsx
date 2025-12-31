@@ -51,6 +51,7 @@ const CotizadorView = ({
         eliminarProducto,
         sugerirDistribucion,
         generarCotizacion,
+        cargarCotizacionEdicion,
     } = cotizacionState;
 
     if (loading) {
@@ -204,6 +205,7 @@ const CotizadorView = ({
                 <CotizacionResult
                     cotizacion={cotizacionResult}
                     iniciarNuevaCotizacion={iniciarNuevaCotizacion}
+                    cargarCotizacionEdicion={cargarCotizacionEdicion}
                     guardarCotizacion={guardarCotizacion}
                     agregarAComparador={agregarAComparador}
                     mostrarPropuesta={(data) => mostrarPropuesta(data || cotizacionResult)}

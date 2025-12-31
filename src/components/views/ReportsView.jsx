@@ -22,8 +22,8 @@ import { formatMXN } from '../../utils/formatters';
 
 const MISSING_DATA_CHAR = '-';
 
-const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterContracts = [], contratosEjecucion = [] }) => {
-    const [seccionReporte, setSeccionReporte] = useState('ventas-mes');
+const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterContracts = [], contratosEjecucion = [], interacciones = [] }) => {
+    const [seccionReporte, setSeccionReporte] = useState('prospeccion');
     const [subCorte, setSubCorte] = useState('pipeline'); // 'pipeline' o 'ejecucion'
     const [expandedRows, setExpandedRows] = useState({});
 
@@ -126,14 +126,20 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
         datosVentasBase.forEach(item => {
             const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
+            const ce = item.original;
+            const q = (cotizaciones || []).find(quote => String(quote.id) === String(ce?.cotizacion_id));
+
             const fechaItem = new Date(item.fecha);
             const mesIdx = fechaItem.getMonth();
             const cId = item.cliente_id;
             const monto = item.monto;
 
+            // Detección de nombre robusta
+            const nombreCliente = cliente?.nombre_empresa || q?.cliente?.nombre_empresa || item.original?.cotizaciones?.clientes?.nombre_empresa || 'S/N';
+
             mesesVisibles.add(mesIdx);
             if (!clienteMap[cId]) {
-                clienteMap[cId] = { nombre: cliente?.nombre_empresa || 'S/N', importes: {} };
+                clienteMap[cId] = { nombre: nombreCliente, importes: {} };
             }
             clienteMap[cId].importes[mesIdx] = (clienteMap[cId].importes[mesIdx] || 0) + monto;
             totalesPorMes[mesIdx] = (totalesPorMes[mesIdx] || 0) + monto;
@@ -157,17 +163,23 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const plazasSet = new Set();
         const totalesPorPlaza = {};
 
+        const vixProcesado = new Set(); // Para no duplicar VIX si una cotización tiene múltiples contratos
+
         datosVentasBase.forEach(item => {
-            // En reportes de canal SIEMPRE usamos la perspectiva de Ejecución (Contratos) para ser precisos
             const ce = (contratosEjecucion || []).find(e => e.id === item.id);
             const q = (cotizaciones || []).find(c => c.id === ce?.cotizacion_id);
 
             if (q) {
-                // 1. Pauta tradicional
+                // 1. Pauta tradicional - FILTRAR POR PLAZA DEL CONTRATO
+                const plazaContrato = ce?.plaza;
+
                 (q.items || []).forEach(i => {
-                    const canal = i.producto?.canal || 'Otros';
                     const plazaItem = i.producto?.plaza || 'Mérida';
 
+                    // Si el contrato tiene plaza especificada, filtrar. Si no (viejo), incluir todo.
+                    if (plazaContrato && plazaItem !== plazaContrato) return;
+
+                    const canal = i.producto?.canal || 'Otros';
                     plazasSet.add(plazaItem);
                     if (!canalesMap[canal]) canalesMap[canal] = {};
 
@@ -176,19 +188,22 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     totalesPorPlaza[plazaItem] = (totalesPorPlaza[plazaItem] || 0) + montoItem;
                 });
 
-                // 2. VIX
-                const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
-                if (costoVIX > 0) {
-                    const canalVIX = 'VIX';
-                    const plazaVIX = q.clientes?.plaza || 'Nacional';
-                    plazasSet.add(plazaVIX);
-                    if (!canalesMap[canalVIX]) canalesMap[canalVIX] = {};
-                    canalesMap[canalVIX][plazaVIX] = (canalesMap[canalVIX][plazaVIX] || 0) + costoVIX;
-                    totalesPorPlaza[plazaVIX] = (totalesPorPlaza[plazaVIX] || 0) + costoVIX;
+                // 2. VIX - Solo una vez por cotización para evitar duplicidad en reportes consolidados
+                if (!vixProcesado.has(q.id)) {
+                    const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
+                    if (costoVIX > 0) {
+                        const canalVIX = 'VIX';
+                        const plazaVIX = q.clientes?.plaza || q.cliente?.plaza || 'Nacional';
+                        plazasSet.add(plazaVIX);
+                        if (!canalesMap[canalVIX]) canalesMap[canalVIX] = {};
+                        canalesMap[canalVIX][plazaVIX] = (canalesMap[canalVIX][plazaVIX] || 0) + costoVIX;
+                        totalesPorPlaza[plazaVIX] = (totalesPorPlaza[plazaVIX] || 0) + costoVIX;
+                        vixProcesado.add(q.id);
+                    }
                 }
             } else {
                 const canal = 'Sin Clasificar';
-                const dummyPlaza = 'Mérida';
+                const dummyPlaza = ce?.plaza || 'Mérida';
                 plazasSet.add(dummyPlaza);
                 if (!canalesMap[canal]) canalesMap[canal] = {};
                 canalesMap[canal][dummyPlaza] = (canalesMap[canal][dummyPlaza] || 0) + item.monto;
@@ -214,40 +229,46 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const plazasSet = new Set();
         const totalesPorPlaza = {};
 
+        const vixProcesadoCiudad = new Set();
+
         datosVentasBase.forEach(item => {
             const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
+            const ce = (contratosEjecucion || []).find(e => e.id === item.id);
+            const q = (cotizaciones || []).find(c => c.id === ce?.cotizacion_id);
             const cId = item.cliente_id;
-            const clienteNombre = cliente?.nombre_empresa || 'S/N';
+            const clienteNombre = cliente?.nombre_empresa || q?.cliente?.nombre_empresa || 'S/N';
 
             if (!clienteMap[cId]) {
                 clienteMap[cId] = { nombre: clienteNombre, importes: {} };
             }
 
-            // SIEMPRE perspectiva de Ejecutoría (Contratos)
-            const ce = (contratosEjecucion || []).find(e => e.id === item.id);
-            const q = (cotizaciones || []).find(c => c.id === ce?.cotizacion_id);
-
             if (q) {
-                // 1. Pauta tradicional
+                // 1. Pauta tradicional - FILTRAR POR PLAZA DEL CONTRATO
+                const plazaContrato = ce?.plaza;
+
                 (q.items || []).forEach(i => {
                     const plazaItem = i.producto?.plaza || 'Mérida';
-                    const montoItem = (i.subtotal || 0);
+
+                    if (plazaContrato && plazaItem !== plazaContrato) return;
 
                     plazasSet.add(plazaItem);
-                    clienteMap[cId].importes[plazaItem] = (clienteMap[cId].importes[plazaItem] || 0) + montoItem;
-                    totalesPorPlaza[plazaItem] = (totalesPorPlaza[plazaItem] || 0) + montoItem;
+                    clienteMap[cId].importes[plazaItem] = (clienteMap[cId].importes[plazaItem] || 0) + (i.subtotal || 0);
+                    totalesPorPlaza[plazaItem] = (totalesPorPlaza[plazaItem] || 0) + (i.subtotal || 0);
                 });
 
-                // 2. VIX
-                const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
-                if (costoVIX > 0) {
-                    const plazaVIX = q.clientes?.plaza || 'Nacional';
-                    plazasSet.add(plazaVIX);
-                    clienteMap[cId].importes[plazaVIX] = (clienteMap[cId].importes[plazaVIX] || 0) + costoVIX;
-                    totalesPorPlaza[plazaVIX] = (totalesPorPlaza[plazaVIX] || 0) + costoVIX;
+                // 2. VIX - Solo una vez por cotización
+                if (!vixProcesadoCiudad.has(q.id)) {
+                    const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
+                    if (costoVIX > 0) {
+                        const plazaVIX = q.clientes?.plaza || q.cliente?.plaza || 'Nacional';
+                        plazasSet.add(plazaVIX);
+                        clienteMap[cId].importes[plazaVIX] = (clienteMap[cId].importes[plazaVIX] || 0) + costoVIX;
+                        totalesPorPlaza[plazaVIX] = (totalesPorPlaza[plazaVIX] || 0) + costoVIX;
+                        vixProcesadoCiudad.add(q.id);
+                    }
                 }
             } else {
-                const plazaFallback = cliente?.plaza || 'Mérida';
+                const plazaFallback = ce?.plaza || cliente?.plaza || 'Mérida';
                 plazasSet.add(plazaFallback);
                 clienteMap[cId].importes[plazaFallback] = (clienteMap[cId].importes[plazaFallback] || 0) + item.monto;
                 totalesPorPlaza[plazaFallback] = (totalesPorPlaza[plazaFallback] || 0) + item.monto;
@@ -265,6 +286,37 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
         return { plazas, filas, totalesPorPlaza, granTotal };
     }, [datosVentasBase, clientes, cotizaciones, contratosEjecucion]);
+
+    // 4. REPORTE: Prospección y CRM
+    const pipelineData = useMemo(() => {
+        const resumen = {
+            'Prospecto': 0,
+            'Contactado': 0,
+            'Interesado': 0,
+            'No Interesado': 0,
+            'Cliente': 0
+        };
+
+        (clientes || []).forEach(c => {
+            if (resumen[c.etapa] !== undefined) resumen[c.etapa]++;
+        });
+
+        const enviadas = (cotizaciones || []).filter(q => q.estatus === 'enviada');
+
+        const seguimientoClientes = (clientes || [])
+            .filter(c => c.etapa !== 'Cliente' && c.etapa !== 'No Interesado')
+            .map(c => {
+                const lasInteracciones = (interacciones || []).filter(i => String(i.cliente_id) === String(c.id));
+                const ultima = lasInteracciones[0]; // Están ordenadas por fecha desc
+                return {
+                    ...c,
+                    ultima_interaccion: ultima,
+                    dias_sin_contacto: ultima ? Math.floor((new Date() - new Date(ultima.created_at)) / (1000 * 60 * 60 * 24)) : '-'
+                };
+            });
+
+        return { resumen, enviadas, seguimientoClientes };
+    }, [clientes, cotizaciones, interacciones]);
 
     const getReportData = (id, forcedCorte = null) => {
         const activeCorte = forcedCorte || subCorte;
@@ -447,36 +499,6 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     ['TOTAL GENERAL EJECUTADO', '', '', '', '', '', '', totalGeneralMonto]
                 ];
             }
-        } else if (id === 'resumen-clientes') {
-        } else if (id === 'resumen-clientes') {
-            title = "PIPELINE Y EFECTIVIDAD POR CUENTA ($)";
-            headers = ['Cuenta', 'Valor Abiertas', 'Valor Ganadas', 'Valor Perdidas', 'Venta Acumulada'];
-
-            let totalAbiertas = 0;
-            let totalGanadas = 0;
-            let totalPerdidas = 0;
-            let totalAcumulada = 0;
-
-            const dataRows = (clientes || []).map(c => {
-                const cCotz = (cotizaciones || []).filter(q => String(q.cliente_id) === String(c.id));
-                const valAbiertas = cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
-                const valGanadas = cCotz.filter(q => q.estatus === 'ganada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
-                const valPerdidas = cCotz.filter(q => q.estatus === 'perdida').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
-
-                if (valAbiertas === 0 && valGanadas === 0 && valPerdidas === 0) return null;
-
-                totalAbiertas += valAbiertas;
-                totalGanadas += valGanadas;
-                totalPerdidas += valPerdidas;
-                totalAcumulada += valGanadas;
-
-                return [c.nombre_empresa, valAbiertas, valGanadas, valPerdidas, valGanadas];
-            }).filter(Boolean);
-
-            rows = [
-                ...dataRows,
-                ['TOTAL GENERAL', totalAbiertas, totalGanadas, totalPerdidas, totalAcumulada]
-            ];
         } else if (id === 'cobranza-periodo') {
             title = "REPORTE DE COBRANZA Y FACTURACIÓN";
             headers = ['F. Programada', 'Cliente', 'Factura', 'Monto', 'Estado', 'F. Pago Real', 'Notas'];
@@ -510,6 +532,30 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 ...dataRows,
                 ['TOTAL COBRANZA', '', '', totalFacturado, '', '', '']
             ];
+        } else if (id === 'prospeccion') {
+            title = "RESUMEN DE PROSPECCIÓN Y PIPELINE";
+            headers = ['Concepto', 'Cantidad / Valor'];
+            rows = [
+                ['ETAPAS DEL EMBUDO', ''],
+                ['Prospectos', pipelineData.resumen['Prospecto']],
+                ['Contactados', pipelineData.resumen['Contactado']],
+                ['Interesados', pipelineData.resumen['Interesado']],
+                ['No Interesados', pipelineData.resumen['No Interesado']],
+                ['Venta Cerrada (Clientes)', pipelineData.resumen['Cliente']],
+                ['', ''],
+                ['PROPUESTAS ENVIADAS', ''],
+                ['Total Cotizaciones en Tránsito', pipelineData.enviadas.length],
+                ['Valor Estimado Pipeline', pipelineData.enviadas.reduce((acc, q) => acc + (q.subtotalGeneral || 0), 0)],
+                ['', ''],
+                ['BITÁCORA DE SEGUIMIENTO (Clientes Activos)', ''],
+                ['Cliente', 'Última Nota', 'Fecha', 'Días'],
+                ...pipelineData.seguimientoClientes.map(c => [
+                    c.nombre_empresa,
+                    c.ultima_interaccion?.comentario || 'Sin notas registrada',
+                    c.ultima_interaccion ? new Date(c.ultima_interaccion.created_at).toLocaleDateString() : 'N/A',
+                    c.dias_sin_contacto
+                ])
+            ];
         }
 
         return { title, headers, rows };
@@ -526,8 +572,8 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 { id: 'ventas-ciudad', name: 'Territorial' },
                 { id: 'control-cierres', sub: 'pipeline', name: 'Saldos Convenio' },
                 { id: 'control-cierres', sub: 'ejecucion', name: 'Libro Mayor' },
-                { id: 'resumen-clientes', name: 'Clientes' },
-                { id: 'cobranza-periodo', name: 'Cobranza' }
+                { id: 'cobranza-periodo', name: 'Cobranza' },
+                { id: 'prospeccion', name: 'Prospección' }
             ];
         } else {
             if (seccionReporte === 'control-cierres') {
@@ -540,8 +586,8 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     'ventas-mes': 'Mensual',
                     'ventas-canal': 'Canal',
                     'ventas-ciudad': 'Territorial',
-                    'resumen-clientes': 'Clientes',
-                    'cobranza-periodo': 'Cobranza'
+                    'cobranza-periodo': 'Cobranza',
+                    'prospeccion': 'Prospección'
                 };
                 reportConfigs = [{ id: seccionReporte, name: namesMap[seccionReporte] || 'Reporte' }];
             }
@@ -754,11 +800,11 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             <div className="flex flex-col gap-4 print:hidden">
                 <div className="flex flex-wrap gap-2 bg-enterprise-950 p-2 rounded-[2rem] shadow-premium border border-white/5">
                     {[
+                        { id: 'prospeccion', label: 'Prospección y CRM', icon: TrendingUp },
                         { id: 'ventas-mes', label: 'Matriz Regional', icon: Calendar },
                         { id: 'ventas-canal', label: 'Densidad por Canal', icon: Tv },
                         { id: 'ventas-ciudad', label: 'Hubs Regionales', icon: Globe },
                         { id: 'control-cierres', label: 'Control de Convenios', icon: Briefcase },
-                        { id: 'resumen-clientes', label: 'Valuación Pipeline', icon: FileText },
                         { id: 'cobranza-periodo', label: 'Recuperación / Cobro', icon: DollarSign },
                     ].map(tab => (
                         <button
@@ -813,6 +859,126 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
             {/* Renderizado de Tablas */}
             <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
+
+                {/* 0. PROSPECCIÓN Y CRM */}
+                {seccionReporte === 'prospeccion' && (
+                    <div className="space-y-6">
+                        {/* 1. Dashboard de Etapas */}
+                        <div className="p-8 border-b border-slate-50 bg-enterprise-950 text-white flex justify-between items-center">
+                            <div>
+                                <h3 className="text-lg font-black tracking-tighter uppercase italic italic-brand">Embudo de Prospección (CRM)</h3>
+                                <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5">Control de etapas comerciales</p>
+                            </div>
+                            <TrendingUp className="text-brand-orange" size={30} />
+                        </div>
+
+                        <div className="px-8 py-6">
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
+                                {Object.entries(pipelineData.resumen).map(([etapa, count]) => (
+                                    <div key={etapa} className="bg-slate-50 p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center hover:bg-white hover:shadow-xl transition-all group">
+                                        <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-1 italic group-hover:text-brand-orange">{etapa}</p>
+                                        <h4 className="text-3xl font-black text-slate-900">{count}</h4>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* 2. Cotizaciones Enviadas */}
+                                <div className="bg-white rounded-[2rem] shadow-premium border border-gray-100 overflow-hidden border-t-4 border-t-slate-900">
+                                    <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50">
+                                        <div>
+                                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">Cotizaciones en Tránsito</h3>
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">Propuestas esperando respuesta</p>
+                                        </div>
+                                        <div className="bg-white px-3 py-1 rounded-full border border-slate-200">
+                                            <span className="text-[10px] font-black text-slate-900">{pipelineData.enviadas.length}</span>
+                                        </div>
+                                    </div>
+                                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                                        <table className="w-full text-left">
+                                            <thead className="bg-white sticky top-0 z-10 shadow-sm">
+                                                <tr className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                                                    <th className="px-6 py-4">Cliente / Folio</th>
+                                                    <th className="px-6 py-4 text-right">Monto Estimado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-50">
+                                                {pipelineData.enviadas.map(q => (
+                                                    <tr key={q.id} className="hover:bg-slate-50/50 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <p className="text-[10px] font-black text-slate-900 uppercase">{q.cliente?.nombre_empresa || 'S/N'}</p>
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                <span className="text-[7px] font-black bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded uppercase">Folio: {q.folio}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <p className="text-xs font-black text-slate-900">{formatMXN(q.subtotalGeneral || q.total / 1.16)}</p>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                {pipelineData.enviadas.length === 0 && (
+                                                    <tr><td colSpan="2" className="py-20 text-center text-[9px] font-black text-slate-300 uppercase italic">Sin propuestas activas</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* 3. Bitácora de Seguimiento Crítico */}
+                                <div className="bg-white rounded-[2rem] shadow-premium border border-gray-100 overflow-hidden border-t-4 border-t-brand-orange">
+                                    <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50">
+                                        <div>
+                                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">Seguimiento de Cuentas</h3>
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">Última actividad registrada</p>
+                                        </div>
+                                        <Clock className="text-brand-orange" size={20} />
+                                    </div>
+                                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                                        <table className="w-full text-left">
+                                            <thead className="bg-white sticky top-0 z-10 shadow-sm">
+                                                <tr className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                                                    <th className="px-6 py-4">Cliente</th>
+                                                    <th className="px-6 py-4">Última Nota / Interaction</th>
+                                                    <th className="px-6 py-4 text-right">Inactividad</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-50">
+                                                {pipelineData.seguimientoClientes.map(c => (
+                                                    <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <p className="text-[10px] font-black text-slate-900 uppercase truncate max-w-[150px]">{c.nombre_empresa}</p>
+                                                            <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">{c.etapa}</p>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <p className="text-[9px] text-slate-600 italic leading-tight line-clamp-2">
+                                                                {c.ultima_interaccion?.comentario || 'Sin notas registradas'}
+                                                            </p>
+                                                            {c.ultima_interaccion && (
+                                                                <span className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter mt-1 block">
+                                                                    {c.ultima_interaccion.tipo} - {new Date(c.ultima_interaccion.created_at).toLocaleDateString()}
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <span className={`px-2 py-1 rounded-lg text-[8px] font-black
+                                                                ${c.dias_sin_contacto === '-' ? 'bg-slate-100 text-slate-400' :
+                                                                    c.dias_sin_contacto > 7 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                                {c.dias_sin_contacto} {c.dias_sin_contacto === '-' ? '' : c.dias_sin_contacto === 1 ? 'DÍA' : 'DÍAS'}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                {pipelineData.seguimientoClientes.length === 0 && (
+                                                    <tr><td colSpan="3" className="py-20 text-center text-[9px] font-black text-slate-300 uppercase italic">Sin cuentas en seguimiento</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* 1. VENTAS POR MES (Matriz Clientes x Meses) */}
                 {seccionReporte === 'ventas-mes' && (
@@ -1112,84 +1278,6 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                             </table>
                         </div>
                     </>
-                )}
-                {seccionReporte === 'resumen-clientes' && (
-                    <div>
-                        <div className="p-8 border-b border-enterprise-700 flex justify-between items-center bg-enterprise-950 text-white">
-                            <div>
-                                <h3 className="text-lg font-black tracking-tighter uppercase italic italic-brand">Pipeline de Ventas y Efectividad</h3>
-                                <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5 italic">Estado actual de propuestas por cuenta</p>
-                            </div>
-                            <Layout className="text-brand-orange" size={30} />
-                        </div>
-                        <div className="overflow-x-auto custom-scrollbar">
-                            <table className="w-full text-left min-w-[700px]">
-                                <thead>
-                                    <tr className="bg-slate-50">
-                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest sticky left-0 bg-slate-50 z-10">Cuenta</th>
-                                        <th className="py-4 px-6 text-center text-[9px] font-black text-blue-500 uppercase tracking-widest">Valor Abiertas</th>
-                                        <th className="py-4 px-6 text-center text-[9px] font-black text-emerald-500 uppercase tracking-widest">Valor Ganadas</th>
-                                        <th className="py-4 px-6 text-center text-[9px] font-black text-brand-orange uppercase tracking-widest">Valor Perdidas</th>
-                                        <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Venta Acumulada</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {(() => {
-                                        let tAbiertas = 0;
-                                        let tGanadas = 0;
-                                        let tPerdidas = 0;
-                                        let tAcumulada = 0;
-
-                                        const rows = (clientes || []).map(c => {
-                                            const cCotz = (cotizaciones || []).filter(q => String(q.cliente_id) === String(c.id));
-                                            const valAbiertas = cCotz.filter(q => q.estatus === 'borrador' || q.estatus === 'enviada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
-                                            const valGanadas = cCotz.filter(q => q.estatus === 'ganada').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
-                                            const valPerdidas = cCotz.filter(q => q.estatus === 'perdida').reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
-
-                                            if (valAbiertas === 0 && valGanadas === 0 && valPerdidas === 0) return null;
-
-                                            tAbiertas += valAbiertas;
-                                            tGanadas += valGanadas;
-                                            tPerdidas += valPerdidas;
-                                            tAcumulada += valGanadas;
-
-                                            return (
-                                                <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
-                                                    <td className="py-4 px-6 sticky left-0 bg-white z-10">
-                                                        <p className="text-[10px] font-black text-slate-900 uppercase">{c.nombre_empresa}</p>
-                                                        <p className="text-[8px] font-bold text-gray-300 uppercase tracking-widest italic">{c.plaza}</p>
-                                                    </td>
-                                                    <td className="py-4 px-6 text-center font-bold text-[10px] text-blue-600">
-                                                        {formatMXN(valAbiertas)}
-                                                    </td>
-                                                    <td className="py-4 px-6 text-center font-bold text-[10px] text-emerald-600">
-                                                        {formatMXN(valGanadas)}
-                                                    </td>
-                                                    <td className="py-4 px-6 text-center font-bold text-[10px] text-brand-orange">
-                                                        {formatMXN(valPerdidas)}
-                                                    </td>
-                                                    <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900">{formatMXN(valGanadas)}</td>
-                                                </tr>
-                                            );
-                                        }).filter(Boolean);
-
-                                        return (
-                                            <>
-                                                {rows}
-                                                <tr className="bg-slate-900 text-white font-black">
-                                                    <td className="py-4 px-6 sticky left-0 bg-slate-900 z-10 text-[9px] uppercase tracking-widest italic">TOTAL GENERAL</td>
-                                                    <td className="py-4 px-6 text-center text-[10px]">{formatMXN(tAbiertas)}</td>
-                                                    <td className="py-4 px-6 text-center text-[10px]">{formatMXN(tGanadas)}</td>
-                                                    <td className="py-4 px-6 text-center text-[10px]">{formatMXN(tPerdidas)}</td>
-                                                    <td className="py-4 px-6 text-right text-[10px]">{formatMXN(tAcumulada)}</td>
-                                                </tr>
-                                            </>
-                                        );
-                                    })()}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
                 )}
 
                 {/* 6. REPORTE DE COBRANZA */}

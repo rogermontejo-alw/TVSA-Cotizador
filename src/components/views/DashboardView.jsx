@@ -201,7 +201,7 @@ const DashboardView = ({
                                     COMANDO <span className="text-brand-orange">INTELIGENTE</span> NEXUS
                                 </h1>
                                 <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em] mt-2 flex items-center gap-2">
-                                    SISTEMA DE AUDITORÍA FINANCIERA <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> V1.9.2
+                                    SISTEMA DE AUDITORÍA FINANCIERA <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> V1.9.5
                                 </p>
                             </div>
                         </div>

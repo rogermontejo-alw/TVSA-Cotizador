@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { APP_CONFIG } from '../../appConfig';
 
-const Navbar = ({ session, vistaActual, setVistaActual, onLogout }) => {
+const Navbar = ({ session, perfil, vistaActual, setVistaActual, onLogout }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const userEmail = session?.user?.email || 'N/A';
 
@@ -30,14 +30,16 @@ const Navbar = ({ session, vistaActual, setVistaActual, onLogout }) => {
         return () => { document.body.style.overflow = 'unset'; };
     }, [isMenuOpen]);
 
-    // Enlaces operativos centrales
+    // Enlaces operativos centrales filtrados por rol
+    // Nota: Default a 'Gerencia' si no existe el campo rol para evitar bloqueos iniciales tras migración
+    const userRole = perfil?.rol || 'Gerencia';
     const middleLinks = [
-        { id: 'crm', label: 'Clientes', icon: Users },
-        { id: 'cotizador', label: 'Cotizar', icon: Calculator },
-        { id: 'historial', label: 'Cotizaciones', icon: History },
-        { id: 'master-contracts', label: 'Convenios', icon: Briefcase },
-        { id: 'cobranza', label: 'Cobranza', icon: DollarSign },
-    ];
+        { id: 'crm', label: 'Clientes', icon: Users, roles: ['Gerencia', 'ventas', 'admon'] },
+        { id: 'cotizador', label: 'Cotizar', icon: Calculator, roles: ['Gerencia', 'ventas'] },
+        { id: 'historial', label: 'Cotizaciones', icon: History, roles: ['Gerencia', 'ventas', 'admon'] },
+        { id: 'master-contracts', label: 'Convenios', icon: Briefcase, roles: ['Gerencia', 'admon'] },
+        { id: 'cobranza', label: 'Cobranza', icon: DollarSign, roles: ['Gerencia', 'admon'] },
+    ].filter(link => !link.roles || link.roles.includes(userRole));
 
     const handleLogout = async () => {
         if (onLogout) {
@@ -107,8 +109,8 @@ const Navbar = ({ session, vistaActual, setVistaActual, onLogout }) => {
                     <div className="flex items-center gap-1 sm:gap-2 ml-auto">
                         <div className="hidden lg:flex items-center gap-1 xl:gap-2 bg-enterprise-50/40 p-1 rounded-2xl border border-enterprise-100/50">
                             <IconButton id="dashboard" icon={LayoutDashboard} label="Dashboard" />
-                            <IconButton id="reportes" icon={BarChart3} label="Reportes" />
-                            <IconButton id="administracion" icon={Settings} label="Administración" />
+                            {userRole === 'Gerencia' && <IconButton id="reportes" icon={BarChart3} label="Reportes" />}
+                            {(userRole === 'Gerencia' || userRole === 'admon') && <IconButton id="administracion" icon={Settings} label="Administración" />}
                             <IconButton id="logout" icon={LogOut} label="Log Out" onClick={handleLogout} />
                         </div>
 
@@ -130,8 +132,8 @@ const Navbar = ({ session, vistaActual, setVistaActual, onLogout }) => {
                     <header className="h-14 flex items-center justify-between px-6 border-b border-white/5 bg-black/40 backdrop-blur-xl flex-shrink-0">
                         <div className="flex items-center gap-2 sm:gap-3">
                             <IconButton id="dashboard" icon={LayoutDashboard} label="D" onClick={() => { setVistaActual('dashboard'); setIsMenuOpen(false); }} className="bg-white/5 w-9 h-9" />
-                            <IconButton id="reportes" icon={BarChart3} label="R" onClick={() => { setVistaActual('reportes'); setIsMenuOpen(false); }} className="bg-white/5 w-9 h-9" />
-                            <IconButton id="administracion" icon={Settings} label="A" onClick={() => { setVistaActual('administracion'); setIsMenuOpen(false); }} className="bg-white/5 w-9 h-9" />
+                            {userRole === 'Gerencia' && <IconButton id="reportes" icon={BarChart3} label="R" onClick={() => { setVistaActual('reportes'); setIsMenuOpen(false); }} className="bg-white/5 w-9 h-9" />}
+                            {(userRole === 'Gerencia' || userRole === 'admon') && <IconButton id="administracion" icon={Settings} label="A" onClick={() => { setVistaActual('administracion'); setIsMenuOpen(false); }} className="bg-white/5 w-9 h-9" />}
                             <IconButton id="logout" icon={LogOut} label="E" onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="bg-white/5 w-9 h-9" />
                         </div>
                         <button
@@ -149,8 +151,8 @@ const Navbar = ({ session, vistaActual, setVistaActual, onLogout }) => {
                         {[
                             { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
                             ...middleLinks,
-                            { id: 'reportes', label: 'Reportes', icon: BarChart3 }
-                        ].map((link) => (
+                            userRole === 'Gerencia' ? { id: 'reportes', label: 'Reportes', icon: BarChart3 } : null
+                        ].filter(Boolean).map((link) => (
                             <button
                                 key={link.id}
                                 onClick={() => { setVistaActual(link.id); setIsMenuOpen(false); }}
@@ -172,11 +174,11 @@ const Navbar = ({ session, vistaActual, setVistaActual, onLogout }) => {
 
                     {/* Footer Minimalista */}
                     <footer className="p-4 border-t border-white/5 bg-black/20 flex items-center justify-between flex-shrink-0">
-                        <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 bg-brand-orange/20 rounded-lg flex items-center justify-center text-brand-orange">
-                                <User size={14} />
-                            </div>
-                            <span className="text-[9px] font-black uppercase text-white/30 truncate max-w-[100px]">{userEmail.split('@')[0]}</span>
+                        <div className="flex flex-col items-end">
+                            <span className="text-[9px] font-black text-brand-orange uppercase tracking-[0.3em] mb-1">{userRole}</span>
+                            <p className="text-[10px] font-black text-white/70 uppercase tracking-widest leading-none">
+                                {perfil?.nombre_completo || userEmail.split('@')[0]}
+                            </p>
                         </div>
                         <span className="text-[7px] font-bold text-white/20 uppercase tracking-widest italic">{APP_CONFIG.FULL_VERSION_LABEL}</span>
                     </footer>

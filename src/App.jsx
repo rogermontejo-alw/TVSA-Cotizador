@@ -81,7 +81,8 @@ const App = () => {
     setCotizacionResult,
     setHistorial: setHistorialState,
     setComparar: setCompararState,
-    iniciarNuevaCotizacion
+    iniciarNuevaCotizacion,
+    cargarCotizacionEdicion
   } = cotizacionState;
 
   // Consolidar formateo de historial usando React.useMemo para máxima reactividad
@@ -111,6 +112,7 @@ const App = () => {
           distribucion: detalles.distribucion || [],
           paqueteVIX: detalles.paqueteVIX || vixCompleto,
           costoVIX: detalles.costoVIX || (detalles.paqueteVIX?.inversion) || 0,
+          subtotalTV: detalles.subtotalTV || 0,
           presupuestoBase: detalles.presupuestoBase || row.monto_total,
         };
       } catch (e) {
@@ -217,6 +219,8 @@ const App = () => {
             onSaveQuote={guardarRegistro}
             setMensaje={setMensajeAdmin}
             masterContracts={masterContracts}
+            contratosEjecucion={dbData.contratosEjecucion}
+            perfil={dbData.perfil}
           />
         );
       case 'comparar':
@@ -284,6 +288,8 @@ const App = () => {
             cliente={selectedClient}
             cotizaciones={historial.filter(h => String(h.cliente_id) === String(selectedClient?.id))}
             masterContracts={masterContracts.filter(mc => String(mc.cliente_id) === String(selectedClient?.id))}
+            interacciones={dbData.interacciones.filter(i => String(i.cliente_id) === String(selectedClient?.id))}
+            perfil={dbData.perfil}
             onBack={() => setVistaActual('crm')}
             onSaveClient={guardarRegistro}
             onNewQuote={() => {
@@ -335,6 +341,7 @@ const App = () => {
         setVistaActual={setVistaActual}
         vistaActual={vistaActual}
         session={session}
+        perfil={dbData.perfil}
         onLogout={handleLogout}
         onNuevaCotizacion={() => {
           iniciarNuevaCotizacion();

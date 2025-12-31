@@ -14,7 +14,8 @@ export const useDatabase = (session) => {
         metasComerciales: [],
         perfil: null,
         perfiles: [],
-        contratosEjecucion: []
+        contratosEjecucion: [],
+        interacciones: []
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -36,7 +37,8 @@ export const useDatabase = (session) => {
                 supabase.from('cobranza').select('*, contratos_ejecucion(numero_contrato), cotizaciones(folio, monto_total, numero_contrato, cliente_id, mc_id, clientes(nombre_empresa))'),
                 supabase.from('metas_comerciales').select('*').order('anio', { ascending: false }).order('mes', { ascending: false }),
                 supabase.from('perfiles').select('*'),
-                supabase.from('contratos_ejecucion').select('*, cotizaciones(folio, monto_total), master_contracts(numero_mc)'),
+                supabase.from('contratos_ejecucion').select('*, cotizaciones(folio, monto_total, cliente_id), master_contracts(numero_mc, cliente_id)'),
+                supabase.from('interacciones_cliente').select('*').order('created_at', { ascending: false }),
                 supabase.auth.getUser().then(async ({ data: { user } }) => {
                     if (!user) return { data: null };
                     const { data: profile } = await supabase.from('perfiles').select('*').eq('id', user.id).maybeSingle();
@@ -57,6 +59,7 @@ export const useDatabase = (session) => {
                 { data: metas },
                 { data: perfiles },
                 { data: contratosEjecucion },
+                { data: interacciones },
                 resPerfil
             ] = results;
 
@@ -122,7 +125,8 @@ export const useDatabase = (session) => {
                     }
                     return list;
                 })(),
-                configuracion: configObj
+                configuracion: configObj,
+                interacciones: interacciones || []
             }));
 
             console.log("📊 Datos cargados:", {

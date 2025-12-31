@@ -13,6 +13,7 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
         email: '',
         iniciales: '',
         codigo_ciudad: 'MID',
+        rol: 'ventas',
         newPassword: '',
         confirmPassword: ''
     });
@@ -28,6 +29,7 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
             email: user.email || '',
             iniciales: user.iniciales || '',
             codigo_ciudad: user.codigo_ciudad || 'MID',
+            rol: user.rol || 'ventas',
             newPassword: '',
             confirmPassword: ''
         });
@@ -44,6 +46,7 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
             email: '',
             iniciales: '',
             codigo_ciudad: 'MID',
+            rol: 'ventas',
             newPassword: '',
             confirmPassword: ''
         });
@@ -92,6 +95,7 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
                 email: userFormData.email, // Guardamos el email en la DB para el directorio
                 iniciales: userFormData.iniciales.toUpperCase(),
                 codigo_ciudad: userFormData.codigo_ciudad.toUpperCase(),
+                rol: userFormData.rol,
                 id: selectedUser?.id // Si es nuevo, esto es undefined
             };
 
@@ -226,6 +230,19 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
                                                 className="w-full p-3.5 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-xl transition-all font-bold outline-none text-sm uppercase"
                                             />
                                         </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Rol de Seguridad</label>
+                                            <select
+                                                value={userFormData.rol}
+                                                onChange={(e) => setUserFormData({ ...userFormData, rol: e.target.value })}
+                                                disabled={perfil?.rol !== 'Gerencia' && selectedUser?.id !== perfil?.id}
+                                                className="w-full p-3.5 bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white rounded-xl transition-all font-bold outline-none text-sm uppercase"
+                                            >
+                                                <option value="Gerencia">Gerencia (Control Total)</option>
+                                                <option value="ventas">Ventas (Operativo)</option>
+                                                <option value="admon">Admon (Administrativo)</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -354,7 +371,10 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
                                                     <div>
                                                         <div className="flex items-center gap-2">
                                                             <p className="font-black text-slate-900 text-sm truncate uppercase tracking-tight leading-none">{u.nombre_completo}</p>
-                                                            {u.id === perfil.id && <span className="bg-emerald-50 text-emerald-600 text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">TÚ (ADMIN)</span>}
+                                                            <span className={`text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest ${u.rol === 'Gerencia' ? 'bg-red-50 text-red-600' : u.rol === 'admon' ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400'}`}>
+                                                                {u.rol || 'ventas'}
+                                                            </span>
+                                                            {u.id === perfil.id && <span className="bg-emerald-50 text-emerald-600 text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">TÚ</span>}
                                                         </div>
                                                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">{u.puesto || 'Colaborador'}</p>
                                                     </div>

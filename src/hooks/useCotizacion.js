@@ -19,6 +19,8 @@ export const useCotizacion = (data = {}) => {
     const [plazaSeleccionada, setPlazaSeleccionada] = useState('');
     const [historial, setHistorial] = useState([]);
     const [comparar, setComparar] = useState([]);
+    const [editingId, setEditingId] = useState(null);
+    const [editingFolio, setEditingFolio] = useState(null);
 
     const calcularPrecioUnitario = useCallback((productoId, clienteId) => {
         const producto = productos.find(p => p.id === productoId);
@@ -149,7 +151,8 @@ export const useCotizacion = (data = {}) => {
         });
 
         const nuevaCotizacion = {
-            id: `COT-${Date.now()}`,
+            id: editingId || `COT-${Date.now()}`,
+            folio: editingFolio,
             fecha: new Date(),
             cliente: clientes.find(c => c.id === clienteSeleccionado),
             items,
@@ -176,7 +179,31 @@ export const useCotizacion = (data = {}) => {
         setCotizacionResult(null);
         setPlazaSeleccionada('');
         setPaqueteVIX('');
+        setEditingId(null);
+        setEditingFolio(null);
     };
+
+    const cargarCotizacionEdicion = useCallback((cotz) => {
+        if (!cotz) return;
+        setEditingId(cotz.id);
+        setEditingFolio(cotz.folio);
+        setClienteSeleccionado(cotz.cliente_id || cotz.cliente?.id || '');
+        setPresupuesto(cotz.presupuestoBase || cotz.monto_total || '');
+        setDuracionDias(String(cotz.diasCampana || 30));
+        setPlazaSeleccionada(cotz.plazaSeleccionada || '');
+        setPaqueteVIX(cotz.paquete_vix_id || cotz.paqueteVIX?.id || '');
+
+        // Cargar productos
+        const items = cotz.items || cotz.json_detalles?.items || [];
+        setProductosSeleccionados(items.map(it => ({
+            id: it.producto.id,
+            cantidad: it.cantidad
+        })));
+
+        // Opcional: mostrar directamente el resultado o volver al editor
+        // Por ahora, solo cargamos los datos y limpiamos el resultado para que el usuario pueda editar
+        setCotizacionResult(null);
+    }, []);
 
     const agregarProducto = (productoId) => {
         if (!productosSeleccionados.find(p => p.id === productoId)) {
@@ -212,8 +239,9 @@ export const useCotizacion = (data = {}) => {
         subtotalActual,
         subtotalTVActual,
         subtotalVIXActual,
-        generarCotizacion, iniciarNuevaCotizacion,
+        generarCotizacion, iniciarNuevaCotizacion, cargarCotizacionEdicion,
         agregarProducto, eliminarProducto, actualizarCantidad,
-        calcularPrecioUnitario, sugerirDistribucion
+        calcularPrecioUnitario, sugerirDistribucion,
+        editingId, editingFolio
     };
 };

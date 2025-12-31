@@ -42,8 +42,12 @@ const MasterContractsView = ({
         monto_ejecucion: '',
         fecha_inicio_pauta: '',
         fecha_fin_pauta: '',
+        plaza: '',
         notas: ''
     });
+
+    const [breakdown, setBreakdown] = useState([]);
+    const [isMultiPlaza, setIsMultiPlaza] = useState(false);
 
     const [isLinkingQuote, setIsLinkingQuote] = useState(false);
     const [targetExecution, setTargetExecution] = useState(null);
@@ -101,20 +105,52 @@ const MasterContractsView = ({
 
     const handleSaveExecution = async (e) => {
         e.preventDefault();
-        const success = await onSaveContrato('contratos_ejecucion', executionData);
-        if (success) {
-            setMensaje({ tipo: 'exito', texto: 'Contrato de registro creado correctamente' });
-            setIsExecuting(false);
-            setExecutionData({
-                cliente_id: '',
-                mc_id: '',
-                cotizacion_id: '',
-                numero_contrato: '',
-                monto_ejecucion: '',
-                fecha_inicio_pauta: '',
-                fecha_fin_pauta: '',
-                notas: ''
+
+        if (isMultiPlaza) {
+            // Validar que todos tengan número de contrato
+            if (breakdown.some(b => !b.numero_contrato)) {
+                setMensaje({ tipo: 'error', texto: 'Todos los contratos deben tener un número' });
+                return;
+            }
+
+            const payload = breakdown.map(b => ({
+                mc_id: executionData.mc_id,
+                cotizacion_id: executionData.cotizacion_id,
+                numero_contrato: b.numero_contrato,
+                monto_ejecucion: b.monto_ejecucion,
+                fecha_inicio_pauta: b.fecha_inicio_pauta,
+                fecha_fin_pauta: b.fecha_fin_pauta,
+                plaza: b.plaza,
+                notas: executionData.notas
+            }));
+
+            const success = await onSaveContrato('contratos_ejecucion', payload, 'numero_contrato');
+            if (success) {
+                setMensaje({ tipo: 'exito', texto: `${payload.length} Contratos creados correctamente` });
+                setIsExecuting(false);
+                setIsMultiPlaza(false);
+                setBreakdown([]);
+            }
+        } else {
+            const success = await onSaveContrato('contratos_ejecucion', {
+                ...executionData,
+                monto_ejecucion: parseFloat(executionData.monto_ejecucion)
             });
+            if (success) {
+                setMensaje({ tipo: 'exito', texto: 'Contrato de registro creado correctamente' });
+                setIsExecuting(false);
+                setExecutionData({
+                    cliente_id: '',
+                    mc_id: '',
+                    cotizacion_id: '',
+                    numero_contrato: '',
+                    monto_ejecucion: '',
+                    fecha_inicio_pauta: '',
+                    fecha_fin_pauta: '',
+                    plaza: '',
+                    notas: ''
+                });
+            }
         }
     };
 
@@ -141,6 +177,7 @@ const MasterContractsView = ({
         setExecutionData({
             ...executionData,
             mc_id: mc.id,
+            cliente_id: mc.cliente_id || '',
             monto_ejecucion: '' // Se llenará al seleccionar cotización
         });
         setIsExecuting(true);
@@ -149,11 +186,39 @@ const MasterContractsView = ({
     const handleSelectQuote = (quoteId) => {
         const quote = cotizaciones.find(q => q.id === quoteId);
         if (quote) {
-            setExecutionData({
-                ...executionData,
-                cotizacion_id: quoteId,
-                monto_ejecucion: quote.subtotalGeneral || quote.total / 1.16
-            });
+            const items = quote.items || [];
+            const plazasDetectadas = [...new Set(items.map(i => i.producto?.plaza).filter(Boolean))];
+
+            if (plazasDetectadas.length > 1) {
+                setIsMultiPlaza(true);
+                const nuevoBreakdown = plazasDetectadas.map(plaza => {
+                    const montoPlaza = items
+                        .filter(i => i.producto?.plaza === plaza)
+                        .reduce((sum, i) => sum + (parseFloat(i.subtotal) || 0), 0);
+
+                    return {
+                        plaza,
+                        monto_ejecucion: montoPlaza,
+                        numero_contrato: '',
+                        fecha_inicio_pauta: executionData.fecha_inicio_pauta || '',
+                        fecha_fin_pauta: executionData.fecha_fin_pauta || ''
+                    };
+                });
+                setBreakdown(nuevoBreakdown);
+                setExecutionData({
+                    ...executionData,
+                    cotizacion_id: quoteId,
+                    monto_ejecucion: quote.subtotalGeneral || quote.total / 1.16
+                });
+            } else {
+                setIsMultiPlaza(false);
+                setExecutionData({
+                    ...executionData,
+                    cotizacion_id: quoteId,
+                    plaza: plazasDetectadas[0] || '',
+                    monto_ejecucion: quote.subtotalGeneral || quote.total / 1.16
+                });
+            }
         }
     };
 
@@ -497,7 +562,11 @@ const MasterContractsView = ({
                                 <select
                                     required
                                     value={executionData.cliente_id}
-                                    onChange={(e) => setExecutionData({ ...executionData, cliente_id: e.target.value, mc_id: '' })}
+                                    onChange={(e) => {
+                                        setExecutionData({ ...executionData, cliente_id: e.target.value, mc_id: '' });
+                                        setIsMultiPlaza(false);
+                                        setBreakdown([]);
+                                    }}
                                     className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none appearance-none uppercase shadow-inner"
                                 >
                                     <option value="">Seleccionar Socio...</option>
@@ -566,56 +635,147 @@ const MasterContractsView = ({
                                 </select>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Nº Contrato</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        placeholder="CTR-..."
-                                        value={executionData.numero_contrato}
-                                        onChange={(e) => setExecutionData({ ...executionData, numero_contrato: e.target.value.toUpperCase() })}
-                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none uppercase shadow-inner"
-                                    />
+                            {isMultiPlaza ? (
+                                <div className="space-y-4 pt-2 border-t border-enterprise-100">
+                                    <p className="text-[8px] font-black text-brand-orange uppercase tracking-widest italic">Desglose Multi-Plaza Detectado ({breakdown.length})</p>
+                                    <div className="space-y-6">
+                                        {breakdown.map((item, idx) => (
+                                            <div key={idx} className="p-4 bg-enterprise-50 rounded-2xl border border-enterprise-100 space-y-3">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="px-2 py-0.5 bg-enterprise-950 text-white rounded text-[7px] font-black uppercase tracking-widest">{item.plaza}</span>
+                                                    <span className="text-[9px] font-black text-enterprise-950">{formatMXN(item.monto_ejecucion)}</span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div className="space-y-1">
+                                                        <label className="text-[7px] font-black text-enterprise-400 uppercase">Nº Contrato</label>
+                                                        <input
+                                                            type="text"
+                                                            required
+                                                            placeholder="CTR-..."
+                                                            value={item.numero_contrato}
+                                                            onChange={(e) => {
+                                                                const newB = [...breakdown];
+                                                                newB[idx].numero_contrato = e.target.value.toUpperCase();
+                                                                setBreakdown(newB);
+                                                            }}
+                                                            className="w-full h-9 px-3 bg-white border border-enterprise-100 rounded-lg text-[9px] font-black outline-none uppercase"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-[7px] font-black text-enterprise-400 uppercase">Monto Final</label>
+                                                        <input
+                                                            type="number"
+                                                            value={item.monto_ejecucion}
+                                                            onChange={(e) => {
+                                                                const newB = [...breakdown];
+                                                                newB[idx].monto_ejecucion = parseFloat(e.target.value);
+                                                                setBreakdown(newB);
+                                                            }}
+                                                            className="w-full h-9 px-3 bg-white border border-enterprise-100 rounded-lg text-[9px] font-black outline-none"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div className="space-y-1">
+                                                        <label className="text-[7px] font-black text-enterprise-400 uppercase">Pauta Inicio</label>
+                                                        <input
+                                                            type="date"
+                                                            required
+                                                            value={item.fecha_inicio_pauta}
+                                                            onChange={(e) => {
+                                                                const newB = [...breakdown];
+                                                                newB[idx].fecha_inicio_pauta = e.target.value;
+                                                                setBreakdown(newB);
+                                                            }}
+                                                            className="w-full h-9 px-3 bg-white border border-enterprise-100 rounded-lg text-[9px] font-black outline-none"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-[7px] font-black text-enterprise-400 uppercase">Pauta Fin</label>
+                                                        <input
+                                                            type="date"
+                                                            required
+                                                            value={item.fecha_fin_pauta}
+                                                            onChange={(e) => {
+                                                                const newB = [...breakdown];
+                                                                newB[idx].fecha_fin_pauta = e.target.value;
+                                                                setBreakdown(newB);
+                                                            }}
+                                                            className="w-full h-9 px-3 bg-white border border-enterprise-100 rounded-lg text-[9px] font-black outline-none"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Valor Contrato ($)</label>
-                                    <input
-                                        type="number"
-                                        required
-                                        value={executionData.monto_ejecucion}
-                                        onChange={(e) => setExecutionData({ ...executionData, monto_ejecucion: e.target.value })}
-                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none shadow-inner"
-                                    />
-                                </div>
-                            </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Nº Contrato</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                placeholder="CTR-..."
+                                                value={executionData.numero_contrato}
+                                                onChange={(e) => setExecutionData({ ...executionData, numero_contrato: e.target.value.toUpperCase() })}
+                                                className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none uppercase shadow-inner"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Valor Contrato ($)</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                value={executionData.monto_ejecucion}
+                                                onChange={(e) => setExecutionData({ ...executionData, monto_ejecucion: e.target.value })}
+                                                className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none shadow-inner"
+                                            />
+                                        </div>
+                                    </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Inicio Pauta</label>
-                                    <input
-                                        type="date"
-                                        required
-                                        value={executionData.fecha_inicio_pauta}
-                                        onChange={(e) => setExecutionData({ ...executionData, fecha_inicio_pauta: e.target.value })}
-                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none shadow-inner"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Fin Pauta</label>
-                                    <input
-                                        type="date"
-                                        required
-                                        value={executionData.fecha_fin_pauta}
-                                        onChange={(e) => setExecutionData({ ...executionData, fecha_fin_pauta: e.target.value })}
-                                        className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none shadow-inner"
-                                    />
-                                </div>
-                            </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Inicio Pauta</label>
+                                            <input
+                                                type="date"
+                                                required
+                                                value={executionData.fecha_inicio_pauta}
+                                                onChange={(e) => setExecutionData({ ...executionData, fecha_inicio_pauta: e.target.value })}
+                                                className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none shadow-inner"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Fin Pauta</label>
+                                            <input
+                                                type="date"
+                                                required
+                                                value={executionData.fecha_fin_pauta}
+                                                onChange={(e) => setExecutionData({ ...executionData, fecha_fin_pauta: e.target.value })}
+                                                className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none shadow-inner"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[8px] font-black text-enterprise-400 uppercase ml-2">Plaza Operación</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Escribir Plaza..."
+                                            value={executionData.plaza}
+                                            onChange={(e) => setExecutionData({ ...executionData, plaza: e.target.value })}
+                                            className="w-full h-11 px-4 bg-enterprise-50 border border-enterprise-100 rounded-xl text-[10px] font-black outline-none uppercase shadow-inner"
+                                        />
+                                    </div>
+                                </>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-enterprise-50">
                                 <button type="button" onClick={() => setIsExecuting(false)} className="h-12 text-[9px] font-black uppercase tracking-widest text-enterprise-400 hover:text-error transition-colors">Abortar</button>
-                                <button type="submit" className="h-12 bg-enterprise-950 text-white rounded-xl text-[9px] font-black uppercase tracking-[.2em] shadow-xl hover:bg-brand-orange active:scale-95 transition-all">Crear Contrato</button>
+                                <button type="submit" className="h-12 bg-enterprise-950 text-white rounded-xl text-[9px] font-black uppercase tracking-[.2em] shadow-xl hover:bg-brand-orange active:scale-95 transition-all">
+                                    {isMultiPlaza ? `Formalizar ${breakdown.length} Órdenes` : 'Crear Contrato'}
+                                </button>
                             </div>
                         </form>
                     </div>

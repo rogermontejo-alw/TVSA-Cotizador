@@ -8,6 +8,7 @@ import { formatMXN } from '../../utils/formatters';
 const CotizacionResult = ({
     cotizacion,
     iniciarNuevaCotizacion,
+    cargarCotizacionEdicion,
     guardarCotizacion,
     agregarAComparador,
     mostrarPropuesta,
@@ -183,15 +184,21 @@ const CotizacionResult = ({
                 <div className="bg-white rounded-2xl shadow-premium border border-enterprise-100 p-4 flex flex-col justify-center">
                     <div className="flex items-center gap-2 mb-2">
                         <Activity size={12} className="text-brand-orange" />
-                        <span className="text-[7px] font-black text-enterprise-400 uppercase tracking-widest italic leading-none">Seguimiento de Estatus</span>
+                        <span className="text-[7px] font-black text-enterprise-400 uppercase tracking-widest italic leading-none">Estatus del Pipeline</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-widest ${cotizacion.estatus === 'ganada' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-brand-orange/10 text-brand-orange'}`}>
+                    <div className="flex items-center justify-between">
+                        <span className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest ${cotizacion.estatus === 'ganada' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' :
+                                cotizacion.estatus === 'perdida' ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20' :
+                                    'bg-enterprise-950 text-white shadow-lg shadow-enterprise-950/20'
+                            }`}>
                             {cotizacion.estatus || 'BORRADOR'}
                         </span>
-                        <span className="text-[9px] font-black text-enterprise-950 uppercase italic">
-                            {cotizacion.folio || 'NUEVO PLAN'}
-                        </span>
+                        <div className="flex flex-col items-end">
+                            <span className="text-[6px] font-black text-enterprise-300 uppercase tracking-widest leading-none mb-1">Folio de Registro</span>
+                            <span className="text-[9px] font-black text-enterprise-950 uppercase italic tracking-tighter">
+                                {cotizacion.folio || 'NUEVO PLAN'}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -241,23 +248,26 @@ const CotizacionResult = ({
                             <span className="text-[9px] font-black text-white uppercase tracking-[0.3em] italic">Resumen del Pipeline</span>
                         </div>
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                            <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-[0.2em]">
                                 <span className="text-white/40">Total Aprobado</span>
-                                <span className="text-white">{formatMXN(presupuestoBase)}</span>
+                                <span className="text-white bg-white/5 px-2 py-1 rounded">{formatMXN(presupuestoBase)}</span>
                             </div>
-                            <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-brand-orange">
+                            <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-[0.2em] text-brand-orange">
                                 <span>Activos Lineales</span>
-                                <span>-{formatMXN(inversionTV)}</span>
+                                <span className="bg-brand-orange/10 px-2 py-1 rounded">-{formatMXN(inversionTV)}</span>
                             </div>
                             {inversionDigital > 0 && (
-                                <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-emerald-500">
+                                <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500">
                                     <span>Impacto Digital</span>
-                                    <span>-{formatMXN(inversionDigital)}</span>
+                                    <span className="bg-emerald-500/10 px-2 py-1 rounded">-{formatMXN(inversionDigital)}</span>
                                 </div>
                             )}
-                            <div className="pt-4 border-t border-white/10 flex justify-between items-center">
-                                <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Balance Estratégico</span>
-                                <span className={`text-[14px] font-black tracking-widest italic ${saldoColor}`}>{formatMXN(saldoFinal)}</span>
+                            <div className="pt-4 border-t border-white/10 flex justify-between items-end">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-black text-white uppercase tracking-[0.2em] leading-none mb-1">Balance Estratégico</span>
+                                    <span className="text-[6px] font-bold text-white/30 uppercase tracking-widest">Sobrante a favor</span>
+                                </div>
+                                <span className={`text-[16px] font-black tracking-widest italic leading-none ${saldoColor}`}>{formatMXN(saldoFinal)}</span>
                             </div>
                         </div>
                     </div>
@@ -271,8 +281,9 @@ const CotizacionResult = ({
                         <textarea
                             value={localObservaciones}
                             onChange={(e) => setLocalObservaciones(e.target.value)}
-                            placeholder="AÑADE NOTAS ESPECÍFICAS PARA EL CLIENTE..."
-                            className="w-full h-20 p-3 bg-enterprise-50 rounded-xl text-[9px] font-bold text-enterprise-900 placeholder:text-enterprise-300 outline-none focus:ring-1 focus:ring-brand-orange resize-none transition-all"
+                            disabled={cotizacion.estatus === 'ganada'}
+                            placeholder={cotizacion.estatus === 'ganada' ? "RESUMEN FINALIZADO (SÓLO LECTURA)" : "AÑADE NOTAS ESPECÍFICAS PARA EL CLIENTE..."}
+                            className="w-full h-20 p-3 bg-enterprise-50 rounded-xl text-[9px] font-bold text-enterprise-900 placeholder:text-enterprise-300 outline-none focus:ring-1 focus:ring-brand-orange resize-none transition-all disabled:opacity-50"
                         />
                     </div>
 
@@ -303,46 +314,40 @@ const CotizacionResult = ({
                         </button>
                     </div>
 
-                    <button
-                        onClick={iniciarNuevaCotizacion}
-                        className="w-full py-3 bg-enterprise-50 border border-enterprise-100 rounded-2xl text-[8px] font-black text-enterprise-400 uppercase tracking-widest hover:text-error transition-all italic"
-                    >
-                        Archivar y Volver al Estratega
-                    </button>
+                    <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-enterprise-50">
+                        <button
+                            onClick={() => cargarCotizacionEdicion(cotizacion)}
+                            disabled={cotizacion.estatus === 'ganada'}
+                            className="w-full py-4 bg-enterprise-950 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.3em] shadow-lg shadow-enterprise-950/20 hover:bg-brand-orange active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed group overflow-hidden relative"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                            <div className="flex items-center justify-center gap-3 relative z-10">
+                                <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+                                <span>Editar Estrategia Comercial</span>
+                            </div>
+                        </button>
+
+                        <button
+                            onClick={iniciarNuevaCotizacion}
+                            className="w-full py-3 bg-white border border-enterprise-100 rounded-2xl text-[8px] font-black text-enterprise-400 uppercase tracking-[0.4em] hover:bg-enterprise-50 hover:text-error transition-all italic text-center"
+                        >
+                            Archivar y Finalizar Sesión
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* Modals Normalized to High Density */}
-            {confirmingQuoteStatus && (
+            {/* Client Stage Modal still kept as it's a critical CRM transition */}
+            {confirmingStage && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-enterprise-950/80 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-white">
                         <h3 className="text-center text-[10px] font-black text-slate-900 uppercase italic tracking-widest mb-4">
-                            Actualizar Pipeline: {confirmingQuoteStatus.status}
+                            Socio Detectado: Actualizar a Cliente
                         </h3>
-                        {confirmingQuoteStatus.status === 'ganada' && (
-                            <div className="space-y-3 mb-6">
-                                <input
-                                    type="number"
-                                    placeholder="NÚMERO DE CONTRATO..."
-                                    value={cierreData.numero_contrato}
-                                    onChange={(e) => setCierreData({ ...cierreData, numero_contrato: e.target.value })}
-                                    className="w-full h-10 px-4 bg-slate-50 rounded-xl text-[10px] font-black focus:ring-1 focus:ring-emerald-500 outline-none uppercase"
-                                />
-                                <select
-                                    value={cierreData.mc_id}
-                                    onChange={(e) => setCierreData({ ...cierreData, mc_id: e.target.value })}
-                                    className="w-full h-10 px-4 bg-slate-50 rounded-xl text-[10px] font-black outline-none appearance-none uppercase"
-                                >
-                                    <option value="">VENTA ÚNICA (SIN MC)</option>
-                                    {clientMCs.map(mc => (
-                                        <option key={mc.id} value={mc.id}>MC: {mc.numero_mc}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
+                        <p className="text-[9px] text-center text-slate-500 mb-6 font-bold uppercase tracking-tight">La venta ha sido exitosa. ¿Deseas mover el registro del socio a la etapa de CLIENTE ACTIVO?</p>
                         <div className="grid grid-cols-2 gap-2">
-                            <button onClick={() => setConfirmingQuoteStatus(null)} className="h-10 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 rounded-xl">Descartar</button>
-                            <button onClick={() => handleUpdateQuoteStatus(confirmingQuoteStatus.status)} className="h-10 bg-enterprise-950 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-brand-orange">Ejecutar Cambio</button>
+                            <button onClick={() => setConfirmingStage(null)} className="h-10 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 rounded-xl">Mantener Prospecto</button>
+                            <button onClick={() => handleUpdateStage('Cliente')} className="h-10 bg-enterprise-950 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500 transition-colors">Convertir a Cliente</button>
                         </div>
                     </div>
                 </div>

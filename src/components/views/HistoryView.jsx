@@ -11,31 +11,14 @@ const HistoryView = ({
     mostrarPropuesta,
     eliminarCotizacion,
     onSaveQuote,
-    setMensaje
+    setMensaje,
+    contratosEjecucion = [],
+    perfil
 }) => {
     const [busqueda, setBusqueda] = useState('');
     const [filtroEstatus, setFiltroEstatus] = useState('todos');
-    const [confirmingStatus, setConfirmingStatus] = useState(null);
     const [isUpdating, setIsUpdating] = useState(false);
-
-    const [cierreData, setCierreData] = useState({
-        numero_contrato: '',
-        mc_id: '',
-        fecha_registro_sistema: '',
-        folio_sistema: ''
-    });
-
-    const openStatusModal = (quote, status) => {
-        setConfirmingStatus({ quote, status });
-        if (status === 'ganada') {
-            setCierreData({
-                numero_contrato: quote.numero_contrato || '',
-                mc_id: quote.mc_id || '',
-                fecha_registro_sistema: quote.fecha_registro_sistema || '',
-                folio_sistema: quote.folio_sistema || ''
-            });
-        }
-    };
+    const [confirmingAction, setConfirmingAction] = useState(null);
 
     const historialFiltrado = useMemo(() => {
         return (historial || []).filter(cotz => {
@@ -58,9 +41,18 @@ const HistoryView = ({
             const success = await onSaveQuote('cotizaciones', payload);
             if (success) {
                 setMensaje({ tipo: 'exito', texto: `Estatus: ${newStatus.toUpperCase()}` });
-                setConfirmingStatus(null);
+                setConfirmingAction(null);
             }
-        } catch (err) { console.error(err); } finally { setIsUpdating(false); }
+        } catch (err) {
+            console.error(err);
+            setConfirmingAction(null);
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const confirmAction = (message, onConfirm) => {
+        setConfirmingAction({ message, onConfirm });
     };
 
     return (
@@ -146,18 +138,45 @@ const HistoryView = ({
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex justify-center gap-1">
-                                            {['enviada', 'ganada', 'perdida'].map(st => (
-                                                <button
-                                                    key={st}
-                                                    onClick={() => openStatusModal(cotz, st)}
-                                                    className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest transition-all ${cotz.estatus === st
-                                                        ? st === 'ganada' ? 'bg-emerald-500 text-white' : st === 'perdida' ? 'bg-brand-orange text-white' : 'bg-enterprise-950 text-white'
-                                                        : 'bg-enterprise-100 text-enterprise-300 hover:bg-enterprise-200'
-                                                        }`}
-                                                >
-                                                    {st}
-                                                </button>
-                                            ))}
+                                            {['enviada', 'ganada', 'perdida'].map(st => {
+                                                const hasContracts = (contratosEjecucion || []).some(ce => String(ce.cotizacion_id) === String(cotz.id));
+
+                                                return (
+                                                    <div key={st} className="relative group/st">
+                                                        <button
+                                                            onClick={() => {
+                                                                if (st === cotz.estatus) return;
+                                                                confirmAction(
+                                                                    `¿Cambiar estatus de la cotización ${cotz.folio || cotz.id} a ${st.toUpperCase()}?`,
+                                                                    () => handleUpdateStatus(cotz, st)
+                                                                );
+                                                            }}
+                                                            disabled={cotz.estatus === 'ganada' && st !== 'ganada' && hasContracts}
+                                                            className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest transition-all ${cotz.estatus === st
+                                                                ? st === 'ganada' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : st === 'perdida' ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20' : 'bg-enterprise-950 text-white shadow-lg shadow-enterprise-950/20'
+                                                                : 'bg-enterprise-100 text-enterprise-300 hover:bg-enterprise-200'
+                                                                } ${cotz.estatus === 'ganada' && st !== 'ganada' && hasContracts ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                        >
+                                                            {st}
+                                                        </button>
+                                                        {st === 'ganada' && cotz.estatus === 'ganada' && !hasContracts && perfil?.rol === 'Gerencia' && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    confirmAction(
+                                                                        '¿Reabrir cotización para ajustes finos? (Se perderá la fecha de cierre original)',
+                                                                        () => handleUpdateStatus(cotz, 'enviada')
+                                                                    );
+                                                                }}
+                                                                className="absolute -right-2 -top-2 bg-white border border-brand-orange text-brand-orange rounded-full p-1 opacity-0 group-hover/st:opacity-100 transition-all hover:bg-brand-orange hover:text-white shadow-lg z-10"
+                                                                title="Reabrir para edición"
+                                                            >
+                                                                <RefreshCw size={8} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-right font-black text-enterprise-950 text-[10px] italic">
@@ -167,7 +186,14 @@ const HistoryView = ({
                                         <div className="flex items-center justify-center gap-1.5">
                                             <button onClick={() => { setCotizacion(cotz); setVistaActual('cotizador'); }} className="w-7 h-7 flex items-center justify-center bg-enterprise-50 text-enterprise-400 hover:bg-enterprise-950 hover:text-white rounded-lg transition-all"><Eye size={12} /></button>
                                             <button onClick={() => mostrarPropuesta(cotz)} className="w-7 h-7 flex items-center justify-center bg-enterprise-50 text-enterprise-400 hover:bg-brand-orange hover:text-white rounded-lg transition-all"><Printer size={12} /></button>
-                                            <button onClick={() => { if (window.confirm('¿Eliminar registro?')) eliminarCotizacion(cotz.id); }} className="w-7 h-7 flex items-center justify-center bg-enterprise-50 text-enterprise-400 hover:text-brand-orange rounded-lg transition-all"><Trash2 size={12} /></button>
+                                            {perfil?.rol === 'Gerencia' && (
+                                                <button onClick={() => {
+                                                    confirmAction(
+                                                        '¿Estás seguro de eliminar este registro permanentemente?',
+                                                        () => eliminarCotizacion(cotz.id)
+                                                    );
+                                                }} className="w-7 h-7 flex items-center justify-center bg-enterprise-50 text-enterprise-400 hover:text-brand-orange rounded-lg transition-all"><Trash2 size={12} /></button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -181,22 +207,39 @@ const HistoryView = ({
                 </div>
             </div>
 
-            {/* Modal Normalized */}
-            {confirmingStatus && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-enterprise-950/80 backdrop-blur-sm animate-premium-fade">
-                    <div className="bg-white w-full max-w-xs rounded-2xl p-6 shadow-2xl border border-enterprise-100">
-                        <h3 className="text-center text-[10px] font-black text-enterprise-950 uppercase italic tracking-widest mb-6">
-                            ¿Marcar como {confirmingStatus.status.toUpperCase()}?
-                        </h3>
-                        <div className="grid grid-cols-2 gap-2">
-                            <button onClick={() => setConfirmingStatus(null)} className="h-9 text-[9px] font-black uppercase text-enterprise-400 hover:bg-enterprise-50 rounded-lg">Abortar</button>
-                            <button
-                                onClick={() => handleUpdateStatus(confirmingStatus.quote, confirmingStatus.status)}
-                                disabled={isUpdating}
-                                className="h-9 bg-enterprise-950 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-orange disabled:opacity-50"
-                            >
-                                {isUpdating ? 'Procesando...' : 'Confirmar'}
-                            </button>
+            {/* Custom Interactive Confirmation Modal */}
+            {confirmingAction && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-enterprise-950/80 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border border-white animate-in zoom-in-95 duration-300">
+                        <div className="flex flex-col items-center text-center space-y-6">
+                            <div className="w-16 h-16 bg-enterprise-50 rounded-2xl flex items-center justify-center text-brand-orange">
+                                <AlertCircle size={32} strokeWidth={2.5} />
+                            </div>
+
+                            <div className="space-y-2">
+                                <h3 className="text-sm font-black text-enterprise-950 uppercase tracking-widest italic leading-tight">
+                                    Confirmación de Sistema
+                                </h3>
+                                <p className="text-[10px] font-bold text-enterprise-400 uppercase tracking-tight leading-relaxed px-4">
+                                    {confirmingAction.message}
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 w-full pt-4">
+                                <button
+                                    onClick={() => setConfirmingAction(null)}
+                                    className="h-12 text-[9px] font-black uppercase tracking-[0.2em] text-enterprise-300 hover:text-enterprise-950 hover:bg-enterprise-50 rounded-2xl transition-all"
+                                >
+                                    Abortar
+                                </button>
+                                <button
+                                    onClick={confirmingAction.onConfirm}
+                                    disabled={isUpdating}
+                                    className="h-12 bg-enterprise-950 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] hover:bg-brand-orange shadow-lg shadow-enterprise-950/20 active:scale-95 transition-all disabled:opacity-50"
+                                >
+                                    {isUpdating ? 'Procesando...' : 'Confirmar'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
