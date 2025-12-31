@@ -25,6 +25,11 @@ const MISSING_DATA_CHAR = '-';
 const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterContracts = [], contratosEjecucion = [] }) => {
     const [seccionReporte, setSeccionReporte] = useState('ventas-mes');
     const [subCorte, setSubCorte] = useState('pipeline'); // 'pipeline' o 'ejecucion'
+    const [expandedRows, setExpandedRows] = useState({});
+
+    const toggleRow = (id) => {
+        setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+    };
 
     // 📅 Periodo
     const hoy = new Date();
@@ -59,6 +64,42 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         });
     }, [cotizaciones, fechaInicio, fechaFin, ignorarPeriodo]);
 
+    // 🚩 Ventas Ganadas que aún no tienen un Contrato de Ejecución (En Limbo)
+    const ganadasSinContrato = useMemo(() => {
+        return (cotizaciones || []).filter(q => {
+            if (q.estatus !== 'ganada') return false;
+            // Solo nos interesan las que NO tienen contrato vinculado
+            return !(contratosEjecucion || []).some(ce => String(ce.id_cotizacion || ce.cotizacion_id) === String(q.id));
+        });
+    }, [cotizaciones, contratosEjecucion]);
+
+    const totalPorFormalizar = useMemo(() => {
+        return ganadasSinContrato.reduce((acc, q) => acc + (parseFloat(q.subtotalGeneral || q.total / 1.16) || 0), 0);
+    }, [ganadasSinContrato]);
+
+    // 📊 Datos Base para Reportes de Ventas (Fijos a Ejecución para consistencia en Matrices)
+    const datosVentasBase = useMemo(() => {
+        return (contratosEjecucion || []).filter(ce => {
+            if (ignorarPeriodo) return true;
+            const fechaE = new Date(ce.fecha_inicio_pauta);
+            const start = new Date(fechaInicio);
+            const end = new Date(fechaFin);
+            end.setHours(23, 59, 59, 999);
+            return fechaE >= start && fechaE <= end;
+        }).map(ce => ({
+            id: ce.id,
+            cliente_id: ce.master_contracts?.cliente_id || ce.cotizaciones?.cliente_id,
+            fecha: ce.fecha_inicio_pauta,
+            monto: parseFloat(ce.monto_ejecucion) || 0,
+            folio_referencia: ce.numero_contrato,
+            mc_id: ce.mc_id,
+            tipo: 'Ejecución',
+            original: ce
+        }));
+    }, [contratosEjecucion, fechaInicio, fechaFin, ignorarPeriodo]);
+
+    // 📊 Datos para el Reporte de Convenios (Permite toggle entre Pipeline/Ejecución si fuera necesario, 
+    // pero actualmente usa masterContracts directamente en getReportData)
     const datosFinancierosTotal = useMemo(() => {
         if (subCorte === 'pipeline') {
             return ganadas.map(q => ({
@@ -72,25 +113,9 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 original: q
             }));
         } else {
-            return (contratosEjecucion || []).filter(ce => {
-                if (ignorarPeriodo) return true;
-                const fechaE = new Date(ce.fecha_inicio_pauta);
-                const start = new Date(fechaInicio);
-                const end = new Date(fechaFin);
-                end.setHours(23, 59, 59, 999);
-                return fechaE >= start && fechaE <= end;
-            }).map(ce => ({
-                id: ce.id,
-                cliente_id: ce.master_contracts?.cliente_id || ce.cotizaciones?.cliente_id,
-                fecha: ce.fecha_inicio_pauta,
-                monto: parseFloat(ce.monto_ejecucion) || 0,
-                folio_referencia: ce.numero_contrato,
-                mc_id: ce.mc_id,
-                tipo: 'Ejecución',
-                original: ce
-            }));
+            return datosVentasBase;
         }
-    }, [ganadas, contratosEjecucion, subCorte, fechaInicio, fechaFin, ignorarPeriodo]);
+    }, [ganadas, datosVentasBase, subCorte]);
 
     // 1. REPORTE: Ventas por Mes (Corte Mensual Matrix: Clientes x Meses)
     const matrizMensual = useMemo(() => {
@@ -99,7 +124,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const mesesVisibles = new Set();
         const totalesPorMes = {};
 
-        datosFinancierosTotal.forEach(item => {
+        datosVentasBase.forEach(item => {
             const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
             const fechaItem = new Date(item.fecha);
             const mesIdx = fechaItem.getMonth();
@@ -124,7 +149,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const granTotal = Object.values(totalesPorMes).reduce((a, b) => a + b, 0);
 
         return { mesesColumnas, mesesNombres, filas, totalesPorMes, granTotal };
-    }, [datosFinancierosTotal, clientes]);
+    }, [datosVentasBase, clientes]);
 
     // 2. REPORTE: Ventas por Canal (Matriz: Canales x Ciudades)
     const matrizCanales = useMemo(() => {
@@ -132,21 +157,16 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const plazasSet = new Set();
         const totalesPorPlaza = {};
 
-        datosFinancierosTotal.forEach(item => {
-            // Obtener cotización vinculada para entrar a sus partidas
-            let q = null;
-            if (subCorte === 'pipeline') {
-                q = (cotizaciones || []).find(c => c.id === item.id);
-            } else {
-                const ce = (contratosEjecucion || []).find(e => e.id === item.id);
-                q = (cotizaciones || []).find(c => c.id === ce?.cotizacion_id);
-            }
+        datosVentasBase.forEach(item => {
+            // En reportes de canal SIEMPRE usamos la perspectiva de Ejecución (Contratos) para ser precisos
+            const ce = (contratosEjecucion || []).find(e => e.id === item.id);
+            const q = (cotizaciones || []).find(c => c.id === ce?.cotizacion_id);
 
             if (q) {
                 // 1. Pauta tradicional
                 (q.items || []).forEach(i => {
                     const canal = i.producto?.canal || 'Otros';
-                    const plazaItem = i.producto?.plaza || 'Mérida'; // PLAZA DEL PRODUCTO
+                    const plazaItem = i.producto?.plaza || 'Mérida';
 
                     plazasSet.add(plazaItem);
                     if (!canalesMap[canal]) canalesMap[canal] = {};
@@ -160,14 +180,13 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
                 if (costoVIX > 0) {
                     const canalVIX = 'VIX';
-                    const plazaVIX = q.clientes?.plaza || 'Nacional'; // VIX se suele atribuir a la plaza del cliente o Nacional
+                    const plazaVIX = q.clientes?.plaza || 'Nacional';
                     plazasSet.add(plazaVIX);
                     if (!canalesMap[canalVIX]) canalesMap[canalVIX] = {};
                     canalesMap[canalVIX][plazaVIX] = (canalesMap[canalVIX][plazaVIX] || 0) + costoVIX;
                     totalesPorPlaza[plazaVIX] = (totalesPorPlaza[plazaVIX] || 0) + costoVIX;
                 }
             } else {
-                // Fallback (monto global si no hay desglose)
                 const canal = 'Sin Clasificar';
                 const dummyPlaza = 'Mérida';
                 plazasSet.add(dummyPlaza);
@@ -187,7 +206,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const granTotal = Object.values(totalesPorPlaza).reduce((a, b) => a + b, 0);
 
         return { plazas, filas, totalesPorPlaza, granTotal };
-    }, [datosFinancierosTotal, clientes, cotizaciones, contratosEjecucion, subCorte]);
+    }, [datosVentasBase, clientes, cotizaciones, contratosEjecucion]);
 
     // 3. REPORTE: Ventas por Ciudad (Matriz: Clientes x Ciudades)
     const matrizCiudad = useMemo(() => {
@@ -195,7 +214,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const plazasSet = new Set();
         const totalesPorPlaza = {};
 
-        datosFinancierosTotal.forEach(item => {
+        datosVentasBase.forEach(item => {
             const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
             const cId = item.cliente_id;
             const clienteNombre = cliente?.nombre_empresa || 'S/N';
@@ -204,14 +223,9 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 clienteMap[cId] = { nombre: clienteNombre, importes: {} };
             }
 
-            // Obtener partidas para saber la plaza del producto
-            let q = null;
-            if (subCorte === 'pipeline') {
-                q = (cotizaciones || []).find(c => c.id === item.id);
-            } else {
-                const ce = (contratosEjecucion || []).find(e => e.id === item.id);
-                q = (cotizaciones || []).find(c => c.id === ce?.cotizacion_id);
-            }
+            // SIEMPRE perspectiva de Ejecutoría (Contratos)
+            const ce = (contratosEjecucion || []).find(e => e.id === item.id);
+            const q = (cotizaciones || []).find(c => c.id === ce?.cotizacion_id);
 
             if (q) {
                 // 1. Pauta tradicional
@@ -250,9 +264,10 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const granTotal = Object.values(totalesPorPlaza).reduce((a, b) => a + b, 0);
 
         return { plazas, filas, totalesPorPlaza, granTotal };
-    }, [datosFinancierosTotal, clientes, cotizaciones, contratosEjecucion, subCorte]);
+    }, [datosVentasBase, clientes, cotizaciones, contratosEjecucion]);
 
-    const getReportData = (id) => {
+    const getReportData = (id, forcedCorte = null) => {
+        const activeCorte = forcedCorte || subCorte;
         let headers = [];
         let rows = [];
         let title = "";
@@ -285,47 +300,154 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             ]);
             rows.push(['TOTAL CIUDAD', ...matrizCiudad.plazas.map(p => matrizCiudad.totalesPorPlaza[p] || 0), matrizCiudad.granTotal]);
         } else if (id === 'control-cierres') {
-            title = subCorte === 'pipeline' ? "CONTROL ADMINISTRATIVO DE CIERRES (COMMERCIAL)" : "CONTROL ADMINISTRATIVO DE CONTRATOS (FINANCIAL)";
-            headers = ['Fecha Cierre', 'Cliente / Empresa', 'Folio Cotz', 'Master Contract', 'Orden / Contrato', 'Factura', 'Inversión Neta'];
+            if (activeCorte === 'pipeline') {
+                title = "SALDOS POR CONVENIO (CPS)";
+                headers = ['CPS (Convenio)', 'Cliente', 'Bolsa Original (Convenio)', 'Monto Contratado', 'Saldo Disponible', 'Monto Facturado', 'Cobranza Real'];
 
-            let totalInversion = 0;
-            const dataRows = datosFinancierosTotal.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).map(item => {
-                totalInversion += item.monto;
-                const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
-                const q = subCorte === 'pipeline' ? item.original : (cotizaciones || []).find(c => String(c.id) === String(item.original?.cotizacion_id));
-                const ce = subCorte === 'ejecucion' ? item.original : (contratosEjecucion || []).find(e => String(e.cotizacion_id) === String(item.id));
-                const registroCobranza = (cobranza || []).find(cob => (q && String(cob.cotizacion_id) === String(q.id)) || (ce && String(cob.contrato_ejecucion_id) === String(ce.id)));
+                const mcSummaries = (masterContracts || []).map(mc => {
+                    const ecs = (contratosEjecucion || []).filter(ce => String(ce.mc_id) === String(mc.id));
+                    const montoEjecutado = ecs.reduce((acc, ce) => acc + (parseFloat(ce.monto_ejecucion) || 0), 0);
+                    const facturas = (cobranza || []).filter(cob => ecs.some(ce => String(ce.id) === String(cob.contrato_ejecucion_id)));
+                    const montoFacturado = facturas.reduce((acc, fac) => acc + (parseFloat(fac.monto_facturado) || 0), 0);
+                    const montoCobrado = facturas.filter(f => f.estatus_pago === 'cobrado').reduce((acc, fac) => acc + (parseFloat(fac.monto_facturado) || 0), 0);
+                    const cliente = (clientes || []).find(c => String(c.id) === String(mc.cliente_id));
+                    const aprobado = parseFloat(mc.monto_aprobado) || 0;
+                    const disponible = aprobado - montoEjecutado;
 
-                let mcEncontrado = (masterContracts || []).find(m =>
-                    (ce && String(m.id) === String(ce.mc_id)) ||
-                    (item.mc_id && String(m.id) === String(item.mc_id)) ||
-                    (q && q.mc_id && String(m.id) === String(q.mc_id))
-                );
+                    return {
+                        numero_mc: mc.numero_mc || 'REF',
+                        cliente: cliente?.nombre_empresa || 'S/N',
+                        aprobado,
+                        ejecutado: montoEjecutado,
+                        disponible,
+                        facturado: montoFacturado,
+                        cobranza: montoCobrado
+                    };
+                }).filter(s => s.aprobado > 0 || s.ejecutado > 0);
 
-                if (!mcEncontrado) {
-                    mcEncontrado = (masterContracts || []).find(m =>
-                        String(m.cliente_id) === String(item.cliente_id) ||
-                        (cliente && String(m.cliente_id) === String(cliente.id))
-                    );
+                const dataRows = mcSummaries.map(s => [
+                    s.numero_mc,
+                    s.cliente,
+                    s.aprobado,
+                    s.ejecutado,
+                    s.disponible,
+                    s.facturado,
+                    s.cobranza
+                ]);
+
+                const totalAprobado = mcSummaries.reduce((acc, s) => acc + s.aprobado, 0);
+                const totalEjecutado = mcSummaries.reduce((acc, s) => acc + s.ejecutado, 0);
+                const totalDisponible = mcSummaries.reduce((acc, s) => acc + s.disponible, 0);
+                const totalFacturado = mcSummaries.reduce((acc, s) => acc + s.facturado, 0);
+                const totalCobranza = mcSummaries.reduce((acc, s) => acc + s.cobranza, 0);
+
+                rows = [
+                    ...dataRows,
+                    ['TOTAL CONSOLIDADO', '', totalAprobado, totalEjecutado, totalDisponible, totalFacturado, totalCobranza]
+                ];
+            } else {
+                title = "LIBRO MAYOR DE CONVENIOS";
+                headers = ['Fecha', 'Concepto', 'Folio Cotz', 'Cliente', 'Ref. Master', 'Ref. Contrato', 'Factura', 'Monto'];
+
+                const eventRows = [];
+                let totalGeneralMonto = 0;
+                const processedCEs = new Set();
+
+                (masterContracts || []).sort((a, b) => b.monto_aprobado - a.monto_aprobado).forEach(mc => {
+                    const ecs = (contratosEjecucion || []).filter(ce => String(ce.mc_id) === String(mc.id));
+                    const cliente = (clientes || []).find(c => String(c.id) === String(mc.cliente_id));
+
+                    if (ecs.length > 0) {
+                        eventRows.push([
+                            new Date(mc.fecha_inicio || mc.created_at).toLocaleDateString('es-MX'),
+                            `CONVENIO: ${mc.numero_mc || 'REF'}`,
+                            '-',
+                            cliente?.nombre_empresa || 'S/N',
+                            mc.numero_mc || 'REF',
+                            '-',
+                            '-',
+                            parseFloat(mc.monto_aprobado) || 0
+                        ]);
+
+                        ecs.sort((a, b) => new Date(a.fecha_inicio_pauta) - new Date(b.fecha_inicio_pauta)).forEach(ce => {
+                            processedCEs.add(ce.id);
+                            const montoCE = parseFloat(ce.monto_ejecucion) || 0;
+                            totalGeneralMonto += montoCE;
+                            const q = (cotizaciones || []).find(quote => String(quote.id) === String(ce.cotizacion_id));
+
+                            eventRows.push([
+                                new Date(ce.fecha_inicio_pauta).toLocaleDateString('es-MX'),
+                                `  [CONTRATO]`,
+                                q?.folio || '-',
+                                cliente?.nombre_empresa || 'S/N',
+                                mc.numero_mc || '-',
+                                ce.numero_contrato || '-',
+                                '-',
+                                montoCE
+                            ]);
+
+                            const facturas = (cobranza || []).filter(cob => String(cob.contrato_ejecucion_id) === String(ce.id));
+                            facturas.sort((a, b) => new Date(a.fecha_programada_cobro) - new Date(b.fecha_programada_cobro)).forEach(fac => {
+                                eventRows.push([
+                                    fac.fecha_programada_cobro ? new Date(fac.fecha_programada_cobro).toLocaleDateString('es-MX') : '-',
+                                    `    >> FACTURA`,
+                                    q?.folio || '-',
+                                    cliente?.nombre_empresa || 'S/N',
+                                    mc.numero_mc || '-',
+                                    ce.numero_contrato || '-',
+                                    fac.numero_factura || 'PENDIENTE',
+                                    parseFloat(fac.monto_facturado) || 0
+                                ]);
+                            });
+                        });
+                        eventRows.push(['', '', '', '', '', '', '', '']);
+                    }
+                });
+
+                const directCEs = (contratosEjecucion || []).filter(ce => !ce.mc_id && !processedCEs.has(ce.id));
+                if (directCEs.length > 0) {
+                    eventRows.push(['-', 'VENTAS DIRECTAS', '-', '-', '-', '-', '-', '-']);
+                    directCEs.forEach(ce => {
+                        const cliente = (clientes || []).find(c => String(c.id) === String(ce.cliente_id));
+                        const montoCE = parseFloat(ce.monto_ejecucion) || 0;
+                        totalGeneralMonto += montoCE;
+                        const q = (cotizaciones || []).find(quote => String(quote.id) === String(ce.cotizacion_id));
+
+                        eventRows.push([
+                            new Date(ce.fecha_inicio_pauta).toLocaleDateString('es-MX'),
+                            `[DIRECTO]`,
+                            q?.folio || '-',
+                            cliente?.nombre_empresa || 'S/N',
+                            '-',
+                            ce.numero_contrato || '-',
+                            '-',
+                            montoCE
+                        ]);
+
+                        const facturas = (cobranza || []).filter(cob => String(cob.contrato_ejecucion_id) === String(ce.id));
+                        facturas.forEach(fac => {
+                            eventRows.push([
+                                fac.fecha_programada_cobro ? new Date(fac.fecha_programada_cobro).toLocaleDateString('es-MX') : '-',
+                                `  >> FACTURA`,
+                                q?.folio || '-',
+                                cliente?.nombre_empresa || 'S/N',
+                                '-',
+                                ce.numero_contrato || '-',
+                                fac.numero_factura || 'PENDIENTE',
+                                parseFloat(fac.monto_facturado) || 0
+                            ]);
+                        });
+                    });
                 }
 
-                const numContrato = ce?.numero_contrato || q?.numero_contrato;
-
-                return [
-                    new Date(item.fecha).toLocaleDateString('es-MX'),
-                    cliente?.nombre_empresa || 'IDENTIDAD DESCONOCIDA',
-                    q?.folio || '-',
-                    mcEncontrado ? (mcEncontrado.numero_mc || 'VINCULADO') : 'FALTA',
-                    numContrato || 'FALTA',
-                    registroCobranza?.numero_factura || 'FALTA',
-                    item.monto
+                rows = [
+                    ['DETALLE CRONOLÓGICO DE OPERACIONES', '', '', '', '', '', '', ''],
+                    ['Fecha', 'Concepto', 'Folio Cotz', 'Cliente', 'Ref. Master', 'Ref. Contrato', 'Factura', 'Monto Transacción'],
+                    ...eventRows,
+                    ['TOTAL GENERAL EJECUTADO', '', '', '', '', '', '', totalGeneralMonto]
                 ];
-            });
-
-            rows = [
-                ...dataRows,
-                ['TOTAL GENERAL', '', '', '', '', '', totalInversion]
-            ];
+            }
+        } else if (id === 'resumen-clientes') {
         } else if (id === 'resumen-clientes') {
             title = "PIPELINE Y EFECTIVIDAD POR CUENTA ($)";
             headers = ['Cuenta', 'Valor Abiertas', 'Valor Ganadas', 'Valor Perdidas', 'Venta Acumulada'];
@@ -394,9 +516,36 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
     };
 
     const handleExportExcel = (mode = 'current') => {
-        const reportIds = mode === 'all'
-            ? ['ventas-mes', 'ventas-canal', 'ventas-ciudad', 'control-cierres', 'resumen-clientes', 'cobranza-periodo']
-            : [seccionReporte];
+        // Definición de reportes a exportar
+        let reportConfigs = [];
+
+        if (mode === 'all') {
+            reportConfigs = [
+                { id: 'ventas-mes', name: 'Mensual' },
+                { id: 'ventas-canal', name: 'Canal' },
+                { id: 'ventas-ciudad', name: 'Territorial' },
+                { id: 'control-cierres', sub: 'pipeline', name: 'Saldos Convenio' },
+                { id: 'control-cierres', sub: 'ejecucion', name: 'Libro Mayor' },
+                { id: 'resumen-clientes', name: 'Clientes' },
+                { id: 'cobranza-periodo', name: 'Cobranza' }
+            ];
+        } else {
+            if (seccionReporte === 'control-cierres') {
+                reportConfigs = [
+                    { id: 'control-cierres', sub: 'pipeline', name: 'Saldos Convenio' },
+                    { id: 'control-cierres', sub: 'ejecucion', name: 'Libro Mayor' }
+                ];
+            } else {
+                const namesMap = {
+                    'ventas-mes': 'Mensual',
+                    'ventas-canal': 'Canal',
+                    'ventas-ciudad': 'Territorial',
+                    'resumen-clientes': 'Clientes',
+                    'cobranza-periodo': 'Cobranza'
+                };
+                reportConfigs = [{ id: seccionReporte, name: namesMap[seccionReporte] || 'Reporte' }];
+            }
+        }
 
         const template = `
             <?xml version="1.0"?>
@@ -435,19 +584,28 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                <Interior ss:Color="#0F172A" ss:Pattern="Solid"/>
                <NumberFormat ss:Format="&quot;$&quot;#,##0.00"/>
               </Style>
+              <Style ss:ID="SummaryHeader">
+               <Alignment ss:Vertical="Center"/>
+               <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#0F172A" ss:Bold="1"/>
+               <Interior ss:Color="#CBD5E1" ss:Pattern="Solid"/>
+               <Borders>
+                <Bottom ss:LineStyle="Continuous" ss:Weight="1"/>
+               </Borders>
+              </Style>
+              <Style ss:ID="SectionTitle">
+                <Alignment ss:Vertical="Center"/>
+                <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="12" ss:Color="#0F172A" ss:Bold="1"/>
+                <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
+              </Style>
              </Styles>
              {SHEETS}
             </Workbook>`;
 
         let sheetsXml = "";
 
-        reportIds.forEach(id => {
-            const { title, headers, rows } = getReportData(id);
-            const sheetName = id === 'ventas-mes' ? 'Mensual' :
-                id === 'ventas-canal' ? 'Canal' :
-                    id === 'ventas-ciudad' ? 'Ciudad' :
-                        id === 'control-cierres' ? 'Cierres' :
-                            id === 'cobranza-periodo' ? 'Cobranza' : 'Pipeline';
+        reportConfigs.forEach(config => {
+            const { title, headers, rows } = getReportData(config.id, config.sub);
+            const sheetName = config.name;
 
             let rowXml = "";
 
@@ -467,24 +625,32 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             // Data Rows
             rows.forEach(row => {
                 const isTotalRow = String(row[0]).startsWith('TOTAL');
-                rowXml += `<Row ss:Height="22">`;
+                const isSectionTitle = String(row[0]).includes('RESUMEN EJECUTIVO') || String(row[0]).includes('DETALLE CRONOLÓGICO');
+                const isTableSubHeader = String(row[0]) === 'Master Contract' || (String(row[1]) === 'Concepto' && String(row[2]) === 'Folio Cotz');
+                const isGroupHeader = String(row[1]).includes('CONVENIO') || String(row[1]).includes('VENTAS DIRECTAS');
+
+                rowXml += `<Row ss:Height="${isSectionTitle ? '25' : '22'}">`;
                 row.forEach((cell, cellIdx) => {
                     const header = headers[cellIdx];
-                    // Identificamos columnas que NO deben ser moneda aunque sean números
-                    const isTextCol = !header.includes('Total') && ["Orden", "Factura", "Folio", "Folio Cotz", "Master Contract", "Cuenta", "Plaza", "Orden / Contrato", "Estado", "F. Pago Real", "F. Programada", "Cliente", "Canal"].some(tc => header.includes(tc));
+                    const isTextCol = !header?.includes('Total') && ["Orden", "Factura", "Folio", "Ref.", "Contrato", "Folio Cotz", "Master Contract", "Cuenta", "Plaza", "Orden / Contrato", "Estado", "F. Pago Real", "F. Programada", "Cliente", "Canal"].some(tc => header?.includes(tc));
 
                     const isNum = !isNaN(cell) && typeof cell !== 'boolean' && cell !== '' && !isTextCol;
                     const type = isNum ? 'Number' : 'String';
 
                     let styleID = "";
-                    if (isTotalRow) {
+                    if (isSectionTitle) {
+                        styleID = ' ss:StyleID="SectionTitle"';
+                    } else if (isTableSubHeader) {
+                        styleID = ' ss:StyleID="SummaryHeader"';
+                    } else if (isTotalRow) {
                         styleID = isNum ? ' ss:StyleID="TotalCurrency"' : ' ss:StyleID="Header"';
+                    } else if (isGroupHeader) {
+                        styleID = isNum ? ' ss:StyleID="Currency"' : ' ss:StyleID="SectionTitle"';
                     } else if (isNum) {
                         styleID = ' ss:StyleID="Currency"';
                     }
 
-                    // Limpieza de caracteres especiales para XML
-                    const cleanVal = String(cell)
+                    const cleanVal = String(cell || '')
                         .replace(/&/g, '&amp;')
                         .replace(/</g, '&lt;')
                         .replace(/>/g, '&gt;')
@@ -500,12 +666,13 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             let colWidthsXml = "";
             headers.forEach((h, hIdx) => {
                 let width = 100; // Default width
-                if (h.includes('Folio Cotz')) width = 160;
+                if (h.includes('Concepto')) width = 220;
                 else if (h.includes('Cliente') || h.includes('Cuenta') || h.includes('Empresa')) width = 250;
                 else if (h.includes('Canal') || h.includes('Notas')) width = 180;
-                else if (h.includes('Total') || h.includes('Monto') || h.includes('Inversión')) width = 120;
+                else if (h.includes('Total') || h.includes('Monto') || h.includes('Transacción') || h.includes('Inversión')) width = 120;
+                else if (h.includes('Ref.')) width = 130;
                 else if (h.includes('Fecha') || h.includes('F. ')) width = 80;
-                else if (h.includes('Folio') || h.includes('Factura') || h.includes('Contrato')) width = 100;
+                else if (h.includes('Folio') || h.includes('Factura') || h.includes('Contrato')) width = 110;
 
                 colWidthsXml += `<Column ss:AutoFitWidth="0" ss:Width="${width}"/>`;
             });
@@ -590,7 +757,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                         { id: 'ventas-mes', label: 'Matriz Regional', icon: Calendar },
                         { id: 'ventas-canal', label: 'Densidad por Canal', icon: Tv },
                         { id: 'ventas-ciudad', label: 'Hubs Regionales', icon: Globe },
-                        { id: 'control-cierres', label: 'Log de Operaciones', icon: Briefcase },
+                        { id: 'control-cierres', label: 'Control de Convenios', icon: Briefcase },
                         { id: 'resumen-clientes', label: 'Valuación Pipeline', icon: FileText },
                         { id: 'cobranza-periodo', label: 'Recuperación / Cobro', icon: DollarSign },
                     ].map(tab => (
@@ -608,19 +775,19 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     ))}
                 </div>
 
-                {['ventas-mes', 'ventas-canal', 'ventas-ciudad', 'control-cierres'].includes(seccionReporte) && (
-                    <div className="flex gap-2 p-1 bg-enterprise-100 rounded-xl w-fit self-center">
+                {seccionReporte === 'control-cierres' && (
+                    <div className="flex bg-enterprise-900 border border-white/10 rounded-xl overflow-hidden self-center ml-auto h-14">
                         <button
                             onClick={() => setSubCorte('pipeline')}
-                            className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${subCorte === 'pipeline' ? 'bg-enterprise-950 text-white shadow-lg' : 'text-enterprise-400'}`}
+                            className={`w-40 h-full px-4 text-[10px] font-black uppercase tracking-widest transition-all leading-tight whitespace-normal text-center flex items-center justify-center ${subCorte === 'pipeline' ? 'bg-brand-orange text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
                         >
-                            Log Comercial (Won)
+                            Saldos por Convenio
                         </button>
                         <button
                             onClick={() => setSubCorte('ejecucion')}
-                            className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${subCorte === 'ejecucion' ? 'bg-brand-orange text-white shadow-lg' : 'text-enterprise-400'}`}
+                            className={`w-40 h-full px-4 text-[10px] font-black uppercase tracking-widest transition-all leading-tight whitespace-normal text-center flex items-center justify-center ${subCorte === 'ejecucion' ? 'bg-brand-orange text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
                         >
-                            Log Financiero (Pauta)
+                            Libro Mayor
                         </button>
                     </div>
                 )}
@@ -803,106 +970,142 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                         <div className="p-6 md:p-8 border-b border-enterprise-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-enterprise-950 text-white">
                             <div>
                                 <h3 className="text-lg font-black tracking-tighter uppercase italic italic-brand">
-                                    {subCorte === 'pipeline' ? 'Control Administrativo de Cierres' : 'Control Administrativo de Contratos'}
+                                    {subCorte === 'pipeline' ? 'Saldos por Convenio (CPS)' : 'Libro Mayor de Convenios'}
                                 </h3>
-                                <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5 italic">Folios, Contratos y Master Contracts</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[9px] font-black uppercase text-brand-orange tracking-widest">
-                                    {subCorte === 'pipeline' ? 'Cierres en Periodo' : 'Contratos en Periodo'}
+                                <p className="text-[9px] font-bold text-enterprise-400 uppercase tracking-widest mt-0.5 italic flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-brand-orange animate-pulse"></div>
+                                    Trazabilidad y Control Documental
                                 </p>
-                                <p className="text-2xl font-black">{datosFinancierosTotal.length}</p>
+                            </div>
+                            <div className="flex gap-4">
+                                <div className="text-right border-r border-slate-700 pr-4">
+                                    <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Convenios</p>
+                                    <p className="text-xl font-black text-white">
+                                        {formatMXN(masterContracts.reduce((acc, m) => acc + (parseFloat(m.monto_aprobado) || 0), 0))}
+                                    </p>
+                                </div>
+                                <div className="text-right border-r border-slate-700 pr-4">
+                                    <p className="text-[9px] font-black uppercase text-brand-orange tracking-widest">Contratos</p>
+                                    <p className="text-xl font-black text-brand-orange">
+                                        {formatMXN(contratosEjecucion.reduce((acc, c) => acc + (parseFloat(c.monto_ejecucion) || 0), 0))}
+                                    </p>
+                                </div>
+                                <div className="text-right border-r border-slate-700 pr-4">
+                                    <p className="text-[9px] font-black uppercase text-blue-400 tracking-widest">Facturación</p>
+                                    <p className="text-xl font-black text-blue-400">
+                                        {formatMXN(cobranza.reduce((acc, f) => acc + (parseFloat(f.monto_facturado) || 0), 0))}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[9px] font-black uppercase text-amber-400 tracking-widest">Por Formalizar</p>
+                                    <p className="text-xl font-black text-amber-400">
+                                        {formatMXN(totalPorFormalizar)}
+                                    </p>
+                                </div>
                             </div>
                         </div>
+
+
+
+
+
                         <div className="overflow-x-auto custom-scrollbar">
-                            <table className="w-full text-left border-collapse min-w-[900px]">
+                            <table className="w-full text-left border-collapse min-w-[1000px]">
                                 <thead>
                                     <tr className="bg-slate-50 border-b border-gray-200">
-                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Fecha {subCorte === 'pipeline' ? 'Cierre' : 'Pauta'}</th>
-                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Cliente / Empresa</th>
-                                        <th className="py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200">Folio Cotz</th>
-                                        <th className="py-4 px-6 text-[9px] font-black text-slate-500 uppercase tracking-widest border-r border-gray-200">Master Contract</th>
-                                        <th className="py-4 px-6 text-[9px] font-black text-emerald-600 uppercase tracking-widest border-r border-gray-200">Orden / Contrato</th>
-                                        <th className="py-4 px-6 text-[9px] font-black text-blue-600 uppercase tracking-widest border-r border-gray-200">Factura</th>
-                                        <th className="py-4 px-6 text-right text-[9px] font-black text-slate-900 uppercase tracking-widest">Inversión Neta</th>
+                                        {(() => {
+                                            const { headers } = getReportData('control-cierres');
+                                            return headers.map((h, idx) => (
+                                                <th key={idx} className={`py-4 px-6 text-[9px] font-black text-slate-900 uppercase tracking-widest border-r border-gray-200 ${idx === headers.length - 1 ? 'text-right' : ''}`}>
+                                                    {h}
+                                                </th>
+                                            ));
+                                        })()}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {datosFinancierosTotal.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).map((item, i) => {
-                                        const cliente = (clientes || []).find(c => String(c.id) === String(item.cliente_id));
+                                    {(() => {
+                                        const { rows } = getReportData('control-cierres');
+                                        // En modo Libro Mayor (ejecucion), filtramos para mostrar solo el log
+                                        const eventRowsStart = rows.findIndex(r => r[0] === 'DETALLE CRONOLÓGICO DE OPERACIONES');
+                                        const UI_ROWS = subCorte === 'pipeline' ? rows : rows.slice(eventRowsStart + 2);
 
-                                        // Extraer datos originales para detalles
-                                        const q = subCorte === 'pipeline' ? item.original : (cotizaciones || []).find(c => String(c.id) === String(item.original?.cotizacion_id));
-                                        const ce = subCorte === 'ejecucion' ? item.original : (contratosEjecucion || []).find(e => String(e.cotizacion_id) === String(item.id));
+                                        return UI_ROWS.map((row, i) => {
+                                            const isTotal = String(row[0]).startsWith('TOTAL');
+                                            const isGroupHeader = String(row[1]).includes('CONVENIO') || String(row[1]).includes('DIRECTAS');
+                                            const isSubLine = String(row[1]).includes('  [');
+                                            const isSubSubLine = String(row[1]).includes('    >>');
+                                            const isEmpty = row[0] === '' && row[1] === '';
 
-                                        const regCob = (cobranza || []).find(cob =>
-                                            (q && String(cob.cotizacion_id) === String(q.id)) ||
-                                            (ce && String(cob.contrato_ejecucion_id) === String(ce.id))
-                                        );
+                                            // En modo Estatus Convenio (pipeline), no ocultamos nada
+                                            const mcKey = row[0]; // CPS
+                                            const ecKey = row[5];
 
-                                        // BÚSQUEDA ULTRA-ROBUSTA DEL MASTER CONTRACT (CONVENIO)
-                                        let mc = (masterContracts || []).find(m =>
-                                            String(m.id) === String(item.mc_id) ||
-                                            (q && q.mc_id && String(m.id) === String(q.mc_id)) ||
-                                            (ce && ce.mc_id && String(m.id) === String(ce.mc_id))
-                                        );
+                                            if (subCorte === 'ejecucion' && !isTotal && !isGroupHeader) {
+                                                const masterRef = row[4];
+                                                if (masterRef !== '-' && !expandedRows[masterRef]) return null;
+                                                if (isSubSubLine && ecKey !== '-' && !expandedRows[`${masterRef}-${ecKey}`]) return null;
+                                            }
 
-                                        if (!mc) {
-                                            // Fallback 1: Por ID de Cliente
-                                            mc = (masterContracts || []).find(m =>
-                                                String(m.cliente_id) === String(item.cliente_id) ||
-                                                (cliente && String(m.cliente_id) === String(cliente.id))
-                                            );
-                                        }
+                                            if (isEmpty) return <tr key={i} className="h-4 bg-slate-50/10"></tr>;
 
-                                        if (!mc && cliente) {
-                                            // Fallback 2: Por Nombre de Empresa
-                                            mc = (masterContracts || []).find(m => {
-                                                const mName = m.clientes?.nombre_empresa || (Array.isArray(m.clientes) && m.clientes[0]?.nombre_empresa);
-                                                return mName && mName.toLowerCase().trim() === cliente.nombre_empresa.toLowerCase().trim();
-                                            });
-                                        }
+                                            let rowClass = "hover:bg-slate-50/50 transition-colors";
+                                            if (isTotal) rowClass = "bg-[#0f172a] text-white font-black sticky bottom-0 z-20";
+                                            if (isGroupHeader && subCorte === 'ejecucion') rowClass = "bg-slate-100/80 font-black cursor-pointer group select-none";
+                                            if (isSubLine && subCorte === 'ejecucion') rowClass = "bg-white cursor-pointer hover:bg-emerald-50/50 transition-colors select-none";
 
-                                        return (
-                                            <tr key={i} className="hover:bg-slate-50/50">
-                                                <td className="py-4 px-6 text-[10px] font-bold text-gray-400 border-r border-gray-100">
-                                                    {new Date(item.fecha).toLocaleDateString('es-MX')}
-                                                </td>
-                                                <td className="py-4 px-6 border-r border-gray-100 font-black text-[10px] text-slate-900 uppercase">
-                                                    {cliente?.nombre_empresa || 'S/N'}
-                                                </td>
-                                                <td className="py-4 px-6 border-r border-gray-100 text-[10px] font-bold text-brand-orange uppercase tracking-tighter">
-                                                    {q?.folio || '-'}
-                                                </td>
-                                                <td className="py-4 px-6 border-r border-gray-100 text-center">
-                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${mc ? 'bg-slate-100 text-slate-600' : 'bg-red-50 text-red-400'}`}>
-                                                        {mc ? (mc.numero_mc || mc.numero_contrato || 'VINCULADO') : 'FALTA'}
-                                                    </span>
-                                                </td>
-                                                <td className="py-4 px-6 border-r border-gray-100 text-center">
-                                                    {(() => {
-                                                        const numContrato = ce?.numero_contrato || q?.numero_contrato;
+                                            return (
+                                                <tr key={i} className={rowClass} onClick={() => {
+                                                    if (subCorte === 'ejecucion') {
+                                                        if (isGroupHeader) toggleRow(row[4]);
+                                                        if (isSubLine) toggleRow(`${row[4]}-${ecKey}`);
+                                                    }
+                                                }}>
+                                                    {row.map((cell, cellIdx) => {
+                                                        const isMonto = (subCorte === 'pipeline' && cellIdx >= 2) || (subCorte === 'ejecucion' && cellIdx === 7);
+                                                        const displayVal = (typeof cell === 'number') ? formatMXN(cell) : (cell || '-');
+
+                                                        let cellStyle = "py-3 px-6 text-[10px] border-r border-gray-100";
+                                                        let contentStyle = "";
+
+                                                        if (isTotal) cellStyle = "py-4 px-6 text-[11px] border-r border-slate-700";
+                                                        if (isMonto) contentStyle = "text-right block w-full font-black";
+
+                                                        if (subCorte === 'ejecucion') {
+                                                            if (isGroupHeader && cellIdx === 1) contentStyle += " flex items-center gap-2";
+                                                            if (isSubLine && cellIdx === 1) contentStyle += " pl-6 flex items-center gap-2 text-slate-700 font-bold underline decoration-emerald-200 decoration-2";
+                                                            if (isSubSubLine && cellIdx === 1) contentStyle += " pl-12 text-slate-400 italic";
+                                                        }
+
+                                                        if (subCorte === 'pipeline' && !isTotal) {
+                                                            if (cellIdx === 4) contentStyle += " text-emerald-600 font-black"; // Disponible
+                                                            if (cellIdx === 6) contentStyle += " text-blue-600 font-black";    // Cobranza
+                                                        }
+
+                                                        if (subCorte === 'ejecucion' && !isTotal) {
+                                                            if (cellIdx === 4) contentStyle += " bg-brand-orange/5 text-brand-orange px-2 py-0.5 rounded font-black";
+                                                            if (cellIdx === 5) contentStyle += " text-emerald-600 font-black";
+                                                            if (cellIdx === 6) contentStyle += " text-blue-600 font-black";
+                                                        }
+
                                                         return (
-                                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${numContrato ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-400'}`}>
-                                                                {numContrato || 'FALTA'}
-                                                            </span>
+                                                            <td key={cellIdx} className={cellStyle}>
+                                                                <span className={contentStyle}>
+                                                                    {subCorte === 'ejecucion' && isGroupHeader && cellIdx === 1 && <ChevronDown size={14} className={`text-brand-orange transition-transform duration-300 ${expandedRows[row[4]] ? '' : '-rotate-90'}`} />}
+                                                                    {subCorte === 'ejecucion' && isSubLine && cellIdx === 1 && <ChevronDown size={12} className={`text-emerald-500 transition-transform duration-300 ${expandedRows[`${row[4]}-${ecKey}`] ? '' : '-rotate-90'}`} />}
+                                                                    {displayVal}
+                                                                </span>
+                                                            </td>
                                                         );
-                                                    })()}
-                                                </td>
-                                                <td className="py-4 px-6 border-r border-gray-100 text-center">
-                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${regCob?.numero_factura ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-400'}`}>
-                                                        {regCob?.numero_factura || 'FALTA'}
-                                                    </span>
-                                                </td>
-                                                <td className="py-4 px-6 text-right text-[10px] font-black text-slate-900">
-                                                    {formatMXN(item.monto)}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
+                                                    })}
+                                                </tr>
+                                            );
+                                        });
+                                    })()}
+
                                     {datosFinancierosTotal.length === 0 && (
                                         <tr>
-                                            <td colSpan="7" className="py-20 text-center text-[10px] font-black text-gray-300 uppercase italic tracking-widest">Sin registros en este periodo</td>
+                                            <td colSpan="8" className="py-20 text-center text-[10px] font-black text-gray-300 uppercase italic tracking-widest">Sin registros en este periodo</td>
                                         </tr>
                                     )}
                                 </tbody>
