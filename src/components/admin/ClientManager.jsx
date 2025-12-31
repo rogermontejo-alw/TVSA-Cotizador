@@ -31,9 +31,9 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
     });
 
     return (
-        <div className="space-y-6 animate-premium-fade px-4">
+        <div className="space-y-6 animate-premium-fade">
             {/* NEXUS IDENTITY STATION - CLIENT MANAGER */}
-            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-4 md:p-6 shadow-2xl relative overflow-hidden group">
+            <div className="bg-enterprise-950 border-x-0 md:border border-white/10 rounded-none md:rounded-[2rem] p-4 md:p-6 shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-brand-orange/10 via-transparent to-transparent pointer-events-none" />
                 <div className="absolute -left-10 -top-10 w-48 h-48 bg-brand-orange/5 blur-3xl rounded-full" />
 
@@ -79,7 +79,7 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
             </div>
 
             {/* Navigation & Lifecycle Filters */}
-            <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-3 rounded-2xl md:rounded-[2rem] border border-enterprise-100 shadow-premium">
+            <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-4 rounded-none md:rounded-[2rem] border-x-0 md:border border-enterprise-100 shadow-premium">
                 <div className="flex items-center gap-3 md:gap-4 ml-0 md:ml-2 w-full md:w-auto">
                     <Activity size={16} className="text-brand-orange flex-shrink-0" />
                     <span className="text-[9px] md:text-[10px] font-black text-enterprise-950 uppercase tracking-widest italic whitespace-nowrap">Ciclo de Vida:</span>
@@ -101,11 +101,11 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
             </div>
 
             {/* Main Interface */}
-            <div className="bg-white rounded-[2.5rem] shadow-premium border border-enterprise-100 overflow-hidden">
+            <div className="bg-white rounded-none md:rounded-[2.5rem] shadow-premium border-x-0 md:border border-enterprise-100 overflow-hidden">
                 {/* Desktop Table View */}
                 <div className="hidden lg:block overflow-x-auto">
                     <div className="overflow-x-auto">
-                        <div className="p-6 space-y-3">
+                        <div className="p-4 space-y-3">
                             {clientesFiltrados.length > 0 ? clientesFiltrados.map(c => (
                                 <div
                                     key={c.id}
@@ -206,7 +206,7 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
                 {/* Mobile Card View */}
                 <div className="lg:hidden divide-y divide-enterprise-50">
                     {clientesFiltrados.length > 0 ? clientesFiltrados.map(c => (
-                        <div key={c.id} className={`p-5 space-y-4 ${c.estatus === 'inactivo' ? 'opacity-50 grayscale' : ''}`}>
+                        <div key={c.id} className={`p-4 space-y-4 ${c.estatus === 'inactivo' ? 'opacity-50 grayscale' : ''}`}>
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-center gap-3 min-w-0">
                                     <div className="w-10 h-10 bg-enterprise-950 rounded-xl flex items-center justify-center text-white font-black text-sm border-2 border-white shadow-lg flex-shrink-0">
@@ -280,7 +280,7 @@ const ClientManager = ({ clientes = [], onToggleEstatus, onEliminar, onEdit, onN
                 </div>
 
                 {/* Footer Insight */}
-                <div className="bg-enterprise-950 px-8 py-4 border-t border-white/10 flex justify-between items-center relative overflow-hidden">
+                <div className="bg-enterprise-950 px-4 md:px-8 py-4 border-t border-white/10 flex justify-between items-center relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-orange/5 to-transparent pointer-events-none" />
 
                     <div className="flex items-center gap-6 relative z-10">

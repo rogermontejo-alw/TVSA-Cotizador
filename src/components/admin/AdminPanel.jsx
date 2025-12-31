@@ -98,7 +98,7 @@ const AdminPanel = ({
             {/* Header Admin Fijo */}
             <div className="bg-enterprise-950 pt-10 pb-36 px-4 md:px-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-brand-orange/10 blur-[100px] -mr-48 -mt-48"></div>
-                <div className="max-w-7xl mx-auto relative z-10">
+                <div className="max-w-[1800px] mx-auto relative z-10">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-4">
@@ -172,8 +172,8 @@ const AdminPanel = ({
                     )}
                 </div>
             </div>
-            <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-24 relative z-20">
-                <div className="bg-enterprise-50 rounded-[3rem] p-6 md:p-10 shadow-2xl border border-white/20 animate-in slide-in-from-bottom-4 duration-500 min-h-[600px]">
+            <div className="max-w-[1800px] mx-auto px-0 -mt-24 relative z-20">
+                <div className="bg-enterprise-50 rounded-none md:rounded-[3rem] p-0 md:p-6 shadow-none md:shadow-2xl border-none md:border border-white/20 animate-in slide-in-from-bottom-4 duration-500 min-h-[600px]">
                     {seccionActiva === 'clientes' && (
                         <div className="space-y-6">
                             <ClientManager

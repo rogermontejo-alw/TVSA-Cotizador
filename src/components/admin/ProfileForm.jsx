@@ -146,11 +146,11 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
     }
 
     return (
-        <div className="space-y-8 max-w-5xl mx-auto animate-in fade-in duration-500 pb-24">
+        <div className="space-y-8 w-full animate-in fade-in duration-500 pb-24">
 
-            <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl border border-enterprise-100">
+            <div className="bg-white rounded-none md:rounded-[2.5rem] shadow-none md:shadow-2xl border-x-0 md:border border-enterprise-100">
                 {/* Header Responsivo */}
-                <div className="px-6 py-5 bg-enterprise-950 flex justify-between items-center rounded-t-[2rem] md:rounded-t-[2.5rem]">
+                <div className="px-4 md:px-6 py-4 md:py-5 bg-enterprise-950 flex justify-between items-center rounded-none md:rounded-t-[2.5rem]">
                     <div className="flex items-center gap-3">
                         <ShieldCheck size={20} className="text-brand-orange" />
                         <h3 className="text-sm font-black text-white uppercase tracking-widest italic italic-brand">Mi Cuenta y Directorio</h3>
@@ -166,7 +166,7 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
                 </div>
 
                 {editMode ? (
-                    <div className="p-6 md:p-8 animate-in slide-in-from-top-4 duration-300">
+                    <div className="p-4 md:p-8 animate-in slide-in-from-top-4 duration-300">
                         <div className="flex justify-between items-center mb-6 md:mb-8 pb-4 border-b border-gray-100">
                             <h4 className="text-[10px] md:text-[11px] font-black text-slate-900 uppercase tracking-[0.2em] md:tracking-[0.3em]">
                                 {selectedUser ? `Edición: ${selectedUser.nombre_completo}` : 'Nuevo Registro de Colaborador'}
@@ -308,7 +308,7 @@ const ProfileForm = ({ perfil, perfiles = [], onSave, onEliminar, setMensaje, on
                         {/* Versión Mobile: Lista de Cartas */}
                         <div className="grid grid-cols-1 md:hidden divide-y divide-gray-100">
                             {perfiles.map(u => (
-                                <div key={u.id} className={`p-5 flex items-center justify-between gap-4 ${u.id === perfil.id ? 'bg-red-50/20' : ''}`}>
+                                <div key={u.id} className={`p-4 flex items-center justify-between gap-4 ${u.id === perfil.id ? 'bg-red-50/20' : ''}`}>
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black shadow-sm
                                             ${u.id === perfil.id ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-400'}`}>

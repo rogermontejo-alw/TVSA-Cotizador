@@ -56,8 +56,8 @@ const PlazaManager = ({ configuracion, onSave, setMensaje }) => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto py-8 animate-premium-fade">
-            <div className="bg-enterprise-950 p-6 rounded-2xl md:rounded-b-none flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300 mb-8 relative overflow-hidden">
+        <div className="w-full py-4 md:py-8 animate-premium-fade">
+            <div className="bg-enterprise-950 p-4 md:p-6 rounded-none md:rounded-2xl md:rounded-b-none flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300 mb-4 md:mb-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-brand-orange/10 blur-[80px] -mr-32 -mt-32"></div>
                 <div className="flex items-center gap-4 relative z-10">
                     <MapPin size={20} className="text-brand-orange" />
@@ -73,7 +73,7 @@ const PlazaManager = ({ configuracion, onSave, setMensaje }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Formulario de Alta */}
                 <div className="md:col-span-1">
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-enterprise-100 shadow-xl sticky top-8">
+                    <div className="bg-white p-4 md:p-8 rounded-none md:rounded-[2.5rem] border-x-0 md:border border-enterprise-100 shadow-xl sticky top-8">
                         <h4 className="text-[10px] font-black text-enterprise-950 uppercase tracking-widest mb-6 flex items-center gap-2">
                             <Plus size={14} className="text-brand-orange" /> Nueva Jurisdicción
                         </h4>
@@ -113,7 +113,7 @@ const PlazaManager = ({ configuracion, onSave, setMensaje }) => {
                             <div
                                 key={p}
                                 className={`
-                                    bg-white p-5 rounded-2xl border flex items-center justify-between group transition-all hover:shadow-lg
+                                    bg-white p-4 md:p-5 rounded-none md:rounded-2xl border-x-0 md:border flex items-center justify-between group transition-all hover:shadow-lg
                                     ${p === PLAZA_BASE ? 'border-brand-orange/20 bg-brand-orange/5' : 'border-enterprise-100'}
                                 `}
                             >
@@ -146,7 +146,7 @@ const PlazaManager = ({ configuracion, onSave, setMensaje }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

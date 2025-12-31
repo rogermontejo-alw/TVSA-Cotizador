@@ -137,7 +137,7 @@ const App = () => {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col">
         <div className="h-20 bg-white border-b border-enterprise-100 mb-10" />
-        <main className="flex-1 max-w-[1600px] w-full mx-auto px-6">
+        <main className="flex-1 max-w-[1800px] w-full mx-auto px-4">
           <DashboardSkeleton />
         </main>
       </div>
@@ -342,14 +342,14 @@ const App = () => {
         }}
       />
 
-      <main className="flex-1 pt-24 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-[1600px] mx-auto">
+      <main className="flex-1 pt-24 pb-20 px-2 sm:px-4">
+        <div className="max-w-[1800px] mx-auto">
           {renderVista()}
         </div>
       </main>
 
       <footer className="bg-enterprise-950 py-12 px-6 text-white border-t border-white/5 mt-auto">
-        <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+        <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-2 shadow-lg hover:scale-110 transition-transform">

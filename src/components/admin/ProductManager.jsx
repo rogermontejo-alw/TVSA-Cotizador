@@ -359,16 +359,16 @@ const ProductManager = ({
     };
 
     return (
-        <div className="space-y-6 animate-premium-fade px-4 md:px-0">
+        <div className="space-y-4 animate-premium-fade">
             {/* Header / Engine Controls */}
-            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-4 md:p-6 shadow-2xl relative overflow-hidden group mb-8">
+            <div className="bg-enterprise-950 border-x-0 md:border border-white/10 rounded-none md:rounded-[2rem] p-3 md:p-4 shadow-2xl relative overflow-hidden group mb-4">
                 <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-brand-orange/10 via-transparent to-transparent pointer-events-none" />
                 <div className="absolute -left-10 -top-10 w-48 h-48 bg-brand-orange/5 blur-3xl rounded-full" />
 
                 <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                     <div className="flex items-center gap-4 md:gap-5 w-full lg:w-auto">
-                        <div className="w-12 h-12 md:w-14 md:h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500 flex-shrink-0">
-                            <Layers size={24} className="md:w-7 md:h-7" strokeWidth={2.5} />
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-orange shadow-inner group-hover:scale-105 transition-transform duration-500 flex-shrink-0">
+                            <Layers size={20} className="md:w-6 md:h-6" strokeWidth={2.5} />
                         </div>
                         <div className="min-w-0">
                             <h2 className="text-lg md:text-2xl font-black text-white tracking-tighter uppercase italic italic-brand leading-none flex flex-wrap items-center gap-2 md:gap-3">
@@ -389,7 +389,7 @@ const ProductManager = ({
                                 placeholder="Buscar medio o región..."
                                 value={busqueda}
                                 onChange={(e) => setBusqueda(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] md:text-[10px] font-black text-white uppercase tracking-widest outline-none focus:bg-white/10 focus:border-brand-orange transition-all placeholder:text-white/20"
+                                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] md:text-[10px] font-black text-white uppercase tracking-widest outline-none focus:bg-white/10 focus:border-brand-orange transition-all placeholder:text-white/20"
                             />
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-brand-orange transition-colors" size={14} />
                         </div>
@@ -451,7 +451,7 @@ const ProductManager = ({
             </div>
 
             {/* Selección Rápida por Plaza */}
-            <div className="flex flex-wrap items-center gap-2 md:gap-3 bg-white p-4 rounded-2xl md:rounded-3xl border border-enterprise-100 shadow-premium overflow-x-auto no-scrollbar">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3 bg-white p-4 rounded-none md:rounded-2xl border-x-0 md:border border-enterprise-100 shadow-premium overflow-x-auto no-scrollbar">
                 <span className="text-[7px] md:text-[9px] font-black text-enterprise-400 uppercase tracking-widest mr-2 whitespace-nowrap">Rápida:</span>
                 <div className="flex flex-wrap gap-2">
                     {plazasUnicas.map(plaza => {
@@ -506,31 +506,31 @@ const ProductManager = ({
                 </div>
             )}
 
-            <div className="bg-white rounded-[2.5rem] shadow-xl border border-enterprise-100 overflow-hidden relative">
+            <div className="bg-white rounded-none md:rounded-[2.5rem] shadow-xl border-x-0 md:border border-enterprise-100 overflow-hidden relative">
                 {/* Desktop view */}
                 <div className="hidden lg:block overflow-x-auto custom-scrollbar">
                     <table className="enterprise-table w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-enterprise-950 text-white font-black uppercase text-[9px] tracking-[0.2em]">
-                                <th className="px-6 py-6 w-14 text-center sticky left-0 bg-enterprise-950 z-10">
+                            <tr className="bg-enterprise-950 text-white font-black uppercase text-[8px] tracking-[0.2em]">
+                                <th className="px-4 py-3 w-14 text-center sticky left-0 bg-enterprise-950 z-10">
                                     <button onClick={toggleAll} className="p-1 hover:text-brand-orange transition-colors">
                                         {selectedIds.length === productosFiltrados.length ? <CheckSquare size={16} /> : <Square size={16} />}
                                     </button>
                                 </th>
-                                <th className="px-6 py-6 opacity-80 w-28 text-center">Estado</th>
-                                <th className="px-8 py-6 opacity-80 min-w-[180px]">Canal</th>
-                                <th className="px-4 py-6 opacity-80 w-20">Tipo</th>
-                                <th className="px-4 py-6 opacity-80 w-24 text-center">Tiempo</th>
-                                <th className="px-6 py-6 opacity-80 w-36">Horario</th>
-                                <th className="px-8 py-6 opacity-80 w-44 text-center">Región</th>
-                                <th className="px-8 py-6 text-right opacity-80 min-w-[140px]">Tarifa Base</th>
-                                <th className="px-8 py-6 text-center opacity-80 w-32 sticky right-0 bg-enterprise-950 z-10">Acciones</th>
+                                <th className="px-4 py-3 opacity-80 w-28 text-center">Estado</th>
+                                <th className="px-4 py-3 opacity-80 min-w-[150px]">Canal</th>
+                                <th className="px-4 py-3 opacity-80 w-20">Tipo</th>
+                                <th className="px-4 py-3 opacity-80 w-20 text-center">Tiempo</th>
+                                <th className="px-4 py-3 opacity-80 w-32">Horario</th>
+                                <th className="px-4 py-3 opacity-80 w-32 text-center">Región</th>
+                                <th className="px-4 py-3 text-right opacity-80 min-w-[120px]">Tarifa Base</th>
+                                <th className="px-4 py-3 text-center opacity-80 w-32 sticky right-0 bg-enterprise-950 z-10">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-enterprise-50">
                             {productosFiltrados.length > 0 ? productosFiltrados.map((p) => (
                                 <tr key={p.id} className={`group hover:bg-enterprise-50/50 transition-all ${!p.activo ? 'bg-enterprise-50/30' : ''} ${selectedIds.includes(p.id) ? 'bg-brand-orange/5' : ''}`}>
-                                    <td className="px-6 py-6 text-center sticky left-0 bg-white group-hover:bg-enterprise-50 transition-colors z-10 border-r border-enterprise-50/50">
+                                    <td className="px-4 py-3 text-center sticky left-0 bg-white group-hover:bg-enterprise-50 transition-colors z-10 border-r border-enterprise-50/50">
                                         <button
                                             onClick={() => toggleSelection(p.id)}
                                             className={`transition-colors ${selectedIds.includes(p.id) ? 'text-brand-orange' : 'text-enterprise-200 group-hover:text-enterprise-400'}`}
@@ -538,7 +538,7 @@ const ProductManager = ({
                                             {selectedIds.includes(p.id) ? <CheckSquare size={16} /> : <Square size={16} />}
                                         </button>
                                     </td>
-                                    <td className="px-6 py-6 text-center">
+                                    <td className="px-4 py-3 text-center">
                                         <button
                                             onClick={() => handleToggleActivo(p)}
                                             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm ${p.activo
@@ -549,7 +549,7 @@ const ProductManager = ({
                                             {p.activo ? <><CheckCircle2 size={12} /> Activo</> : <><PowerOff size={12} /> Pausa</>}
                                         </button>
                                     </td>
-                                    <td className="px-8 py-6">
+                                    <td className="px-4 py-3">
                                         <div className="flex items-center gap-3 min-w-[150px]">
                                             <div className="w-8 h-8 bg-enterprise-950 rounded-lg flex items-center justify-center text-white shadow-sm flex-shrink-0">
                                                 <Tv size={14} className="text-brand-orange" />
@@ -557,29 +557,29 @@ const ProductManager = ({
                                             <span className="text-[11px] font-black text-enterprise-950 uppercase truncate">{p.canal}</span>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-6">
+                                    <td className="px-4 py-3">
                                         <span className="px-3 py-1 bg-enterprise-100 text-[9px] font-black text-enterprise-700 rounded-lg uppercase tracking-wider border border-enterprise-200/50 whitespace-nowrap">
                                             {p.tipo || '---'}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-6 text-center font-bold text-[11px] text-enterprise-900">
+                                    <td className="px-4 py-3 text-center font-bold text-[10px] text-enterprise-900">
                                         {p.duracion || '--'}
                                     </td>
-                                    <td className="px-6 py-6">
-                                        <span className="text-[10px] font-black text-brand-orange uppercase tracking-widest whitespace-nowrap">{p.horario || '---'}</span>
+                                    <td className="px-4 py-3">
+                                        <span className="text-[9px] font-black text-brand-orange uppercase tracking-widest whitespace-nowrap">{p.horario || '---'}</span>
                                     </td>
-                                    <td className="px-8 py-6 text-center">
+                                    <td className="px-4 py-3 text-center">
                                         <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                                             <MapPin size={10} className="text-enterprise-300" />
                                             <span className="text-[9px] font-black text-enterprise-500 uppercase tracking-widest">{p.plaza}</span>
                                         </div>
                                     </td>
-                                    <td className="px-8 py-6 text-right">
-                                        <span className="text-sm font-black text-enterprise-950 tabular-nums whitespace-nowrap">
+                                    <td className="px-4 py-3 text-right">
+                                        <span className="text-xs font-black text-enterprise-950 tabular-nums whitespace-nowrap">
                                             {formatMXN(p.costo_base)}
                                         </span>
                                     </td>
-                                    <td className="px-8 py-6 sticky right-0 bg-white group-hover:bg-enterprise-50 transition-colors z-10 border-l border-enterprise-50/50">
+                                    <td className="px-4 py-3 sticky right-0 bg-white group-hover:bg-enterprise-50 transition-colors z-10 border-l border-enterprise-50/50">
                                         <div className="flex items-center justify-center gap-3">
                                             <button
                                                 onClick={() => handleEdit(p)}
@@ -613,7 +613,7 @@ const ProductManager = ({
                 {/* Mobile view */}
                 <div className="lg:hidden divide-y divide-enterprise-50">
                     {productosFiltrados.length > 0 ? productosFiltrados.map((p) => (
-                        <div key={p.id} className={`p-5 space-y-4 ${!p.activo ? 'bg-enterprise-50/30 grayscale opacity-60' : ''} ${selectedIds.includes(p.id) ? 'bg-brand-orange/5' : ''}`}>
+                        <div key={p.id} className={`p-4 space-y-4 ${!p.activo ? 'bg-enterprise-50/30 grayscale opacity-60' : ''} ${selectedIds.includes(p.id) ? 'bg-brand-orange/5' : ''}`}>
                             <div className="flex justify-between items-start gap-4">
                                 <div className="flex items-center gap-3 min-w-0">
                                     <button onClick={() => toggleSelection(p.id)} className={`flex-shrink-0 ${selectedIds.includes(p.id) ? 'text-brand-orange' : 'text-enterprise-200'}`}>
@@ -662,7 +662,7 @@ const ProductManager = ({
                 </div>
 
                 {/* Performance Insight Footer */}
-                <div className="bg-enterprise-50 px-8 py-6 border-t border-enterprise-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="bg-enterprise-50 px-4 md:px-8 py-6 border-t border-enterprise-100 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex items-center gap-4">
                         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-enterprise-950 shadow-lg">
                             <Activity size={16} className="text-brand-orange" />

@@ -153,7 +153,7 @@ const ConditionsForm = ({ clientes, productos, condicionesCliente, onSave, setMe
     }, [matrix, filtroPlaza, filtroCanal, filtroTipo, filtroHorario]);
 
     return (
-        <div className="bg-white rounded-2xl shadow-premium border border-enterprise-100 mt-6 overflow-hidden animate-premium-fade max-w-6xl mx-auto">
+        <div className="bg-white rounded-none md:rounded-2xl shadow-none md:shadow-premium border-x-0 md:border border-enterprise-100 mt-4 md:mt-6 overflow-hidden animate-premium-fade w-full">
             {/* COMPACT HEADLINE BAR */}
             <div className="bg-enterprise-950 p-4 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">

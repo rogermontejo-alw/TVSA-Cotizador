@@ -139,7 +139,7 @@ const MaintenanceView = ({
     ];
 
     return (
-        <div className="max-w-4xl mx-auto py-8 animate-premium-fade">
+        <div className="w-full py-8 animate-premium-fade">
             <div className="bg-enterprise-950 p-6 rounded-2xl md:rounded-b-none flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300 mb-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-brand-orange/10 blur-[80px] -mr-32 -mt-32"></div>
                 <div className="flex items-center gap-4 relative z-10">
@@ -155,7 +155,7 @@ const MaintenanceView = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {categories.map((cat) => (
-                    <div key={cat.id} className="bg-white p-8 rounded-[2.5rem] border border-enterprise-100 shadow-sm flex items-center justify-between group hover:border-brand-orange/20 transition-all hover:shadow-xl">
+                    <div key={cat.id} className="bg-white p-4 md:p-8 rounded-none md:rounded-[2.5rem] border-x-0 md:border border-enterprise-100 shadow-sm flex items-center justify-between group hover:border-brand-orange/20 transition-all hover:shadow-xl">
                         <div className="flex items-center gap-6">
                             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-enterprise-50 text-enterprise-950 group-hover:bg-enterprise-950 group-hover:text-white transition-all shadow-inner`}>
                                 <cat.icon size={24} className="group-hover:text-brand-orange transition-colors" />
@@ -179,7 +179,7 @@ const MaintenanceView = ({
 
                 <button
                     onClick={() => setShowConfirm('ALL')}
-                    className="md:col-span-2 bg-brand-magenta text-white p-10 rounded-[3rem] font-black uppercase tracking-[0.4em] flex flex-col items-center justify-center gap-4 hover:bg-enterprise-950 transition-all shadow-2xl shadow-brand-magenta/20 active:scale-[0.98] group"
+                    className="md:col-span-2 bg-brand-magenta text-white p-8 md:p-10 rounded-none md:rounded-[3rem] font-black uppercase tracking-[0.4em] flex flex-col items-center justify-center gap-4 hover:bg-enterprise-950 transition-all shadow-2xl shadow-brand-magenta/20 active:scale-[0.98] group"
                 >
                     <AlertTriangle size={32} className="group-hover:scale-110 transition-transform" />
                     <span className="text-[12px]">Restablecimiento Global de Infraestructura</span>

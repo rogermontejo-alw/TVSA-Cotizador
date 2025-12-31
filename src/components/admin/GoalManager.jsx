@@ -43,7 +43,7 @@ const GoalManager = ({ metas, onSaveGoal, onRemoveGoal }) => {
             </div>
 
             {/* Formulario de Alta */}
-            <div className="bg-white p-8 rounded-b-[2.5rem] shadow-xl border border-enterprise-100">
+            <div className="bg-white p-4 md:p-6 rounded-b-[2.5rem] shadow-xl border border-enterprise-100">
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-enterprise-400 uppercase ml-2 tracking-widest">Mes Operativo</label>
@@ -89,14 +89,14 @@ const GoalManager = ({ metas, onSaveGoal, onRemoveGoal }) => {
 
             {/* Listado de Metas */}
             <div className="bg-white rounded-[2.5rem] shadow-xl border border-enterprise-100 overflow-hidden">
-                <div className="p-6 bg-enterprise-50 border-b border-enterprise-100">
+                <div className="p-4 bg-enterprise-50 border-b border-enterprise-100">
                     <span className="text-[10px] font-black text-enterprise-400 uppercase tracking-widest flex items-center gap-2">
                         <Calendar size={14} className="text-brand-orange" /> Histórico de Objetivos
                     </span>
                 </div>
                 <div className="divide-y divide-enterprise-50">
                     {metas && metas.length > 0 ? metas.map(m => (
-                        <div key={m.id} className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-enterprise-50/50 transition-all gap-4">
+                        <div key={m.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-enterprise-50/50 transition-all gap-4">
                             <div className="flex items-center gap-4 sm:gap-6">
                                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-enterprise-950 text-white flex items-center justify-center font-black text-[9px] sm:text-[11px] uppercase shadow-lg flex-shrink-0">
                                     {MESES[m.mes - 1]?.substring(0, 3)}
