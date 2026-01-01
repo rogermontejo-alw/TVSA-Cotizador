@@ -24,7 +24,7 @@ const MISSING_DATA_CHAR = '-';
 
 const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterContracts = [], contratosEjecucion = [], interacciones = [] }) => {
     const [seccionReporte, setSeccionReporte] = useState('prospeccion');
-    const [subCorte, setSubCorte] = useState('pipeline'); // 'pipeline' o 'ejecucion'
+    const [subCorte, setSubCorte] = useState('ejecucion'); // 'pipeline' o 'ejecucion' - Default to Ejecución as requested
     const [expandedRows, setExpandedRows] = useState({});
 
     const toggleRow = (id) => {
@@ -38,10 +38,12 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
     const [fechaInicio, setFechaInicio] = useState(new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0]);
     const [fechaFin, setFechaFin] = useState(new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().split('T')[0]);
     const [ignorarPeriodo, setIgnorarPeriodo] = useState(false);
+    const [tipoPeriodo, setTipoPeriodo] = useState('mes'); // 'mes', 'año', 'todo', 'custom'
 
     const establecerRango = (tipo) => {
         const d = getMeridaNow();
         setIgnorarPeriodo(false);
+        setTipoPeriodo(tipo);
         if (tipo === 'mes') {
             setFechaInicio(new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]);
             setFechaFin(new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0]);
@@ -58,7 +60,19 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         return (cotizaciones || []).filter(q => {
             if (q.estatus !== 'ganada') return false;
             if (ignorarPeriodo) return true;
-            const fechaQ = new Date(q.fecha_cierre_real || q.created_at || q.fecha);
+
+            // Preferir fecha de contrato si existe
+            const contrato = (contratosEjecucion || []).find(ce => String(ce.cotizacion_id) === String(q.id));
+            let fechaQ;
+
+            if (contrato && contrato.fecha_inicio_pauta) {
+                const [y, m, d] = contrato.fecha_inicio_pauta.split('-').map(Number);
+                fechaQ = new Date(y, m - 1, d);
+            } else {
+                const fechaRef = q.fecha_cierre_real || q.created_at || q.fecha;
+                fechaQ = new Date(fechaRef);
+            }
+
             const start = new Date(fechaInicio);
             const end = new Date(fechaFin);
             end.setHours(23, 59, 59, 999);
@@ -83,7 +97,12 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
     const datosVentasBase = useMemo(() => {
         return (contratosEjecucion || []).filter(ce => {
             if (ignorarPeriodo) return true;
-            const fechaE = new Date(ce.fecha_inicio_pauta);
+            if (!ce.fecha_inicio_pauta) return false;
+
+            // Parsear YYYY-MM-DD sin desfase de zona horaria
+            const [y, m, d] = ce.fecha_inicio_pauta.split('-').map(Number);
+            const fechaE = new Date(y, m - 1, d);
+
             const start = new Date(fechaInicio);
             const end = new Date(fechaFin);
             end.setHours(23, 59, 59, 999);
@@ -131,7 +150,8 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             const ce = item.original;
             const q = (cotizaciones || []).find(quote => String(quote.id) === String(ce?.cotizacion_id));
 
-            const fechaItem = new Date(item.fecha);
+            const [y, m, d] = item.fecha.split('-').map(Number);
+            const fechaItem = new Date(y, m - 1, d);
             const mesIdx = fechaItem.getMonth();
             const cId = item.cliente_id;
             const monto = item.monto;
@@ -302,9 +322,22 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         (clientes || []).forEach(c => {
             if (resumen[c.etapa] !== undefined) {
                 resumen[c.etapa].cant++;
-                const valorC = (cotizaciones || [])
-                    .filter(q => String(q.cliente_id) === String(c.id) && q.estatus === 'enviada')
-                    .reduce((acc, q) => acc + (q.subtotalGeneral || q.total / 1.16 || 0), 0);
+
+                let valorC = 0;
+                if (c.etapa === 'Cliente') {
+                    // Para clientes con venta cerrada, usamos contratos de ejecución
+                    valorC = (contratosEjecucion || [])
+                        .filter(ce => {
+                            const q = (cotizaciones || []).find(quote => String(quote.id) === String(ce.cotizacion_id));
+                            return (q && String(q.cliente_id) === String(c.id)) || String(ce.master_contracts?.cliente_id) === String(c.id);
+                        })
+                        .reduce((acc, ce) => acc + (parseFloat(ce.monto_ejecucion) || 0), 0);
+                } else {
+                    // Para etapas iniciales, usamos cotizaciones enviadas
+                    valorC = (cotizaciones || [])
+                        .filter(q => String(q.cliente_id) === String(c.id) && q.estatus === 'enviada')
+                        .reduce((acc, q) => acc + (q.subtotalGeneral || q.total / 1.16 || 0), 0);
+                }
                 resumen[c.etapa].valor += valorC;
             }
         });
@@ -853,14 +886,14 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest">Ajustar Período:</span>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={() => establecerRango('mes')} className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase transition-all border ${!ignorarPeriodo && fechaInicio.includes('-' + (hoy.getMonth() + 1).toString().padStart(2, '0')) ? 'bg-enterprise-950 text-white' : 'bg-slate-50 text-slate-600 hover:bg-black hover:text-white border-slate-100'}`}>Mes Actual</button>
-                    <button onClick={() => establecerRango('año')} className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase transition-all border ${!ignorarPeriodo && fechaInicio.endsWith('-01-01') ? 'bg-enterprise-950 text-white' : 'bg-slate-50 text-slate-600 hover:bg-black hover:text-white border-slate-100'}`}>Año Completo</button>
-                    <button onClick={() => establecerRango('todo')} className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase transition-all border ${ignorarPeriodo ? 'bg-brand-orange text-white border-brand-orange' : 'bg-slate-50 text-slate-600 hover:bg-brand-orange hover:text-white border-slate-100'}`}>Historial Completo</button>
+                    <button onClick={() => establecerRango('mes')} className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase transition-all border ${tipoPeriodo === 'mes' && !ignorarPeriodo ? 'bg-enterprise-950 text-white' : 'bg-slate-50 text-slate-600 hover:bg-black hover:text-white border-slate-100'}`}>Mes Actual</button>
+                    <button onClick={() => establecerRango('año')} className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase transition-all border ${tipoPeriodo === 'año' && !ignorarPeriodo ? 'bg-enterprise-950 text-white' : 'bg-slate-50 text-slate-600 hover:bg-black hover:text-white border-slate-100'}`}>Año Completo</button>
+                    <button onClick={() => establecerRango('todo')} className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-[7px] sm:text-[8px] font-black uppercase transition-all border ${tipoPeriodo === 'todo' || ignorarPeriodo ? 'bg-brand-orange text-white border-brand-orange' : 'bg-slate-50 text-slate-600 hover:bg-brand-orange hover:text-white border-slate-100'}`}>Historial Completo</button>
                 </div>
                 <div className={`flex items-center gap-2 md:ml-auto transition-opacity ${ignorarPeriodo ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-                    <input type="date" value={fechaInicio} onChange={(e) => { setFechaInicio(e.target.value); setIgnorarPeriodo(false); }} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-brand-orange min-w-0" />
+                    <input type="date" value={fechaInicio} onChange={(e) => { setFechaInicio(e.target.value); setIgnorarPeriodo(false); setTipoPeriodo('custom'); }} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-brand-orange min-w-0" />
                     <span className="text-gray-300 font-bold text-[10px]">A</span>
-                    <input type="date" value={fechaFin} onChange={(e) => { setFechaFin(e.target.value); setIgnorarPeriodo(false); }} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-brand-orange min-w-0" />
+                    <input type="date" value={fechaFin} onChange={(e) => { setFechaFin(e.target.value); setIgnorarPeriodo(false); setTipoPeriodo('custom'); }} className="flex-1 bg-slate-50 border-none rounded-lg p-1.5 text-[9px] sm:text-[10px] font-bold focus:ring-1 focus:ring-brand-orange min-w-0" />
                 </div>
             </div>
 
