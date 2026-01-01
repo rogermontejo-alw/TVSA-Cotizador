@@ -3,6 +3,7 @@ import {
     FileText, Printer, Eye, Trash2, Search, AlertCircle, RefreshCw, CalendarDays, BadgeDollarSign, MoreHorizontal
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
+import { formatToMeridaISO } from '../../utils/dateUtils';
 
 const HistoryView = ({
     setVistaActual,
@@ -36,7 +37,7 @@ const HistoryView = ({
         try {
             const payload = { id: quote.id, estatus: newStatus };
             if (newStatus === 'ganada') {
-                payload.fecha_cierre_real = new Date().toISOString();
+                payload.fecha_cierre_real = formatToMeridaISO(new Date().toISOString());
             }
             const success = await onSaveQuote('cotizaciones', payload);
             if (success) {

@@ -12,11 +12,12 @@ import {
     Menu,
     X,
     User,
-    ChevronRight
+    ChevronRight,
+    Bell
 } from 'lucide-react';
 import { APP_CONFIG } from '../../appConfig';
 
-const Navbar = ({ session, perfil, vistaActual, setVistaActual, onLogout }) => {
+const Navbar = ({ session, perfil, vistaActual, setVistaActual, onLogout, onViewBriefing }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const userEmail = session?.user?.email || 'N/A';
 
@@ -107,6 +108,15 @@ const Navbar = ({ session, perfil, vistaActual, setVistaActual, onLogout }) => {
 
                     {/* CONTROLES EJECUTIVOS (Solo Iconos) - Área Derecha (Solo Desktop) */}
                     <div className="flex items-center gap-1 sm:gap-2 ml-auto">
+                        {/* Briefing Access (Campanita) */}
+                        <button
+                            onClick={onViewBriefing}
+                            className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center bg-white text-enterprise-950 rounded-xl shadow-sm border border-enterprise-100 hover:bg-enterprise-950 hover:text-white transition-all active:scale-95 group"
+                            title="Ver Briefing Comercial"
+                        >
+                            <Bell size={20} className="group-hover:animate-bounce" />
+                        </button>
+
                         <div className="hidden lg:flex items-center gap-1 xl:gap-2 bg-enterprise-50/40 p-1 rounded-2xl border border-enterprise-100/50">
                             <IconButton id="dashboard" icon={LayoutDashboard} label="Dashboard" />
                             {userRole === 'Gerencia' && <IconButton id="reportes" icon={BarChart3} label="Reportes" />}

@@ -92,10 +92,25 @@ const DashboardView = ({
     };
 
     const stats = useMemo(() => {
-        const ahora = new Date();
-        const inicio = new Date();
-        if (periodo === 'mes') inicio.setDate(1);
-        else inicio.setMonth(0, 1);
+        // Forzar tiempo de Mérida (UTC-6)
+        const getMeridaNow = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/Merida" }));
+        const ahora = getMeridaNow();
+
+        // Helper para comparar fechas sin desfase UTC (solo año-mes-día)
+        const isDateInPeriod = (dateStr, start, end) => {
+            if (!dateStr) return false;
+            // Forzar interpretación como fecha local (YYYY/MM/DD) o desglosar
+            const [y, m, d] = dateStr.includes('T') ? dateStr.split('T')[0].split('-') : dateStr.split('-');
+            const date = new Date(y, m - 1, d);
+            return date >= start && date <= end;
+        };
+
+        const inicio = new Date(ahora);
+        if (periodo === 'mes') {
+            inicio.setDate(1);
+        } else {
+            inicio.setMonth(0, 1);
+        }
         inicio.setHours(0, 0, 0, 0);
 
         // 1. PIPELINE (Cotizaciones)
@@ -111,15 +126,14 @@ const DashboardView = ({
 
         // 3. REAL EXECUTION (CONTRATOS) - LA BASE DE LA META
         const periodExecutions = (contratosEjecucion || []).filter(ce => {
-            const d = new Date(ce.fecha_inicio_pauta);
-            return d >= inicio && d <= ahora;
+            return isDateInPeriod(ce.fecha_inicio_pauta, inicio, ahora);
         });
         const totalRealContracted = periodExecutions.reduce((sum, ce) => sum + (parseFloat(ce.monto_ejecucion) || 0), 0);
 
         // 4. FACTURACIÓN Y COBRANZA
         const periodBilling = cobranza.filter(c => {
-            const d = new Date(c.fecha_facturacion || c.updated_at);
-            return d >= inicio && d <= ahora;
+            const dateStr = c.fecha_facturacion || c.updated_at;
+            return isDateInPeriod(dateStr, inicio, ahora);
         });
         const totalBilled = periodBilling.reduce((sum, c) => sum + (parseFloat(c.monto_facturado) || 0), 0);
         const totalCollected = periodBilling.filter(c => c.estatus_pago === 'cobrado').reduce((sum, c) => sum + (parseFloat(c.monto_facturado) || 0), 0);
@@ -201,7 +215,7 @@ const DashboardView = ({
                                     COMANDO <span className="text-brand-orange">INTELIGENTE</span> NEXUS
                                 </h1>
                                 <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em] mt-2 flex items-center gap-2">
-                                    SISTEMA DE AUDITORÍA FINANCIERA <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> V1.9.5
+                                    SISTEMA DE AUDITORÍA FINANCIERA <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> V1.9.7
                                 </p>
                             </div>
                         </div>

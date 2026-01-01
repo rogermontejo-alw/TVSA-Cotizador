@@ -18,6 +18,7 @@ import MasterContractsView from './components/views/MasterContractsView';
 import ReportsView from './components/views/ReportsView';
 import Navbar from './components/common/Navbar';
 import StatusMessage from './components/admin/StatusMessage';
+import BriefingModal from './components/common/BriefingModal';
 import { supabase } from './lib/supabase';
 import { APP_CONFIG } from './appConfig';
 import { DashboardSkeleton } from './components/ui/Skeleton';
@@ -27,6 +28,7 @@ const App = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [vistaActual, setVistaActual] = useState('dashboard');
   const [selectedClient, setSelectedClient] = useState(null);
+  const [showBriefing, setShowBriefing] = useState(false);
 
   // Auth Listener
   useEffect(() => {
@@ -42,6 +44,7 @@ const App = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -56,6 +59,17 @@ const App = () => {
   // Custom Hooks
   const dbData = useDatabase(session);
   const cotizacionState = useCotizacion(dbData);
+
+  // Mostrar Briefing solo una vez por sesión de carga
+  useEffect(() => {
+    if (session && !dbData.loading && dbData.interacciones) {
+      const hasSeenBriefing = sessionStorage.getItem(`nexus_briefing_${session.user.id}`);
+      if (!hasSeenBriefing) {
+        setShowBriefing(true);
+        sessionStorage.setItem(`nexus_briefing_${session.user.id}`, 'true');
+      }
+    }
+  }, [session, dbData.loading]);
 
   const {
     cargarDatos,
@@ -328,6 +342,7 @@ const App = () => {
             cobranza={dbData.cobranza}
             masterContracts={masterContracts}
             contratosEjecucion={dbData.contratosEjecucion}
+            interacciones={dbData.interacciones}
           />
         );
       default:
@@ -347,6 +362,7 @@ const App = () => {
           iniciarNuevaCotizacion();
           setVistaActual('cotizador');
         }}
+        onViewBriefing={() => setShowBriefing(true)}
       />
 
       <main className="flex-1 pt-24 pb-20 px-2 sm:px-4">
@@ -389,6 +405,14 @@ const App = () => {
           </div>
         </div>
       </footer>
+
+      {showBriefing && (
+        <BriefingModal
+          interacciones={dbData.interacciones}
+          clientes={dbData.clientes}
+          onClose={() => setShowBriefing(false)}
+        />
+      )}
 
       {mensajeAdmin && (
         <StatusMessage

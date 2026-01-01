@@ -5,6 +5,7 @@ import {
     ChevronRight, Filter, Building2, BarChart3, FileText, Calculator
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
+import { formatToMeridaISO } from '../../utils/dateUtils';
 
 const MasterContractsView = ({
     masterContracts = [],
@@ -118,8 +119,8 @@ const MasterContractsView = ({
                 cotizacion_id: executionData.cotizacion_id,
                 numero_contrato: b.numero_contrato,
                 monto_ejecucion: b.monto_ejecucion,
-                fecha_inicio_pauta: b.fecha_inicio_pauta,
-                fecha_fin_pauta: b.fecha_fin_pauta,
+                fecha_inicio_pauta: formatToMeridaISO(b.fecha_inicio_pauta),
+                fecha_fin_pauta: formatToMeridaISO(b.fecha_fin_pauta),
                 plaza: b.plaza,
                 notas: executionData.notas
             }));
@@ -134,6 +135,8 @@ const MasterContractsView = ({
         } else {
             const success = await onSaveContrato('contratos_ejecucion', {
                 ...executionData,
+                fecha_inicio_pauta: formatToMeridaISO(executionData.fecha_inicio_pauta),
+                fecha_fin_pauta: formatToMeridaISO(executionData.fecha_fin_pauta),
                 monto_ejecucion: parseFloat(executionData.monto_ejecucion)
             });
             if (success) {
@@ -224,7 +227,11 @@ const MasterContractsView = ({
 
     const handleSaveMC = async (e) => {
         e.preventDefault();
-        const success = await onSaveMC('master_contracts', formData);
+        const success = await onSaveMC('master_contracts', {
+            ...formData,
+            fecha_inicio: formatToMeridaISO(formData.fecha_inicio),
+            fecha_fin: formatToMeridaISO(formData.fecha_fin)
+        });
         if (success) {
             setMensaje({ tipo: 'exito', texto: 'Contrato Maestro guardado' });
             setIsCreating(false);

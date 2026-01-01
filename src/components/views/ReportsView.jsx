@@ -31,14 +31,16 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
     };
 
-    // 📅 Periodo
-    const hoy = new Date();
+    // 📅 Periodo (Sincronizado con Mérida UTC-6)
+    const getMeridaNow = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/Merida" }));
+    const hoy = getMeridaNow();
+
     const [fechaInicio, setFechaInicio] = useState(new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0]);
     const [fechaFin, setFechaFin] = useState(new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().split('T')[0]);
     const [ignorarPeriodo, setIgnorarPeriodo] = useState(false);
 
     const establecerRango = (tipo) => {
-        const d = new Date();
+        const d = getMeridaNow();
         setIgnorarPeriodo(false);
         if (tipo === 'mes') {
             setFechaInicio(new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]);
@@ -290,32 +292,39 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
     // 4. REPORTE: Prospección y CRM
     const pipelineData = useMemo(() => {
         const resumen = {
-            'Prospecto': 0,
-            'Contactado': 0,
-            'Interesado': 0,
-            'No Interesado': 0,
-            'Cliente': 0
+            'Prospecto': { cant: 0, valor: 0 },
+            'Contactado': { cant: 0, valor: 0 },
+            'Interesado': { cant: 0, valor: 0 },
+            'No Interesado': { cant: 0, valor: 0 },
+            'Cliente': { cant: 0, valor: 0 }
         };
 
         (clientes || []).forEach(c => {
-            if (resumen[c.etapa] !== undefined) resumen[c.etapa]++;
+            if (resumen[c.etapa] !== undefined) {
+                resumen[c.etapa].cant++;
+                const valorC = (cotizaciones || [])
+                    .filter(q => String(q.cliente_id) === String(c.id) && q.estatus === 'enviada')
+                    .reduce((acc, q) => acc + (q.subtotalGeneral || q.total / 1.16 || 0), 0);
+                resumen[c.etapa].valor += valorC;
+            }
         });
 
         const enviadas = (cotizaciones || []).filter(q => q.estatus === 'enviada');
 
-        const seguimientoClientes = (clientes || [])
-            .filter(c => c.etapa !== 'Cliente' && c.etapa !== 'No Interesado')
+        const seguimientoTotal = (clientes || [])
             .map(c => {
                 const lasInteracciones = (interacciones || []).filter(i => String(i.cliente_id) === String(c.id));
-                const ultima = lasInteracciones[0]; // Están ordenadas por fecha desc
+                const ultima = lasInteracciones[0];
+                const now = getMeridaNow();
+                const diffDays = ultima ? Math.floor((now - new Date(ultima.created_at)) / (1000 * 60 * 60 * 24)) : 999;
                 return {
                     ...c,
                     ultima_interaccion: ultima,
-                    dias_sin_contacto: ultima ? Math.floor((new Date() - new Date(ultima.created_at)) / (1000 * 60 * 60 * 24)) : '-'
+                    dias_sin_contacto: diffDays
                 };
-            });
+            }).sort((a, b) => b.dias_sin_contacto - a.dias_sin_contacto);
 
-        return { resumen, enviadas, seguimientoClientes };
+        return { resumen, enviadas, seguimientoTotal };
     }, [clientes, cotizaciones, interacciones]);
 
     const getReportData = (id, forcedCorte = null) => {
@@ -534,26 +543,24 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             ];
         } else if (id === 'prospeccion') {
             title = "RESUMEN DE PROSPECCIÓN Y PIPELINE";
-            headers = ['Concepto', 'Cantidad / Valor'];
+            headers = ['Concepto', 'Volumen (Cant)', 'Valor del Pipeline ($)'];
             rows = [
-                ['ETAPAS DEL EMBUDO', ''],
-                ['Prospectos', pipelineData.resumen['Prospecto']],
-                ['Contactados', pipelineData.resumen['Contactado']],
-                ['Interesados', pipelineData.resumen['Interesado']],
-                ['No Interesados', pipelineData.resumen['No Interesado']],
-                ['Venta Cerrada (Clientes)', pipelineData.resumen['Cliente']],
-                ['', ''],
-                ['PROPUESTAS ENVIADAS', ''],
-                ['Total Cotizaciones en Tránsito', pipelineData.enviadas.length],
-                ['Valor Estimado Pipeline', pipelineData.enviadas.reduce((acc, q) => acc + (q.subtotalGeneral || 0), 0)],
-                ['', ''],
-                ['BITÁCORA DE SEGUIMIENTO (Clientes Activos)', ''],
-                ['Cliente', 'Última Nota', 'Fecha', 'Días'],
-                ...pipelineData.seguimientoClientes.map(c => [
+                ['ETAPAS DEL EMBUDO', '', ''],
+                ['Prospectos', pipelineData.resumen['Prospecto'].cant, pipelineData.resumen['Prospecto'].valor],
+                ['Contactados', pipelineData.resumen['Contactado'].cant, pipelineData.resumen['Contactado'].valor],
+                ['Interesados', pipelineData.resumen['Interesado'].cant, pipelineData.resumen['Interesado'].valor],
+                ['No Interesados', pipelineData.resumen['No Interesado'].cant, pipelineData.resumen['No Interesado'].valor],
+                ['Venta Cerrada (Clientes)', pipelineData.resumen['Cliente'].cant, pipelineData.resumen['Cliente'].valor],
+                ['', '', ''],
+                ['KPIs DE GESTIÓN', '', ''],
+                ['Total Propuestas en Tránsito', pipelineData.enviadas.length, pipelineData.enviadas.reduce((acc, q) => acc + (q.subtotalGeneral || 0), 0)],
+                ['', '', ''],
+                ['BITÁCORA DE CARTERA TOTAL (Clasificación por Inactividad)', '', ''],
+                ['Cliente', 'Última Nota', 'Días Inactivo'],
+                ...pipelineData.seguimientoTotal.map(c => [
                     c.nombre_empresa,
-                    c.ultima_interaccion?.comentario || 'Sin notas registrada',
-                    c.ultima_interaccion ? new Date(c.ultima_interaccion.created_at).toLocaleDateString() : 'N/A',
-                    c.dias_sin_contacto
+                    c.ultima_interaccion?.comentario || 'Sin notas registradas',
+                    c.dias_sin_contacto === 999 ? 'N/A' : c.dias_sin_contacto
                 ])
             ];
         }
@@ -873,11 +880,21 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                         </div>
 
                         <div className="px-8 py-6">
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
-                                {Object.entries(pipelineData.resumen).map(([etapa, count]) => (
-                                    <div key={etapa} className="bg-slate-50 p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center hover:bg-white hover:shadow-xl transition-all group">
-                                        <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-1 italic group-hover:text-brand-orange">{etapa}</p>
-                                        <h4 className="text-3xl font-black text-slate-900">{count}</h4>
+                            {/* Grid Dual: Cantidad vs Valor */}
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-10">
+                                {Object.entries(pipelineData.resumen).map(([etapa, data]) => (
+                                    <div key={etapa} className="bg-slate-50 p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center hover:bg-white hover:shadow-xl transition-all group overflow-hidden relative">
+                                        <div className="relative z-10">
+                                            <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-2 italic group-hover:text-brand-orange transition-colors">{etapa}</p>
+                                            <div className="flex flex-col gap-1">
+                                                <h4 className="text-3xl font-black text-slate-900 leading-none">{data.cant}</h4>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase">Cuentas</p>
+                                            </div>
+                                            <div className="mt-4 pt-4 border-t border-slate-200">
+                                                <p className="text-[11px] font-black text-brand-orange">{formatMXN(data.valor, 0)}</p>
+                                                <p className="text-[7px] font-black text-slate-300 uppercase tracking-tighter">Valor Transito</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -924,12 +941,12 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                     </div>
                                 </div>
 
-                                {/* 3. Bitácora de Seguimiento Crítico */}
+                                {/* 3. Bitácora de Seguimiento Cartera Total */}
                                 <div className="bg-white rounded-[2rem] shadow-premium border border-gray-100 overflow-hidden border-t-4 border-t-brand-orange">
                                     <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50">
                                         <div>
-                                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">Seguimiento de Cuentas</h3>
-                                            <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">Última actividad registrada</p>
+                                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">Cartera 360° (Gestión por Inactividad)</h3>
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">Ordenado por cuentas desatendidas</p>
                                         </div>
                                         <Clock className="text-brand-orange" size={20} />
                                     </div>
@@ -937,17 +954,20 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                         <table className="w-full text-left">
                                             <thead className="bg-white sticky top-0 z-10 shadow-sm">
                                                 <tr className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                                                    <th className="px-6 py-4">Cliente</th>
+                                                    <th className="px-6 py-4">Cliente / Etapa</th>
                                                     <th className="px-6 py-4">Última Nota / Interaction</th>
                                                     <th className="px-6 py-4 text-right">Inactividad</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-50">
-                                                {pipelineData.seguimientoClientes.map(c => (
+                                                {pipelineData.seguimientoTotal.map(c => (
                                                     <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
                                                         <td className="px-6 py-4">
                                                             <p className="text-[10px] font-black text-slate-900 uppercase truncate max-w-[150px]">{c.nombre_empresa}</p>
-                                                            <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">{c.etapa}</p>
+                                                            <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest
+                                                                ${c.etapa === 'Cliente' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                                {c.etapa}
+                                                            </span>
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <p className="text-[9px] text-slate-600 italic leading-tight line-clamp-2">
@@ -961,16 +981,13 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                                         </td>
                                                         <td className="px-6 py-4 text-right">
                                                             <span className={`px-2 py-1 rounded-lg text-[8px] font-black
-                                                                ${c.dias_sin_contacto === '-' ? 'bg-slate-100 text-slate-400' :
-                                                                    c.dias_sin_contacto > 7 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                                                                {c.dias_sin_contacto} {c.dias_sin_contacto === '-' ? '' : c.dias_sin_contacto === 1 ? 'DÍA' : 'DÍAS'}
+                                                                ${c.dias_sin_contacto === 999 ? 'bg-red-50 text-red-400' :
+                                                                    c.dias_sin_contacto > 7 ? 'bg-red-100 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                                {c.dias_sin_contacto === 999 ? 'ABANDONO' : c.dias_sin_contacto === 1 ? '1 DÍA' : `${c.dias_sin_contacto} DÍAS`}
                                                             </span>
                                                         </td>
                                                     </tr>
                                                 ))}
-                                                {pipelineData.seguimientoClientes.length === 0 && (
-                                                    <tr><td colSpan="3" className="py-20 text-center text-[9px] font-black text-slate-300 uppercase italic">Sin cuentas en seguimiento</td></tr>
-                                                )}
                                             </tbody>
                                         </table>
                                     </div>

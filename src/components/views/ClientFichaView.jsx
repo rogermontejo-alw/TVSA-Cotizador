@@ -2,9 +2,10 @@ import React, { useState, useMemo } from 'react';
 import {
     User, Phone, Mail, MapPin, Building2, Briefcase,
     ChevronLeft, Edit3, Plus, FileText, CheckCircle2,
-    Clock, AlertCircle, Save, Trash2, ArrowRight, RefreshCw, Printer
+    Clock, AlertCircle, Save, Trash2, ArrowRight, RefreshCw, Printer, Calendar
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
+import { formatToMeridaISO } from '../../utils/dateUtils';
 
 const ClientFichaView = ({
     cliente,
@@ -35,6 +36,7 @@ const ClientFichaView = ({
     });
 
     const [nuevaNota, setNuevaNota] = useState('');
+    const [fechaRecordatorio, setFechaRecordatorio] = useState('');
     const [tipoNota, setTipoNota] = useState('Seguimiento');
     const [isSavingNota, setIsSavingNota] = useState(false);
 
@@ -105,7 +107,7 @@ const ClientFichaView = ({
                 updatedQuote.mc_id = cierreData.mc_id || null;
                 updatedQuote.fecha_registro_sistema = cierreData.fecha_registro_sistema || null;
                 updatedQuote.folio_sistema = cierreData.folio_sistema || null;
-                updatedQuote.fecha_cierre_real = quote.fecha_cierre_real || new Date().toISOString();
+                updatedQuote.fecha_cierre_real = quote.fecha_cierre_real || formatToMeridaISO(new Date().toISOString());
             }
 
             const success = await onSaveClient('cotizaciones', updatedQuote);
@@ -156,10 +158,12 @@ const ClientFichaView = ({
                 cliente_id: cliente.id,
                 tipo: tipoNota,
                 comentario: nuevaNota,
-                usuario_id: perfil?.id
+                usuario_id: perfil?.id,
+                fecha_recordatorio: formatToMeridaISO(fechaRecordatorio) || null
             });
             if (success) {
                 setNuevaNota('');
+                setFechaRecordatorio('');
                 setMensaje({ tipo: 'exito', texto: 'Nota de seguimiento guardada' });
             }
         } catch (err) {
@@ -284,10 +288,10 @@ const ClientFichaView = ({
                             </div>
                         </div>
 
-                        {/* Input de Registro Rápido */}
+                        {/* Input de Registro Rápido con Recordatorio */}
                         <div className="mb-8 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                            <div className="flex gap-2 mb-4">
-                                {['Llamada', 'Visita', 'WhatsApp', 'Correo', 'Seguimiento'].map(t => (
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {['Llamada', 'Visita', 'WhatsApp', 'Sinergia', 'Correo', 'Seguimiento'].map(t => (
                                     <button
                                         key={t}
                                         onClick={() => setTipoNota(t)}
@@ -301,20 +305,37 @@ const ClientFichaView = ({
                                     </button>
                                 ))}
                             </div>
-                            <div className="relative">
+                            <div className="space-y-4">
                                 <textarea
                                     placeholder="¿En qué va la cuenta? Escribe una nota de seguimiento..."
                                     value={nuevaNota}
                                     onChange={e => setNuevaNota(e.target.value)}
                                     className="w-full p-4 bg-white rounded-2xl text-xs font-bold border-none outline-none ring-2 ring-slate-100 focus:ring-slate-900/10 min-h-[80px] transition-all"
                                 />
-                                <button
-                                    disabled={!nuevaNota.trim() || isSavingNota}
-                                    onClick={handleSaveNota}
-                                    className="absolute bottom-3 right-3 p-3 bg-slate-900 text-white rounded-xl shadow-lg hover:bg-brand-orange transition-all disabled:opacity-30 active:scale-95"
-                                >
-                                    {isSavingNota ? <RefreshCw className="animate-spin" size={16} /> : <ArrowRight size={16} />}
-                                </button>
+
+                                <div className="flex flex-col md:flex-row items-center gap-4">
+                                    <div className="flex-1 w-full relative group">
+                                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-orange" size={16} />
+                                        <input
+                                            type="datetime-local"
+                                            value={fechaRecordatorio}
+                                            onChange={e => setFechaRecordatorio(e.target.value)}
+                                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-100 rounded-xl text-[9px] font-black uppercase outline-none focus:ring-2 focus:ring-slate-900/5 shadow-sm"
+                                        />
+                                        <div className="absolute -top-1.5 left-10 px-1 bg-slate-50 text-[7px] font-black text-slate-400 uppercase tracking-widest">
+                                            Fecha Próximo Contacto (Alertar)
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        disabled={!nuevaNota.trim() || isSavingNota}
+                                        onClick={handleSaveNota}
+                                        className="w-full md:w-auto px-8 py-3 bg-slate-900 text-white rounded-xl shadow-lg hover:bg-brand-orange transition-all disabled:opacity-30 active:scale-95 flex items-center justify-center gap-3 font-black uppercase text-[10px]"
+                                    >
+                                        {isSavingNota ? <RefreshCw className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
+                                        Guardar Gestión
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
