@@ -118,9 +118,19 @@ const CotizacionResult = ({
             };
             const result = await guardarCotizacion('cotizaciones', payload);
             if (result?.[0]) {
-                cotizacion.id = result[0].id;
-                cotizacion.folio = result[0].folio;
-                setMensaje({ tipo: 'exito', texto: 'Plan Guardado Exitosamente.' });
+                const savedQuote = result[0];
+                cotizacion.id = savedQuote.id;
+                cotizacion.folio = savedQuote.folio;
+
+                // Registro Automático de Actividad en CRM
+                await guardarCotizacion('interacciones_cliente', {
+                    cliente_id: cliente.id,
+                    tipo: 'Cotización',
+                    comentario: `Se generó propuesta comercial con Folio: ${savedQuote.folio}. Inversión: ${formatMXN(cotizacion.total || 0)}`,
+                    usuario_id: perfil?.id
+                });
+
+                setMensaje({ tipo: 'exito', texto: 'Plan Guardado y Actividad Registrada.' });
             }
         } catch (err) { setMensaje({ tipo: 'error', texto: `Error: ${err.message}` }); } finally { setIsUpdating(false); }
     };
@@ -188,8 +198,8 @@ const CotizacionResult = ({
                     </div>
                     <div className="flex items-center justify-between">
                         <span className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest ${cotizacion.estatus === 'ganada' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' :
-                                cotizacion.estatus === 'perdida' ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20' :
-                                    'bg-enterprise-950 text-white shadow-lg shadow-enterprise-950/20'
+                            cotizacion.estatus === 'perdida' ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20' :
+                                'bg-enterprise-950 text-white shadow-lg shadow-enterprise-950/20'
                             }`}>
                             {cotizacion.estatus || 'BORRADOR'}
                         </span>

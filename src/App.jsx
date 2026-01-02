@@ -331,6 +331,7 @@ const App = () => {
             onSaveQuote={guardarRegistro}
             onSaveContrato={guardarRegistro}
             setMensaje={setMensajeAdmin}
+            perfil={dbData.perfil}
           />
         );
       case 'reportes':

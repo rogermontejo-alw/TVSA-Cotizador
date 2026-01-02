@@ -16,7 +16,8 @@ const MasterContractsView = ({
     onSaveMC,
     onSaveContrato,
     onSaveQuote,
-    setMensaje
+    setMensaje,
+    perfil
 }) => {
     const [activeTab, setActiveTab] = useState('mcs'); // 'mcs' (Convenios) o 'ejecuciones' (Contratos)
     const [busqueda, setBusqueda] = useState('');
@@ -127,6 +128,15 @@ const MasterContractsView = ({
 
             const success = await onSaveContrato('contratos_ejecucion', payload, 'numero_contrato');
             if (success) {
+                // Registro en CRM para cada contrato del desglose
+                for (const reg of payload) {
+                    await onSaveContrato('interacciones_cliente', {
+                        cliente_id: executionData.cliente_id,
+                        tipo: 'Contrato',
+                        comentario: `Formalización Contrato Multi-plaza: ${reg.numero_contrato} (${reg.plaza}). Inversión: ${formatMXN(reg.monto_ejecucion)}`,
+                        usuario_id: perfil?.id
+                    });
+                }
                 setMensaje({ tipo: 'exito', texto: `${payload.length} Contratos creados correctamente` });
                 setIsExecuting(false);
                 setIsMultiPlaza(false);
@@ -140,6 +150,14 @@ const MasterContractsView = ({
                 monto_ejecucion: parseFloat(executionData.monto_ejecucion)
             });
             if (success) {
+                // Registro en CRM
+                await onSaveContrato('interacciones_cliente', {
+                    cliente_id: executionData.cliente_id,
+                    tipo: 'Contrato',
+                    comentario: `Formalización Contrato: ${executionData.numero_contrato}. Inversión: ${formatMXN(executionData.monto_ejecucion)}`,
+                    usuario_id: perfil?.id
+                });
+
                 setMensaje({ tipo: 'exito', texto: 'Contrato de registro creado correctamente' });
                 setIsExecuting(false);
                 setExecutionData({
@@ -169,6 +187,15 @@ const MasterContractsView = ({
 
         const success = await onSaveContrato('contratos_ejecucion', payload);
         if (success) {
+            // Registro en CRM
+            const mc = masterContracts.find(m => m.id === targetExecution.mc_id);
+            await onSaveContrato('interacciones_cliente', {
+                cliente_id: mc?.cliente_id || targetExecution.cliente_id,
+                tipo: 'Vinculación',
+                comentario: `Cotización Folio ${quote.folio} vinculada exitosamente al Contrato ${targetExecution.numero_contrato}`,
+                usuario_id: perfil?.id
+            });
+
             setMensaje({ tipo: 'exito', texto: 'Cotización vinculada al contrato con éxito' });
             setIsLinkingQuote(false);
             setTargetExecution(null);
@@ -233,6 +260,14 @@ const MasterContractsView = ({
             fecha_fin: formatToMeridaISO(formData.fecha_fin)
         });
         if (success) {
+            // Registro en CRM
+            await onSaveMC('interacciones_cliente', {
+                cliente_id: formData.cliente_id,
+                tipo: 'Convenio',
+                comentario: `Socio formalizó Convenio Estratégico ${formData.numero_mc} por un capital de ${formatMXN(formData.monto_aprobado)}`,
+                usuario_id: perfil?.id
+            });
+
             setMensaje({ tipo: 'exito', texto: 'Contrato Maestro guardado' });
             setIsCreating(false);
             setFormData({

@@ -16,16 +16,62 @@ import {
     Layout,
     Globe,
     Briefcase,
-    DollarSign
+    DollarSign,
+    X,
+    Info
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
 const MISSING_DATA_CHAR = '-';
 
+const HistoryModal = ({ client, onClose }) => {
+    if (!client) return null;
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-enterprise-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-2xl rounded-[2rem] overflow-hidden flex flex-col max-h-[85vh] shadow-2xl">
+                <div className="bg-enterprise-950 p-6 flex items-center justify-between border-b border-white/10 shrink-0">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-brand-orange/20 rounded-xl flex items-center justify-center text-brand-orange">
+                            <Clock size={20} />
+                        </div>
+                        <div>
+                            <h3 className="text-white text-sm font-black uppercase tracking-widest">{client.nombre_empresa}</h3>
+                            <p className="text-white/40 text-[8px] font-bold uppercase tracking-widest">Historial Completo de Actividades</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:bg-white/10 hover:text-white transition-all">
+                        <X size={18} />
+                    </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50">
+                    {client.historico_completo && client.historico_completo.length > 0 ? (
+                        client.historico_completo.map((inter, idx) => (
+                            <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                                <div className="absolute top-0 left-0 w-1.5 h-full bg-brand-orange/30 group-hover:bg-brand-orange transition-colors" />
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="px-2 py-0.5 bg-slate-100 rounded text-[7px] font-black text-slate-500 uppercase tracking-widest">{inter.tipo}</span>
+                                    <span className="text-[8px] font-bold text-slate-400">{new Date(inter.created_at).toLocaleString('es-MX')}</span>
+                                </div>
+                                <p className="text-[10px] text-slate-700 font-medium leading-relaxed italic">"{inter.comentario}"</p>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-20 text-slate-300 italic">
+                            <Clock size={40} className="mb-4 opacity-20" />
+                            <p className="text-sm">No hay actividades registradas</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterContracts = [], contratosEjecucion = [], interacciones = [] }) => {
     const [seccionReporte, setSeccionReporte] = useState('prospeccion');
     const [subCorte, setSubCorte] = useState('ejecucion'); // 'pipeline' o 'ejecucion' - Default to Ejecución as requested
     const [expandedRows, setExpandedRows] = useState({});
+    const [selectedClientHistory, setSelectedClientHistory] = useState(null);
 
     const toggleRow = (id) => {
         setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
@@ -347,13 +393,15 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
         const seguimientoTotal = (clientes || [])
             .map(c => {
                 const lasInteracciones = (interacciones || []).filter(i => String(i.cliente_id) === String(c.id));
+                const ahora = getMeridaNow();
                 const ultima = lasInteracciones[0];
-                const now = getMeridaNow();
-                const diffDays = ultima ? Math.floor((now - new Date(ultima.created_at)) / (1000 * 60 * 60 * 24)) : 999;
+                const diffDays = ultima ? Math.floor((ahora - new Date(ultima.created_at)) / (1000 * 60 * 60 * 24)) : 999;
                 return {
                     ...c,
+                    interacciones_recientes: lasInteracciones.slice(0, 4),
                     ultima_interaccion: ultima,
-                    dias_sin_contacto: diffDays
+                    dias_sin_contacto: diffDays,
+                    historico_completo: lasInteracciones
                 };
             }).sort((a, b) => b.dias_sin_contacto - a.dias_sin_contacto);
 
@@ -575,27 +623,40 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 ['TOTAL COBRANZA', '', '', totalFacturado, '', '', '']
             ];
         } else if (id === 'prospeccion') {
-            title = "RESUMEN DE PROSPECCIÓN Y PIPELINE";
-            headers = ['Concepto', 'Volumen (Cant)', 'Valor del Pipeline ($)'];
-            rows = [
+            title = "PROSPECCION_SIDE_BY_SIDE";
+            const leftHeaders = ['Concepto', 'Volumen (Cant)', 'Valor del Pipeline ($)'];
+            const rightHeaders = ['Cliente', 'Última Nota', 'Días Inactivo'];
+
+            const leftRows = [
                 ['ETAPAS DEL EMBUDO', '', ''],
                 ['Prospectos', pipelineData.resumen['Prospecto'].cant, pipelineData.resumen['Prospecto'].valor],
                 ['Contactados', pipelineData.resumen['Contactado'].cant, pipelineData.resumen['Contactado'].valor],
                 ['Interesados', pipelineData.resumen['Interesado'].cant, pipelineData.resumen['Interesado'].valor],
                 ['No Interesados', pipelineData.resumen['No Interesado'].cant, pipelineData.resumen['No Interesado'].valor],
-                ['Venta Cerrada (Clientes)', pipelineData.resumen['Cliente'].cant, pipelineData.resumen['Cliente'].valor],
-                ['', '', ''],
-                ['KPIs DE GESTIÓN', '', ''],
-                ['Total Propuestas en Tránsito', pipelineData.enviadas.length, pipelineData.enviadas.reduce((acc, q) => acc + (q.subtotalGeneral || 0), 0)],
-                ['', '', ''],
-                ['BITÁCORA DE CARTERA TOTAL (Clasificación por Inactividad)', '', ''],
-                ['Cliente', 'Última Nota', 'Días Inactivo'],
-                ...pipelineData.seguimientoTotal.map(c => [
-                    c.nombre_empresa,
-                    c.ultima_interaccion?.comentario || 'Sin notas registradas',
-                    c.dias_sin_contacto === 999 ? 'N/A' : c.dias_sin_contacto
-                ])
+                ['Venta Cerrada (Clientes)', pipelineData.resumen['Cliente'].cant, pipelineData.resumen['Cliente'].valor]
             ];
+
+            const rightRows = pipelineData.seguimientoTotal.flatMap(c => {
+                const mainRow = [c.nombre_empresa, c.ultima_interaccion?.comentario || 'Sin notas registradas', c.dias_sin_contacto === 999 ? 'N/A' : c.dias_sin_contacto];
+                const detailRows = (c.interacciones_recientes || []).slice(1).map(note => [
+                    '',
+                    `(Historial ${new Date(note.created_at).toLocaleDateString()}) ${note.comentario}`,
+                    ''
+                ]);
+                return [mainRow, ...detailRows];
+            });
+
+            const maxRows = Math.max(leftRows.length, rightRows.length);
+            const headers = [...leftHeaders, '', ...rightHeaders];
+            const rows = [];
+
+            for (let i = 0; i < maxRows; i++) {
+                const left = leftRows[i] || ['', '', ''];
+                const right = rightRows[i] || ['', '', ''];
+                rows.push([...left, '', ...right]);
+            }
+
+            return { title, headers, rows };
         }
 
         return { title, headers, rows };
@@ -696,31 +757,49 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             let rowXml = "";
 
             // Title and Metadata
-            rowXml += `<Row ss:Height="22"><Cell ss:StyleID="Title"><Data ss:Type="String">${title}</Data></Cell></Row>`;
-            rowXml += `<Row ss:Height="22"><Cell><Data ss:Type="String">Periodo: ${fechaInicio} al ${fechaFin}</Data></Cell></Row>`;
-            rowXml += `<Row ss:Height="22"><Cell><Data ss:Type="String">Generado: ${new Date().toLocaleString()}</Data></Cell></Row>`;
-            rowXml += `<Row ss:Height="22"></Row>`;
+            if (title === "PROSPECCION_SIDE_BY_SIDE") {
+                rowXml += `<Row ss:Height="25">
+                    <Cell ss:StyleID="Title"><Data ss:Type="String">RESUMEN DE PROSPECCIÓN Y PIPELINE</Data></Cell>
+                    <Cell ss:Index="5" ss:StyleID="Title"><Data ss:Type="String">KPIs DE GESTIÓN</Data></Cell>
+                </Row>`;
+                rowXml += `<Row ss:Height="20">
+                    <Cell><Data ss:Type="String">Periodo: ${fechaInicio} al ${fechaFin}</Data></Cell>
+                    <Cell ss:Index="5"><Data ss:Type="String">BITÁCORA DE CARTERA TOTAL (Clasificación por Inactividad)</Data></Cell>
+                </Row>`;
+                rowXml += `<Row ss:Height="20">
+                    <Cell><Data ss:Type="String">Generado: ${new Date().toLocaleString()}</Data></Cell>
+                </Row>`;
+            } else {
+                rowXml += `<Row ss:Height="25"><Cell ss:StyleID="Title"><Data ss:Type="String">${title}</Data></Cell></Row>`;
+                rowXml += `<Row ss:Height="20"><Cell><Data ss:Type="String">Periodo: ${fechaInicio} al ${fechaFin}</Data></Cell></Row>`;
+                rowXml += `<Row ss:Height="20"><Cell><Data ss:Type="String">Generado: ${new Date().toLocaleString()}</Data></Cell></Row>`;
+            }
+            rowXml += `<Row ss:Height="20"></Row>`;
 
             // Headers
-            rowXml += `<Row ss:Height="22">`;
-            headers.forEach(h => {
-                rowXml += `<Cell ss:StyleID="Header"><Data ss:Type="String">${h}</Data></Cell>`;
+            rowXml += `<Row ss:Height="25">`;
+            headers.forEach((h, hIdx) => {
+                if (h === '') {
+                    rowXml += `<Cell></Cell>`;
+                } else {
+                    rowXml += `<Cell ss:StyleID="Header"><Data ss:Type="String">${h}</Data></Cell>`;
+                }
             });
             rowXml += `</Row>`;
 
             // Data Rows
             rows.forEach(row => {
                 const isTotalRow = String(row[0]).startsWith('TOTAL');
-                const isSectionTitle = String(row[0]).includes('RESUMEN EJECUTIVO') || String(row[0]).includes('DETALLE CRONOLÓGICO');
+                const isSectionTitle = String(row[0]).includes('ETAPAS DEL EMBUDO') || String(row[0]).includes('RESUMEN EJECUTIVO') || String(row[0]).includes('DETALLE CRONOLÓGICO');
                 const isTableSubHeader = String(row[0]) === 'Master Contract' || (String(row[1]) === 'Concepto' && String(row[2]) === 'Folio Cotz');
                 const isGroupHeader = String(row[1]).includes('CONVENIO') || String(row[1]).includes('VENTAS DIRECTAS');
 
                 rowXml += `<Row ss:Height="${isSectionTitle ? '25' : '22'}">`;
                 row.forEach((cell, cellIdx) => {
                     const header = headers[cellIdx];
-                    const isTextCol = !header?.includes('Total') && ["Orden", "Factura", "Folio", "Ref.", "Contrato", "Folio Cotz", "Master Contract", "Cuenta", "Plaza", "Orden / Contrato", "Estado", "F. Pago Real", "F. Programada", "Cliente", "Canal"].some(tc => header?.includes(tc));
+                    const isTextCol = !header?.includes('Total') && ["Orden", "Factura", "Folio", "Ref.", "Contrato", "Folio Cotz", "Master Contract", "Cuenta", "Plaza", "Orden / Contrato", "Estado", "F. Pago Real", "F. Programada", "Cliente", "Canal", "Última Nota", "Concepto"].some(tc => header?.includes(tc));
 
-                    const isNum = !isNaN(cell) && typeof cell !== 'boolean' && cell !== '' && !isTextCol;
+                    let isNum = !isNaN(cell) && typeof cell !== 'boolean' && cell !== '' && !isTextCol;
                     const type = isNum ? 'Number' : 'String';
 
                     let styleID = "";
@@ -733,7 +812,9 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     } else if (isGroupHeader) {
                         styleID = isNum ? ' ss:StyleID="Currency"' : ' ss:StyleID="SectionTitle"';
                     } else if (isNum) {
-                        styleID = ' ss:StyleID="Currency"';
+                        const noCurrencyHeaders = ['Cant', 'Días Inactivo', 'Volumen'];
+                        const shouldHaveCurrency = !noCurrencyHeaders.some(nh => header?.includes(nh));
+                        styleID = shouldHaveCurrency ? ' ss:StyleID="Currency"' : '';
                     }
 
                     const cleanVal = String(cell || '')
@@ -752,13 +833,23 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
             let colWidthsXml = "";
             headers.forEach((h, hIdx) => {
                 let width = 100; // Default width
-                if (h.includes('Concepto')) width = 220;
-                else if (h.includes('Cliente') || h.includes('Cuenta') || h.includes('Empresa')) width = 250;
-                else if (h.includes('Canal') || h.includes('Notas')) width = 180;
-                else if (h.includes('Total') || h.includes('Monto') || h.includes('Transacción') || h.includes('Inversión')) width = 120;
-                else if (h.includes('Ref.')) width = 130;
-                else if (h.includes('Fecha') || h.includes('F. ')) width = 80;
-                else if (h.includes('Folio') || h.includes('Factura') || h.includes('Contrato')) width = 110;
+                if (title === "PROSPECCION_SIDE_BY_SIDE") {
+                    if (hIdx === 0) width = 180; // Concepto
+                    else if (hIdx === 1) width = 100; // Volumen
+                    else if (hIdx === 2) width = 120; // Valor
+                    else if (hIdx === 3) width = 30; // Separador
+                    else if (hIdx === 4) width = 180; // Cliente
+                    else if (hIdx === 5) width = 350; // Última Nota
+                    else if (hIdx === 6) width = 80; // Días Inactivo
+                } else {
+                    if (h.includes('Concepto')) width = 220;
+                    else if (h.includes('Cliente') || h.includes('Cuenta') || h.includes('Empresa')) width = 250;
+                    else if (h.includes('Canal') || h.includes('Notas')) width = 180;
+                    else if (h.includes('Total') || h.includes('Monto') || h.includes('Transacción') || h.includes('Inversión')) width = 120;
+                    else if (h.includes('Ref.')) width = 130;
+                    else if (h.includes('Fecha') || h.includes('F. ')) width = 80;
+                    else if (h.includes('Folio') || h.includes('Factura') || h.includes('Contrato')) width = 110;
+                }
 
                 colWidthsXml += `<Column ss:AutoFitWidth="0" ss:Width="${width}"/>`;
             });
@@ -994,23 +1085,42 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                             </thead>
                                             <tbody className="divide-y divide-gray-50">
                                                 {pipelineData.seguimientoTotal.map(c => (
-                                                    <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
+                                                    <tr
+                                                        key={c.id}
+                                                        onClick={() => setSelectedClientHistory(c)}
+                                                        className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                                                    >
                                                         <td className="px-6 py-4">
-                                                            <p className="text-[10px] font-black text-slate-900 uppercase truncate max-w-[150px]">{c.nombre_empresa}</p>
-                                                            <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest
-                                                                ${c.etapa === 'Cliente' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
-                                                                {c.etapa}
-                                                            </span>
+                                                            <div className="flex flex-col">
+                                                                <p className="text-[10px] font-black text-slate-900 uppercase truncate max-w-[150px] group-hover:text-brand-orange transition-colors">
+                                                                    {c.nombre_empresa}
+                                                                </p>
+                                                                <div className="flex items-center gap-1.5 mt-1">
+                                                                    <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest
+                                                                        ${c.etapa === 'Cliente' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                                        {c.etapa}
+                                                                    </span>
+                                                                    <Info size={10} className="text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                                </div>
+                                                            </div>
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <p className="text-[9px] text-slate-600 italic leading-tight line-clamp-2">
-                                                                {c.ultima_interaccion?.comentario || 'Sin notas registradas'}
-                                                            </p>
-                                                            {c.ultima_interaccion && (
-                                                                <span className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter mt-1 block">
-                                                                    {c.ultima_interaccion.tipo} - {new Date(c.ultima_interaccion.created_at).toLocaleDateString()}
-                                                                </span>
-                                                            )}
+                                                            <div className="space-y-2">
+                                                                {c.interacciones_recientes && c.interacciones_recientes.length > 0 ? (
+                                                                    c.interacciones_recientes.map((note, idx) => (
+                                                                        <div key={idx} className={idx === 0 ? "" : "opacity-40 border-t border-slate-50 pt-1"}>
+                                                                            <p className={`text-[9px] text-slate-600 italic leading-tight ${idx === 0 ? "line-clamp-2 font-medium" : "line-clamp-1"}`}>
+                                                                                {note.comentario}
+                                                                            </p>
+                                                                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5 block">
+                                                                                {note.tipo} • {new Date(note.created_at).toLocaleDateString()}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))
+                                                                ) : (
+                                                                    <p className="text-[9px] text-slate-400 italic">Sin notas registradas</p>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                         <td className="px-6 py-4 text-right">
                                                             <span className={`px-2 py-1 rounded-lg text-[8px] font-black
@@ -1456,6 +1566,12 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     </div>
                 </div>
             </div>
+            {selectedClientHistory && (
+                <HistoryModal
+                    client={selectedClientHistory}
+                    onClose={() => setSelectedClientHistory(null)}
+                />
+            )}
         </div>
     );
 };
