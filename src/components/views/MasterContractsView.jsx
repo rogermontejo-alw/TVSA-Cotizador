@@ -245,7 +245,7 @@ const MasterContractsView = ({
                 // Agregar VIX como partida independiente
                 if (hasVIX) {
                     nuevoBreakdown.push({
-                        plaza: 'VIX DIGITAL',
+                        plaza: 'CDMX',
                         monto_ejecucion: montoVIX,
                         numero_contrato: '',
                         fecha_inicio_pauta: executionData.fecha_inicio_pauta || '',
@@ -264,7 +264,7 @@ const MasterContractsView = ({
                 setExecutionData({
                     ...executionData,
                     cotizacion_id: quoteId,
-                    plaza: hasVIX ? 'VIX DIGITAL' : (plazasDetectadas[0] || ''),
+                    plaza: hasVIX ? 'CDMX' : (plazasDetectadas[0] || ''),
                     monto_ejecucion: quote.subtotalGeneral || quote.total / 1.16
                 });
             }

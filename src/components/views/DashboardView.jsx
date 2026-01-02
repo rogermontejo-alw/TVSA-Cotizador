@@ -96,6 +96,22 @@ const DashboardView = ({
         const getMeridaNow = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/Merida" }));
         const ahora = getMeridaNow();
 
+        // Determinar el rango del periodo
+        const inicio = new Date(ahora);
+        const finPeriodo = new Date(ahora);
+
+        if (periodo === 'mes') {
+            inicio.setDate(1);
+            // Fin de este mes
+            finPeriodo.setMonth(finPeriodo.getMonth() + 1, 0);
+        } else {
+            inicio.setMonth(0, 1);
+            // Fin de este año
+            finPeriodo.setMonth(11, 31);
+        }
+        inicio.setHours(0, 0, 0, 0);
+        finPeriodo.setHours(23, 59, 59, 999);
+
         // Helper para comparar fechas sin desfase UTC (solo año-mes-día)
         const isDateInPeriod = (dateStr, start, end) => {
             if (!dateStr) return false;
@@ -104,14 +120,6 @@ const DashboardView = ({
             const date = new Date(y, m - 1, d);
             return date >= start && date <= end;
         };
-
-        const inicio = new Date(ahora);
-        if (periodo === 'mes') {
-            inicio.setDate(1);
-        } else {
-            inicio.setMonth(0, 1);
-        }
-        inicio.setHours(0, 0, 0, 0);
 
         // 1. PIPELINE (Cotizaciones)
         const openQuotes = historial.filter(h => (h.estatus === 'borrador' || h.estatus === 'enviada'));
@@ -126,14 +134,14 @@ const DashboardView = ({
 
         // 3. REAL EXECUTION (CONTRATOS) - LA BASE DE LA META
         const periodExecutions = (contratosEjecucion || []).filter(ce => {
-            return isDateInPeriod(ce.fecha_inicio_pauta, inicio, ahora);
+            return isDateInPeriod(ce.fecha_inicio_pauta, inicio, finPeriodo);
         });
         const totalRealContracted = periodExecutions.reduce((sum, ce) => sum + (parseFloat(ce.monto_ejecucion) || 0), 0);
 
         // 4. FACTURACIÓN Y COBRANZA
-        const periodBilling = cobranza.filter(c => {
+        const periodBilling = (cobranza || []).filter(c => {
             const dateStr = c.fecha_facturacion || c.updated_at;
-            return isDateInPeriod(dateStr, inicio, ahora);
+            return isDateInPeriod(dateStr, inicio, finPeriodo);
         });
         const totalBilled = periodBilling.reduce((sum, c) => sum + (parseFloat(c.monto_facturado) || 0), 0);
         const totalCollected = periodBilling.filter(c => c.estatus_pago === 'cobrado').reduce((sum, c) => sum + (parseFloat(c.monto_facturado) || 0), 0);
@@ -157,7 +165,7 @@ const DashboardView = ({
         }
 
         // DSO (Days Sales Outstanding)
-        const collectedItems = cobranza.filter(c => c.estatus_pago === 'cobrado' && c.fecha_cobro_real);
+        const collectedItems = (cobranza || []).filter(c => c.estatus_pago === 'cobrado' && c.fecha_cobro_real);
         let dsoDays = 0;
         if (collectedItems.length > 0) {
             const sumDSO = collectedItems.reduce((acc, c) => {
@@ -169,11 +177,11 @@ const DashboardView = ({
         }
 
         // COMMISSIONS (15% of Collected)
-        const totalCollectedPeriod = periodBilling
+        const totalCollectedPeriod = (cobranza || [])
             .filter(c => c.estatus_pago === 'cobrado' && c.fecha_cobro_real)
             .filter(c => {
                 const d = new Date(c.fecha_cobro_real);
-                return d >= inicio && d <= ahora;
+                return d >= inicio && d <= finPeriodo;
             })
             .reduce((sum, c) => sum + (parseFloat(c.monto_facturado) || 0), 0);
 
