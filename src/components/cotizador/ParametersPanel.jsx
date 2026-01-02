@@ -15,6 +15,7 @@ const ParametersPanel = ({
     paquetesVIX = [],
     sugerirDistribucion,
     clienteSeleccionado,
+    iniciarNuevaCotizacion, // Prop added
     compactRow,
     mobileStage
 }) => {
@@ -32,7 +33,16 @@ const ParametersPanel = ({
                 {/* 2nd Module: Regions/Plaza */}
                 <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all ${mobileStage === 'digital' ? 'hidden sm:flex' : 'flex'}`}>
                     <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between shrink-0">
-                        <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Selección Regional</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Propuesta Regional</span>
+                            <button
+                                onClick={iniciarNuevaCotizacion}
+                                className="text-[7px] font-black text-brand-orange hover:text-white uppercase tracking-widest bg-brand-orange/10 hover:bg-brand-orange px-1.5 py-0.5 rounded transition-all"
+                                title="Reiniciar Sesión"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
                         <MapPin size={10} className="text-brand-orange" />
                     </div>
                     <div className="px-4 flex-1 flex items-center relative min-w-0">

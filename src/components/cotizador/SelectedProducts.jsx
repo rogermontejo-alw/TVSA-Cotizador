@@ -57,6 +57,12 @@ const SelectedProducts = ({
                                         <div className="flex items-center gap-2 mb-1 text-[7.5px] font-black uppercase italic">
                                             <span className="text-brand-orange">{producto.canal}</span>
                                             <span className="text-enterprise-400">{producto.plaza}</span>
+                                            {producto.horario && (
+                                                <>
+                                                    <span className="w-1 h-1 bg-enterprise-200 rounded-full" />
+                                                    <span className="text-brand-orange/70 font-black">{producto.horario}</span>
+                                                </>
+                                            )}
                                         </div>
                                         <h4 className="text-[10px] font-black text-enterprise-950 uppercase truncate leading-none italic group-hover:text-brand-orange transition-colors">
                                             {producto.tipo} <span className="text-enterprise-300 not-italic font-bold ml-1 text-[8px]">[{producto.duracion}]</span>

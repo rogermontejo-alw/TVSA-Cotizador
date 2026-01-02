@@ -151,6 +151,7 @@ const CotizadorView = ({
                             paquetesVIX={paquetesVIX}
                             sugerirDistribucion={sugerirDistribucion}
                             clienteSeleccionado={clienteSeleccionado}
+                            iniciarNuevaCotizacion={iniciarNuevaCotizacion}
                             compactRow={true}
                             mobileStage={etapaMovil}
                         />

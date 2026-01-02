@@ -339,9 +339,9 @@ const CotizacionResult = ({
 
                         <button
                             onClick={iniciarNuevaCotizacion}
-                            className="w-full py-3 bg-white border border-enterprise-100 rounded-2xl text-[8px] font-black text-enterprise-400 uppercase tracking-[0.4em] hover:bg-enterprise-50 hover:text-error transition-all italic text-center"
+                            className="w-full py-3 bg-white border border-enterprise-100 rounded-2xl text-[8px] font-black text-enterprise-400 uppercase tracking-[0.4em] hover:bg-enterprise-950 hover:text-white transition-all italic text-center group"
                         >
-                            Archivar y Finalizar Sesión
+                            <span className="group-hover:text-brand-orange transition-colors">Cancelar Plan y Nueva Sesión</span>
                         </button>
                     </div>
                 </div>

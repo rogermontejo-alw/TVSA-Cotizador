@@ -140,6 +140,14 @@ const ProductGrid = ({
                                                 <span className="text-[7.5px] font-black text-brand-orange uppercase italic">{p.canal}</span>
                                                 <span className="w-1 h-1 bg-enterprise-200 rounded-full" />
                                                 <span className="text-[7.5px] text-enterprise-400 font-bold uppercase truncate tracking-wider">{p.plaza}</span>
+                                                {p.horario && (
+                                                    <>
+                                                        <span className="w-1 h-1 bg-enterprise-200 rounded-full" />
+                                                        <span className="text-[7.5px] text-brand-orange/70 font-black uppercase truncate tracking-wider">
+                                                            {p.horario}
+                                                        </span>
+                                                    </>
+                                                )}
                                             </div>
                                             <h4 className="text-[10px] font-black text-enterprise-950 uppercase italic leading-none truncate group-hover:text-brand-orange transition-colors">
                                                 {p.tipo} <span className="text-enterprise-300 not-italic font-bold text-[8px] ml-1">[{p.duracion}]</span>
