@@ -126,7 +126,7 @@ const CotizacionResult = ({
                 await guardarCotizacion('interacciones_cliente', {
                     cliente_id: cliente.id,
                     tipo: 'Cotización',
-                    comentario: `Se generó propuesta comercial con Folio: ${savedQuote.folio}. Inversión: ${formatMXN(cotizacion.total || 0)}`,
+                    comentario: `Se generó propuesta comercial con Folio: ${savedQuote.folio}. Inversión: ${formatMXN(cotizacion.subtotalGeneral || 0)}`,
                     usuario_id: perfil?.id
                 });
 

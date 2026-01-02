@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { X, Save, Tv, Tag, MapPin, DollarSign, Clock, Layout, Layers, Activity } from 'lucide-react';
 
 const ProductForm = ({ onSave, onCancel, productoEdicion = null, plazasOficiales = [] }) => {

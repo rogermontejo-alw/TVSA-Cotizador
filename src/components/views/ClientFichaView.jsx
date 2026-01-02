@@ -386,32 +386,51 @@ const ClientFichaView = ({
 
                         <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
                             {clientQuotes.map(quote => (
-                                <div key={quote.id} onClick={() => onViewQuote(quote)} className="group p-6 bg-slate-50 hover:bg-white rounded-3xl border border-transparent hover:border-red-100 transition-all cursor-pointer flex justify-between items-center shadow-sm hover:shadow-xl">
-                                    <div className="flex items-center gap-5">
-                                        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                                <div
+                                    key={quote.id}
+                                    onClick={() => onViewQuote(quote)}
+                                    className={`group p-6 rounded-[2rem] border transition-all cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm hover:shadow-xl
+                                        ${quote.estatus === 'ganada'
+                                            ? 'bg-emerald-50/30 border-emerald-100 hover:border-emerald-200'
+                                            : 'bg-slate-50 border-transparent hover:border-red-100'}`}
+                                >
+                                    <div className="flex items-center gap-5 w-full md:w-auto">
+                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm transition-colors
+                                            ${quote.estatus === 'ganada'
+                                                ? 'bg-emerald-500 text-white'
+                                                : 'bg-white group-hover:bg-slate-900 group-hover:text-white'}`}>
                                             {getStatusIcon(quote.estatus)}
                                         </div>
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1" onClick={e => e.stopPropagation()}>
-                                                <span className="text-[11px] font-black text-slate-900 uppercase tracking-tighter">{quote.folio}</span>
-                                                <div className="flex gap-1 overflow-x-auto no-scrollbar max-w-[120px]">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex flex-col mb-1">
+                                                <span className="text-[10px] font-black text-slate-900 uppercase tracking-tighter truncate max-w-[200px]">{quote.folio}</span>
+                                                <div className="flex gap-1 mt-1" onClick={e => e.stopPropagation()}>
                                                     {['enviada', 'ganada', 'perdida'].map(st => (
                                                         <button
                                                             key={st}
                                                             onClick={() => handleOpenQuoteStatusModal(quote, st)}
                                                             className={`text-[7px] px-2 py-0.5 rounded-lg font-black uppercase transition-all
-                                                                ${quote.estatus === st ? 'bg-slate-900 text-white ring-2 ring-slate-200' : 'bg-white text-slate-400 opacity-60 hover:opacity-100'}`}
+                                                                ${quote.estatus === st
+                                                                    ? (st === 'ganada' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-900 text-white')
+                                                                    : 'bg-white text-slate-400 border border-slate-100 hover:border-slate-300'}`}
                                                         >
                                                             {st}
                                                         </button>
                                                     ))}
                                                 </div>
                                             </div>
-                                            <p className="text-xl font-black text-slate-900">{formatMXN(quote.subtotalGeneral || quote.total / 1.16)}</p>
+                                            <p className={`text-xl font-black ${quote.estatus === 'ganada' ? 'text-emerald-700' : 'text-slate-900'}`}>
+                                                {formatMXN(quote.subtotalGeneral || quote.total / 1.16)}
+                                            </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={e => { e.stopPropagation(); onPrintQuote(quote); }} className="p-3 bg-white rounded-xl border border-gray-100 hover:bg-slate-900 hover:text-white transition-colors"><Printer size={18} /></button>
+                                    <div className="flex items-center gap-2 self-end md:self-center">
+                                        <button
+                                            onClick={e => { e.stopPropagation(); onPrintQuote(quote); }}
+                                            className="p-3 bg-white rounded-xl border border-gray-100 hover:bg-slate-900 hover:text-white transition-colors shadow-sm"
+                                        >
+                                            <Printer size={18} />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
