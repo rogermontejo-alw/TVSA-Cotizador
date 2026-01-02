@@ -19,6 +19,7 @@ import ReportsView from './components/views/ReportsView';
 import Navbar from './components/common/Navbar';
 import StatusMessage from './components/admin/StatusMessage';
 import BriefingModal from './components/common/BriefingModal';
+import ClientForm from './components/admin/ClientForm';
 import { supabase } from './lib/supabase';
 import { APP_CONFIG } from './appConfig';
 import { DashboardSkeleton } from './components/ui/Skeleton';
@@ -293,8 +294,22 @@ const App = () => {
           <CRMView
             clientes={clientes}
             onSelectClient={handleVerFichaCliente}
-            onAddNewClient={() => setVistaActual('administracion')}
+            onAddNewClient={() => setVistaActual('client-registration')}
           />
+        );
+      case 'client-registration':
+        return (
+          <div className="max-w-5xl mx-auto py-10 px-4">
+            <ClientForm
+              onSave={async (tabla, payload) => {
+                const res = await guardarRegistro(tabla, payload);
+                if (res) setVistaActual('crm');
+                return res;
+              }}
+              setMensaje={setMensajeAdmin}
+              onCancel={() => setVistaActual('crm')}
+            />
+          </div>
         );
       case 'ficha-cliente':
         return (
