@@ -179,8 +179,11 @@ const MasterContractsView = ({
         const quote = cotizaciones.find(q => q.id === quoteId);
         if (!quote || !targetExecution) return;
 
+        // Excluir objetos unidos (joins) para evitar error de esquema, pero MANTENER cliente_id
+        const { master_contracts, cotizaciones: cotiRef, ...pureTarget } = targetExecution;
+
         const payload = {
-            ...targetExecution,
+            ...pureTarget,
             cotizacion_id: quoteId,
             monto_ejecucion: quote.subtotalGeneral || quote.total / 1.16
         };
