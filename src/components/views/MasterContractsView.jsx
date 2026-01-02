@@ -464,10 +464,10 @@ const MasterContractsView = ({
                             <thead className="bg-enterprise-950 text-white/40">
                                 <tr>
                                     <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Fecha Pauta</th>
-                                    <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Socio / CTR</th>
+                                    <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Socio / Contrato</th>
                                     <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic">Valor Contratado</th>
                                     <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic text-center">Referencia Convenio</th>
-                                    <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic text-right">Vinculado a</th>
+                                    <th className="px-6 py-3 text-[8px] font-black uppercase tracking-widest italic text-right">Ordenes</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-enterprise-50">
@@ -487,8 +487,11 @@ const MasterContractsView = ({
                                                 <p className="text-[7px] font-black text-enterprise-300 uppercase tracking-widest mt-1">REAL ID: {ce.id.substring(0, 8)}</p>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <p className="text-[10px] font-black text-enterprise-950 uppercase leading-none">Contrato {ce.numero_contrato}</p>
-                                                <p className="text-[8px] font-bold text-enterprise-400 uppercase tracking-widest mt-1">Estatus: Activo</p>
+                                                <p className="text-[10px] font-black text-brand-orange uppercase leading-none mb-1">
+                                                    {clientes.find(c => String(c.id) === String(ce.master_contracts?.cliente_id || ce.cotizaciones?.cliente_id || ce.cliente_id))?.nombre_empresa || 'Cliente S/N'}
+                                                </p>
+                                                <p className="text-[9px] font-bold text-enterprise-950 uppercase leading-none">Orden {ce.numero_contrato}</p>
+                                                <p className="text-[7px] font-bold text-enterprise-400 uppercase tracking-widest mt-1">Estatus: Activo</p>
                                             </td>
                                             <td className="px-6 py-4 font-black text-enterprise-950 italic text-[10px]">
                                                 {formatMXN(ce.monto_ejecucion)}

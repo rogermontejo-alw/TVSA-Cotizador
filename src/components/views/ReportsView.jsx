@@ -261,7 +261,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                     const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
                     if (costoVIX > 0) {
                         const canalVIX = 'VIX';
-                        const plazaVIX = q.clientes?.plaza || q.cliente?.plaza || 'Nacional';
+                        const plazaVIX = 'CDMX';
                         plazasSet.add(plazaVIX);
                         if (!canalesMap[canalVIX]) canalesMap[canalVIX] = {};
                         canalesMap[canalVIX][plazaVIX] = (canalesMap[canalVIX][plazaVIX] || 0) + costoVIX;
@@ -328,7 +328,7 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 if (!vixProcesadoCiudad.has(q.id)) {
                     const costoVIX = parseFloat(q.costoVIX || (q.paqueteVIX?.inversion) || 0);
                     if (costoVIX > 0) {
-                        const plazaVIX = q.clientes?.plaza || q.cliente?.plaza || 'Nacional';
+                        const plazaVIX = 'CDMX';
                         plazasSet.add(plazaVIX);
                         clienteMap[cId].importes[plazaVIX] = (clienteMap[cId].importes[plazaVIX] || 0) + costoVIX;
                         totalesPorPlaza[plazaVIX] = (totalesPorPlaza[plazaVIX] || 0) + costoVIX;
