@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ClientSelector from '../cotizador/ClientSelector';
 import ParametersPanel from '../cotizador/ParametersPanel';
 import ProductGrid from '../cotizador/ProductGrid';
 import SelectedProducts from '../cotizador/SelectedProducts';
 import CotizacionResult from '../cotizador/CotizacionResult';
 import { CotizadorSkeleton } from '../ui/Skeleton';
-import { TrendingUp, AlertCircle, Wallet, Activity, Target } from 'lucide-react';
+import { TrendingUp, AlertCircle, Wallet, Activity, Target, ArrowRight } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
 const CotizadorView = ({

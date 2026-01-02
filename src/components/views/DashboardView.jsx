@@ -7,11 +7,11 @@ import {
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
-const KPINode = ({ title, value, subtext, icon: Icon, colorClass, isCurrency = true, trend = null, status = 'neutral' }) => (
+const KPINode = ({ title, value, subtext, icon: Icon, colorClass, isCurrency = true, trend = null, status = 'neutral', suffix = '' }) => (
     <div className="bg-white rounded-[2rem] p-5 border border-enterprise-100 shadow-sm hover:shadow-xl hover:border-brand-orange/20 transition-all duration-500 group animate-premium-fade relative overflow-hidden">
         {status === 'warning' && <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/5 blur-2xl rounded-full -mr-10 -mt-10" />}
         <div className="flex justify-between items-start mb-4">
-            <div className={`w-10 h-10 rounded-xl ${colorClass} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+            <div className={`w-10 h-10 rounded-xl ${colorClass} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform text-white`}>
                 <Icon size={20} strokeWidth={2.5} />
             </div>
             {trend !== null && (
@@ -21,12 +21,12 @@ const KPINode = ({ title, value, subtext, icon: Icon, colorClass, isCurrency = t
                 </div>
             )}
         </div>
-        <div>
+        <div className="relative z-10">
             <p className="text-[8px] font-black text-enterprise-300 uppercase tracking-[0.2em] mb-1">{title}</p>
-            <h3 className="text-xl font-black text-enterprise-950 tracking-tighter italic">
-                {isCurrency ? formatMXN(value, 0) : value}
+            <h3 className="text-xl font-black text-enterprise-950 tracking-tighter italic truncate">
+                {isCurrency ? formatMXN(value, 0) : `${value}${suffix}`}
             </h3>
-            {subtext && <p className="text-[7.5px] font-bold text-enterprise-400 mt-1 uppercase tracking-wider">{subtext}</p>}
+            {subtext && <p className="text-[7.5px] font-bold text-enterprise-400 mt-1 uppercase tracking-wider truncate">{subtext}</p>}
         </div>
     </div>
 );
