@@ -135,6 +135,7 @@ const CotizadorView = ({
                                 clienteSeleccionado={clienteSeleccionado}
                                 setClienteSeleccionado={setClienteSeleccionado}
                                 compactRow={true}
+                                mobileStage={etapaMovil}
                             />
                         </div>
                         <ParametersPanel
