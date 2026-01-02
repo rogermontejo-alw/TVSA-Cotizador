@@ -219,7 +219,14 @@ const MasterContractsView = ({
             const items = quote.items || [];
             const plazasDetectadas = [...new Set(items.map(i => i.producto?.plaza).filter(Boolean))];
 
-            if (plazasDetectadas.length > 1) {
+            // Detectar presencia de VIX
+            const hasVIX = !!quote.paqueteVIX && (parseFloat(quote.costoVIX) > 0);
+            const montoVIX = parseFloat(quote.costoVIX || 0);
+
+            // Si hay VIX y TV (independiente de plazas) o más de una plaza de TV -> Multi-plaza
+            const totalEntidades = plazasDetectadas.length + (hasVIX ? 1 : 0);
+
+            if (totalEntidades > 1) {
                 setIsMultiPlaza(true);
                 const nuevoBreakdown = plazasDetectadas.map(plaza => {
                     const montoPlaza = items
@@ -234,6 +241,18 @@ const MasterContractsView = ({
                         fecha_fin_pauta: executionData.fecha_fin_pauta || ''
                     };
                 });
+
+                // Agregar VIX como partida independiente
+                if (hasVIX) {
+                    nuevoBreakdown.push({
+                        plaza: 'VIX DIGITAL',
+                        monto_ejecucion: montoVIX,
+                        numero_contrato: '',
+                        fecha_inicio_pauta: executionData.fecha_inicio_pauta || '',
+                        fecha_fin_pauta: executionData.fecha_fin_pauta || ''
+                    });
+                }
+
                 setBreakdown(nuevoBreakdown);
                 setExecutionData({
                     ...executionData,
@@ -245,7 +264,7 @@ const MasterContractsView = ({
                 setExecutionData({
                     ...executionData,
                     cotizacion_id: quoteId,
-                    plaza: plazasDetectadas[0] || '',
+                    plaza: hasVIX ? 'VIX DIGITAL' : (plazasDetectadas[0] || ''),
                     monto_ejecucion: quote.subtotalGeneral || quote.total / 1.16
                 });
             }
