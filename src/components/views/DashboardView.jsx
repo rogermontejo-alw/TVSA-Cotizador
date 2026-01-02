@@ -215,7 +215,7 @@ const DashboardView = ({
                                     COMANDO <span className="text-brand-orange">INTELIGENTE</span> NEXUS
                                 </h1>
                                 <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em] mt-2 flex items-center gap-2">
-                                    SISTEMA DE AUDITORÍA FINANCIERA <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> V1.9.8
+                                    SISTEMA DE AUDITORÍA FINANCIERA <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> V1.9.9
                                 </p>
                             </div>
                         </div>
@@ -258,6 +258,7 @@ const DashboardView = ({
                     title="Meta de Contratación"
                     value={stats.cumplimiento}
                     isCurrency={false}
+                    suffix="%"
                     icon={Target}
                     colorClass="bg-enterprise-950 text-white"
                     subtext={`Meta: ${formatMXN(stats.metaMonto, 0)}`}
@@ -275,17 +276,19 @@ const DashboardView = ({
                     title="Velocidad de Cierre"
                     value={stats.avgVelocityDays}
                     isCurrency={false}
+                    suffix=" DÍAS"
                     icon={TrendingUp}
                     colorClass="bg-blue-600 text-white"
-                    subtext="Días Promedio (Lead-to-Contract)"
+                    subtext="Promedio (Lead-to-Contract)"
                 />
                 <KPINode
                     title="Ciclo de Cobranza (DSO)"
                     value={stats.dsoDays}
                     isCurrency={false}
+                    suffix=" DÍAS"
                     icon={RefreshCw}
                     colorClass="bg-emerald-500 text-white"
-                    subtext="Días para recuperar liquidez"
+                    subtext="Días recuperación liquidez"
                 />
             </div>
 

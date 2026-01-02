@@ -54,6 +54,8 @@ const CotizadorView = ({
         cargarCotizacionEdicion,
     } = cotizacionState;
 
+    const [etapaMovil, setEtapaMovil] = useState('context'); // 'context', 'digital', 'pauta'
+
     if (loading) {
         return (
             <div className="max-w-[1000px] mx-auto pt-10">
@@ -71,75 +73,70 @@ const CotizadorView = ({
             {!cotizacionResult ? (
                 <div className="flex flex-col gap-4">
 
-                    {/* TOP STATUS BAR - NEXUS KPI CONSOLE */}
-                    <div className="sticky top-20 z-40 mb-4 animate-in slide-in-from-top duration-700">
-                        <div className={`bg-enterprise-950 border ${isExcedido ? 'border-brand-orange/50 shadow-brand-orange/10' : 'border-white/10'} rounded-[1.5rem] p-5 shadow-2xl relative overflow-hidden`}>
+                    {/* TOP STATUS BAR - PERSISTENT & STICKY */}
+                    <div className="sticky top-20 z-50 mb-4 animate-in slide-in-from-top duration-700">
+                        <div className={`bg-enterprise-950 border ${isExcedido ? 'border-brand-orange/50 shadow-brand-orange/10' : 'border-white/10'} rounded-[1.5rem] p-4 sm:p-5 shadow-2xl relative overflow-hidden`}>
                             {/* Accent Glow */}
                             <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-brand-orange/5 to-transparent pointer-events-none" />
-                            <div className="absolute -left-10 -top-10 w-32 h-32 bg-brand-orange/5 blur-3xl rounded-full" />
 
-                            <div className="relative z-10 flex flex-col gap-4">
+                            <div className="relative z-10 flex flex-col gap-3 sm:gap-4">
                                 {/* MAIN STATS ROW */}
                                 <div className="flex items-center justify-between">
-                                    <div className="flex flex-col gap-1">
+                                    <div className="flex flex-col gap-0.5 sm:gap-1">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-4 h-4 rounded-full border border-brand-orange/30 flex items-center justify-center">
-                                                <Target size={8} className="text-brand-orange" />
-                                            </div>
-                                            <span className="text-[7px] font-black text-white/40 uppercase tracking-[0.3em] italic">Target Plan</span>
+                                            <Target size={8} className="text-brand-orange" />
+                                            <span className="text-[6px] sm:text-[7px] font-black text-white/40 uppercase tracking-[0.3em] italic">Target</span>
                                         </div>
-                                        <p className="text-xl font-black text-white tracking-tighter ml-6">{formatMXN(presupuesto || 0)}</p>
+                                        <p className="text-sm sm:text-xl font-black text-white tracking-tighter ml-4 sm:ml-6">{formatMXN(presupuesto || 0)}</p>
                                     </div>
 
-                                    <div className="flex-1 max-w-[45%] flex flex-col gap-3">
-                                        <div className="flex items-center justify-between text-[7px] font-black uppercase tracking-[0.3em]">
-                                            <span className="text-white/20">System Load</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-white/40 italic">Efficiency</span>
-                                                <span className={isExcedido ? 'text-brand-orange' : 'text-emerald-400'}>{porcentajeUtilizado.toFixed(1)}%</span>
+                                    <div className="flex-1 max-w-[40%] sm:max-w-[45%] flex flex-col gap-2 sm:gap-3">
+                                        <div className="flex items-center justify-between text-[6px] sm:text-[7px] font-black uppercase tracking-[0.3em]">
+                                            <div className="flex items-center gap-1">
+                                                <span className={isExcedido ? 'text-brand-orange' : 'text-emerald-400'}>{porcentajeUtilizado.toFixed(0)}%</span>
                                             </div>
+                                            <span className="text-white/20 hidden sm:inline">System Load</span>
                                         </div>
                                         <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden flex items-center">
                                             <div
                                                 className={`h-full transition-all duration-1000 ease-out relative ${isExcedido ? 'bg-brand-orange shadow-[0_0_10px_rgba(255,102,0,0.5)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]'}`}
                                                 style={{ width: `${Math.min(porcentajeUtilizado, 100)}%` }}
-                                            >
-                                                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full shadow-lg" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* SECONDARY MONITORING ROW */}
-                                <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                                    <div className="flex items-center gap-6">
-                                        <div className="flex items-center gap-2">
-                                            <Activity size={10} className={isExcedido ? 'text-brand-orange' : 'text-emerald-400'} />
-                                            <span className="text-[7px] font-black text-white/30 uppercase tracking-widest italic">Actual Run:</span>
-                                            <span className={`text-[10px] font-black italic ${isExcedido ? 'text-brand-orange' : 'text-emerald-400'}`}>{formatMXN(subtotalActual)}</span>
+                                            />
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[7px] font-black text-white/30 uppercase tracking-widest italic">Net Available:</span>
-                                            <span className={`text-[10px] font-black tracking-tight ${isExcedido ? 'text-brand-orange' : 'text-white'}`}>{formatMXN(saldoRestante)}</span>
+                                    <div className="flex flex-col gap-0.5 sm:gap-1 text-right">
+                                        <div className="flex items-center gap-2 justify-end">
+                                            <span className="text-[6px] sm:text-[7px] font-black text-white/40 uppercase tracking-[0.3em] italic">Actual</span>
+                                            <Activity size={8} className={isExcedido ? 'text-brand-orange' : 'text-emerald-400'} />
                                         </div>
-                                        {isExcedido && <AlertCircle size={12} className="text-brand-orange animate-pulse" />}
+                                        <p className={`text-sm sm:text-lg font-black italic tracking-tight ${isExcedido ? 'text-brand-orange' : 'text-emerald-400'}`}>{formatMXN(subtotalActual)}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* STRATEGY HEADER - SINGLE COMPACT ROW */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                        <ClientSelector
-                            clientes={clientes}
-                            clienteSeleccionado={clienteSeleccionado}
-                            setClienteSeleccionado={setClienteSeleccionado}
-                            compactRow={true}
-                        />
+                    {/* FLOW INDICATOR (ONLY MOBILE) */}
+                    <div className="flex sm:hidden items-center justify-between px-2 mb-2">
+                        {['context', 'digital', 'pauta'].map((s, i) => (
+                            <div key={s} className="flex flex-col items-center gap-1 opacity-100 transition-all duration-500">
+                                <div className={`w-1.5 h-1.5 rounded-full ${etapaMovil === s ? 'bg-brand-orange scale-150 ring-4 ring-brand-orange/20' : i < ['context', 'digital', 'pauta'].indexOf(etapaMovil) ? 'bg-emerald-500' : 'bg-enterprise-200'}`} />
+                                <span className={`text-[6px] font-black uppercase tracking-widest ${etapaMovil === s ? 'text-brand-orange' : 'text-enterprise-300'}`}>{s}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* STRATEGY HEADER - 2x2 ON TABLET, 1x4 ON DESKTOP */}
+                    <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2 ${etapaMovil !== 'context' && etapaMovil !== 'digital' ? 'hidden sm:grid' : ''}`}>
+                        <div className={etapaMovil === 'digital' ? 'hidden sm:block' : ''}>
+                            <ClientSelector
+                                clientes={clientes}
+                                clienteSeleccionado={clienteSeleccionado}
+                                setClienteSeleccionado={setClienteSeleccionado}
+                                compactRow={true}
+                            />
+                        </div>
                         <ParametersPanel
                             productos={productos}
                             plazaSeleccionada={plazaSeleccionada}
@@ -154,37 +151,71 @@ const CotizadorView = ({
                             sugerirDistribucion={sugerirDistribucion}
                             clienteSeleccionado={clienteSeleccionado}
                             compactRow={true}
+                            mobileStage={etapaMovil}
                         />
+
+                        {/* Mobile Navigation Buttons */}
+                        <div className="sm:hidden mt-2">
+                            {etapaMovil === 'context' && (
+                                <button
+                                    onClick={() => { setEtapaMovil('digital'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                    disabled={!clienteSeleccionado || !presupuesto}
+                                    className="w-full py-4 bg-enterprise-950 text-white rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 disabled:opacity-30"
+                                >
+                                    Siguiente: Plan Digital <ArrowRight size={14} />
+                                </button>
+                            )}
+                            {etapaMovil === 'digital' && (
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        onClick={() => { setEtapaMovil('pauta'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                        className="w-full py-4 bg-brand-orange text-white rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2"
+                                    >
+                                        Configurar Pauta <ArrowRight size={14} />
+                                    </button>
+                                    <button
+                                        onClick={() => setEtapaMovil('context')}
+                                        className="w-full py-3 text-enterprise-400 font-black uppercase text-[8px] tracking-widest"
+                                    >
+                                        Regresar
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    {/* CAPTURE GRIDS - TWO COLUMNS SIDE BY SIDE */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2 items-start text-enterprise-950">
-                        <ProductGrid
-                            productos={productos}
-                            productosSeleccionados={productosSeleccionados}
-                            plazaSeleccionada={plazaSeleccionada}
-                            clienteSeleccionado={clienteSeleccionado}
-                            calcularPrecioUnitario={calcularPrecioUnitario}
-                            agregarProducto={agregarProducto}
-                        />
+                    {/* CAPTURE GRIDS - SIDE BY SIDE STARTING FROM TABLET */}
+                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 mt-2 items-start text-enterprise-950 ${etapaMovil !== 'pauta' ? 'hidden sm:grid' : ''}`}>
+                        <div className="min-w-0">
+                            <ProductGrid
+                                productos={productos}
+                                productosSeleccionados={productosSeleccionados}
+                                plazaSeleccionada={plazaSeleccionada}
+                                clienteSeleccionado={clienteSeleccionado}
+                                calcularPrecioUnitario={calcularPrecioUnitario}
+                                agregarProducto={agregarProducto}
+                            />
+                        </div>
 
-                        <SelectedProducts
-                            productos={productos}
-                            productosSeleccionados={productosSeleccionados}
-                            paqueteVIX={paqueteVIX}
-                            setPaqueteVIX={setPaqueteVIX}
-                            paquetesVIX={paquetesVIX}
-                            actualizarCantidad={actualizarCantidad}
-                            eliminarProducto={eliminarProducto}
-                            generarCotizacion={generarCotizacion}
-                            presupuesto={presupuesto}
-                            subtotalActual={subtotalActual}
-                            subtotalTVActual={subtotalTVActual}
-                            subtotalVIXActual={subtotalVIXActual}
-                            clienteSeleccionado={clienteSeleccionado}
-                            calcularPrecioUnitario={calcularPrecioUnitario}
-                            onlyItems={true}
-                        />
+                        <div className="min-w-0">
+                            <SelectedProducts
+                                productos={productos}
+                                productosSeleccionados={productosSeleccionados}
+                                paqueteVIX={paqueteVIX}
+                                setPaqueteVIX={setPaqueteVIX}
+                                paquetesVIX={paquetesVIX}
+                                actualizarCantidad={actualizarCantidad}
+                                eliminarProducto={eliminarProducto}
+                                generarCotizacion={generarCotizacion}
+                                presupuesto={presupuesto}
+                                subtotalActual={subtotalActual}
+                                subtotalTVActual={subtotalTVActual}
+                                subtotalVIXActual={subtotalVIXActual}
+                                clienteSeleccionado={clienteSeleccionado}
+                                calcularPrecioUnitario={calcularPrecioUnitario}
+                                onlyItems={true}
+                            />
+                        </div>
                     </div>
 
                     {/* SUMMARY ROW - FULL WIDTH BUT RIGHT ALIGNED CONTENT */}

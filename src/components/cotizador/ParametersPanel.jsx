@@ -15,7 +15,8 @@ const ParametersPanel = ({
     paquetesVIX = [],
     sugerirDistribucion,
     clienteSeleccionado,
-    compactRow
+    compactRow,
+    mobileStage
 }) => {
 
     const plazasDisponibles = useMemo(() => {
@@ -29,12 +30,12 @@ const ParametersPanel = ({
         return (
             <>
                 {/* 2nd Module: Regions/Plaza */}
-                <div className="bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all">
-                    <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between">
+                <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all ${mobileStage === 'digital' ? 'hidden sm:flex' : 'flex'}`}>
+                    <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between shrink-0">
                         <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Selección Regional</span>
                         <MapPin size={10} className="text-brand-orange" />
                     </div>
-                    <div className="px-4 flex-1 flex items-center relative">
+                    <div className="px-4 flex-1 flex items-center relative min-w-0">
                         <select
                             value={plazaSeleccionada}
                             onChange={(e) => setPlazaSeleccionada(e.target.value)}
@@ -52,13 +53,13 @@ const ParametersPanel = ({
                 </div>
 
                 {/* 3rd Module: Pipeline Financials */}
-                <div className="bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all">
-                    <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between">
+                <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all ${mobileStage === 'digital' ? 'hidden sm:flex' : 'flex'}`}>
+                    <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between shrink-0">
                         <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Inversión y Vigencia</span>
                         <DollarSign size={10} className="text-brand-orange" />
                     </div>
-                    <div className="flex-1 flex divide-x divide-enterprise-100">
-                        <div className="flex-1 px-4 flex items-center gap-2">
+                    <div className="flex-1 flex divide-x divide-enterprise-100 min-w-0">
+                        <div className="flex-1 px-4 flex items-center gap-2 min-w-0">
                             <span className="text-[10px] font-black text-brand-orange">$</span>
                             <input
                                 type="number"
@@ -66,10 +67,10 @@ const ParametersPanel = ({
                                 value={presupuesto}
                                 onChange={(e) => setPresupuesto(e.target.value)}
                                 placeholder="MXN..."
-                                className="w-full bg-transparent text-[10px] font-black text-enterprise-950 outline-none placeholder:text-enterprise-300 uppercase"
+                                className="w-full bg-transparent text-[10px] font-black text-enterprise-950 outline-none placeholder:text-enterprise-300 uppercase truncate"
                             />
                         </div>
-                        <div className="w-[80px] px-4 flex items-center gap-2 bg-enterprise-50/30">
+                        <div className="w-[80px] px-4 flex items-center gap-2 bg-enterprise-50/30 shrink-0">
                             <Calendar size={12} className="text-brand-orange shrink-0" />
                             <input
                                 type="number"
@@ -84,12 +85,12 @@ const ParametersPanel = ({
                 </div>
 
                 {/* 4th Module: Digital / VIX */}
-                <div className="bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all">
-                    <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between">
+                <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all ${mobileStage === 'context' ? 'hidden sm:flex' : 'flex'}`}>
+                    <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between shrink-0">
                         <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Despliegue Digital</span>
                         <Sparkles size={10} className="text-brand-orange" />
                     </div>
-                    <div className="px-4 flex-1 flex items-center relative gap-2">
+                    <div className="px-4 flex-1 flex items-center relative gap-2 min-w-0">
                         <select
                             value={paqueteVIX}
                             onChange={(e) => setPaqueteVIX(e.target.value)}
@@ -105,7 +106,7 @@ const ParametersPanel = ({
                         <button
                             onClick={sugerirDistribucion}
                             disabled={!clienteSeleccionado || !presupuesto}
-                            className="w-7 h-7 flex items-center justify-center bg-brand-orange text-white rounded-lg hover:bg-brand-magenta transition-all disabled:opacity-30 shadow-lg shadow-brand-orange/20"
+                            className="w-7 h-7 flex items-center justify-center bg-brand-orange text-white rounded-lg hover:bg-brand-magenta transition-all disabled:opacity-30 shadow-lg shadow-brand-orange/20 shrink-0"
                             title="Sugerir Plan"
                         >
                             <Wand2 size={12} />

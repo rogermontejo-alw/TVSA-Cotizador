@@ -1,12 +1,12 @@
 import { Search, User, Briefcase, ShieldCheck, ChevronDown } from 'lucide-react';
 
-const ClientSelector = ({ clientes = [], clienteSeleccionado, setClienteSeleccionado, compactRow }) => {
+const ClientSelector = ({ clientes = [], clienteSeleccionado, setClienteSeleccionado, compactRow, mobileStage }) => {
     const selectedClient = clientes.find(c => String(c.id) === String(clienteSeleccionado));
 
     if (compactRow) {
         return (
-            <div className="bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all">
-                <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between">
+            <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all min-w-0 ${mobileStage !== 'context' ? 'hidden sm:flex' : 'flex'}`}>
+                <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between shrink-0">
                     <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Identidad Comercial</span>
                     <ShieldCheck size={10} className="text-brand-orange" />
                 </div>

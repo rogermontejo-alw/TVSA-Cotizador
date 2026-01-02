@@ -73,92 +73,98 @@ const BriefingModal = ({ interacciones, clientes, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-enterprise-950/40 backdrop-blur-xl animate-in fade-in duration-500">
-            <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden border border-white/20 relative animate-in zoom-in-95 slide-in-from-bottom-10 duration-700">
-                {/* Header Premium */}
-                <div className="bg-enterprise-950 p-8 text-white relative">
+            <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 relative animate-in zoom-in-95 slide-in-from-bottom-10 duration-700 flex flex-col">
+
+                {/* Header Premium - More Compact */}
+                <div className="bg-enterprise-950 p-6 sm:p-8 text-white relative shrink-0">
                     <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-brand-orange/20 to-transparent pointer-events-none" />
-                    <div className="relative z-10 flex justify-between items-start">
+                    <div className="relative z-10 flex justify-between items-center">
                         <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-brand-orange rounded-lg shadow-lg shadow-brand-orange/20 animate-pulse">
-                                    <Zap size={16} className="text-white fill-white" />
+                            <div className="flex items-center gap-2 mb-1">
+                                <div className="p-1.5 bg-brand-orange rounded-lg shadow-lg shadow-brand-orange/20 animate-pulse">
+                                    <Zap size={14} className="text-white fill-white" />
                                 </div>
-                                <h2 className="text-2xl font-black tracking-tighter uppercase italic italic-brand">Nexus Briefing</h2>
+                                <h2 className="text-xl sm:text-2xl font-black tracking-tighter uppercase italic italic-brand">Nexus Briefing</h2>
                             </div>
-                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em] mb-4">Módulo de Inteligencia Comercial</p>
+                            <p className="text-[7.5px] sm:text-[8px] font-black text-white/40 uppercase tracking-[0.4em]">Módulo de Inteligencia Comercial</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-3xl font-black tracking-tighter opacity-20">{localHoy.getFullYear()}</p>
-                            <p className="text-[9px] font-bold text-brand-orange uppercase">{currentTime.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                            <p className="text-[8px] font-bold text-brand-orange uppercase">{currentTime.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
+                            <p className="text-[18px] sm:text-2xl font-black tracking-tighter opacity-20 leading-none">{localHoy.getFullYear()}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="p-10 space-y-8">
-                    {/* Stats de Impacto */}
-                    <div className="grid grid-cols-3 gap-6">
-                        <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 text-center group hover:bg-white hover:shadow-xl transition-all">
-                            <p className="text-[24px] font-black text-slate-900 group-hover:scale-110 transition-transform">{clientes.length}</p>
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Cartera Total</p>
+                {/* Scrollable Content Area */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-6">
+
+                    {/* Stats de Impacto - More density */}
+                    <div className="grid grid-cols-3 gap-3 sm:gap-6">
+                        <div className="bg-slate-50 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 text-center group hover:bg-white hover:shadow-xl transition-all">
+                            <p className="text-[18px] sm:text-[24px] font-black text-slate-900 group-hover:scale-110 transition-transform">{clientes.length}</p>
+                            <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Cartera</p>
                         </div>
-                        <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 text-center group hover:bg-white hover:shadow-xl transition-all">
-                            <p className={`text-[24px] font-black ${pendientesHoy.length > 0 ? 'text-brand-orange' : 'text-slate-900'}`}>{pendientesHoy.length}</p>
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Focus Hoy</p>
+                        <div className="bg-slate-50 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 text-center group hover:bg-white hover:shadow-xl transition-all">
+                            <p className={`text-[18px] sm:text-[24px] font-black ${pendientesHoy.length > 0 ? 'text-brand-orange' : 'text-slate-900'}`}>{pendientesHoy.length}</p>
+                            <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Focus Hoy</p>
                         </div>
-                        <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 text-center group hover:bg-white hover:shadow-xl transition-all">
-                            <p className="text-[24px] font-black text-slate-900">{pendientesSemana.length}</p>
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">En Pipeline</p>
+                        <div className="bg-slate-50 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 text-center group hover:bg-white hover:shadow-xl transition-all">
+                            <p className="text-[18px] sm:text-[24px] font-black text-slate-900">{pendientesSemana.length}</p>
+                            <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Pipeline</p>
                         </div>
                     </div>
 
                     {/* Alertas Críticas */}
                     <div className="space-y-4">
-                        <div className="flex items-center gap-3 mb-2">
-                            <Star size={14} className="text-brand-orange fill-brand-orange" />
-                            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Agenda de Seguimiento</h3>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Star size={12} className="text-brand-orange fill-brand-orange" />
+                            <h3 className="text-[9px] font-black text-slate-900 uppercase tracking-[0.2em]">Agenda Estratégica</h3>
                         </div>
 
-                        <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="space-y-2">
                             {todosPendientes.length > 0 ? todosPendientes.map(p => (
-                                <div key={p.id} className="flex items-center gap-4 p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-white hover:shadow-md transition-all group">
-                                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center text-brand-orange group-hover:bg-brand-orange group-hover:text-white transition-all">
-                                        <Clock size={16} />
+                                <div key={p.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-white hover:shadow-md transition-all group">
+                                    <div className="w-8 h-8 bg-white rounded-lg shadow-sm border border-slate-100 flex items-center justify-center text-brand-orange group-hover:bg-brand-orange group-hover:text-white transition-all shrink-0">
+                                        <Clock size={14} />
                                     </div>
-                                    <div className="flex-1">
+                                    <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                            <p className="text-[10px] font-black text-slate-900 uppercase truncate max-w-[150px]">{clientes.find(c => String(c.id) === String(p.cliente_id))?.nombre_empresa || 'Cliente'}</p>
-                                            <span className={`text-[7px] font-black uppercase px-1.5 py-0.5 rounded-md bg-white border border-slate-100 ${p.colorEtiqueta}`}>
+                                            <p className="text-[9px] font-black text-slate-900 uppercase truncate">{clientes.find(c => String(c.id) === String(p.cliente_id))?.nombre_empresa || 'Cliente'}</p>
+                                            <span className={`text-[6px] font-black uppercase px-1 py-0.5 rounded bg-white border border-slate-100 shrink-0 ${p.colorEtiqueta}`}>
                                                 {p.etiqueta}
                                             </span>
                                         </div>
-                                        <p className="text-[9px] text-slate-400 font-bold truncate italic leading-tight mt-0.5">"{p.comentario}"</p>
+                                        <p className="text-[8.5px] text-slate-400 font-bold truncate italic leading-tight mt-0.5">"{p.comentario}"</p>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-[9px] font-black text-slate-900 uppercase">{p.fechaD.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                                        <p className="text-[7px] font-bold text-slate-300 uppercase">{p.fechaD.toLocaleDateString([], { day: '2-digit', month: 'short' })}</p>
+                                    <div className="text-right shrink-0">
+                                        <p className="text-[8.5px] font-black text-slate-900 uppercase">{p.fechaD.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                        <p className="text-[6.5px] font-bold text-slate-300 uppercase">{p.fechaD.toLocaleDateString([], { day: '2-digit', month: 'short' })}</p>
                                     </div>
                                 </div>
                             )) : (
-                                <div className="py-8 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
-                                    <p className="text-[9px] font-black text-slate-300 uppercase italic">Sin seguimientos para esta semana</p>
+                                <div className="py-6 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
+                                    <p className="text-[8px] font-black text-slate-300 uppercase italic">Sin seguimientos agendados</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Frase Motivacional */}
-                    <div className="bg-brand-orange/5 p-6 rounded-[2rem] border border-brand-orange/10 relative overflow-hidden">
-                        <Rocket className="absolute -right-4 -bottom-4 text-brand-orange/10" size={80} />
-                        <p className="text-[11px] font-black text-brand-orange uppercase tracking-widest mb-2 italic">Mindset Corporativo</p>
-                        <p className="text-sm font-bold text-slate-700 leading-relaxed italic relative z-10">"{fraseDelDia}"</p>
+                    {/* Frase Motivacional - Integrated as an insight block */}
+                    <div className="bg-brand-orange/5 p-5 rounded-[1.5rem] border border-brand-orange/10 relative overflow-hidden shrink-0">
+                        <Rocket className="absolute -right-4 -bottom-4 text-brand-orange/10" size={60} />
+                        <p className="text-[9px] font-black text-brand-orange uppercase tracking-widest mb-1 italic">Mindset Corporativo</p>
+                        <p className="text-[12px] font-bold text-slate-600 leading-relaxed italic relative z-10 pr-8">"{fraseDelDia}"</p>
                     </div>
+                </div>
 
+                {/* Sticky Footer Action */}
+                <div className="p-6 sm:p-8 pt-2 bg-white border-t border-slate-100 shrink-0">
                     <button
                         onClick={onClose}
-                        className="w-full py-5 bg-enterprise-950 text-white rounded-[1.5rem] font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl shadow-enterprise-950/20 active:scale-95 group"
+                        className="w-full py-4 bg-enterprise-950 text-white rounded-[1.2rem] font-black uppercase text-[9px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl shadow-enterprise-950/20 active:scale-95 group"
                     >
                         Entendido, vamos a vender
-                        <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </button>
                 </div>
             </div>
