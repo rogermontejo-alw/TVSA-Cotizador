@@ -15,7 +15,8 @@ const CotizacionResult = ({
     onSaveClient,
     masterContracts = [],
     perfil = null,
-    setMensaje
+    setMensaje,
+    setVistaActual
 }) => {
     const [confirmingStage, setConfirmingStage] = useState(null);
     const [confirmingQuoteStatus, setConfirmingQuoteStatus] = useState(null);
@@ -131,6 +132,11 @@ const CotizacionResult = ({
                 });
 
                 setMensaje({ tipo: 'exito', texto: 'Plan Guardado y Actividad Registrada.' });
+
+                // Redirigir al historial después de un breve momento para que se vea el mensaje de éxito
+                setTimeout(() => {
+                    setVistaActual('historial');
+                }, 1500);
             }
         } catch (err) { setMensaje({ tipo: 'error', texto: `Error: ${err.message}` }); } finally { setIsUpdating(false); }
     };
@@ -228,13 +234,20 @@ const CotizacionResult = ({
                         </div>
                         <div className="p-3 overflow-y-auto custom-scrollbar space-y-1.5 bg-enterprise-50/30 flex-1">
                             {cotizacion.distribucion?.map((dist, idx) => {
-                                const lineTotal = cotizacion.items.find(i => i.producto.id === dist.producto.id)?.subtotal || 0;
+                                const item = cotizacion.items.find(i => i.producto.id === dist.producto.id);
+                                const lineTotal = item?.subtotal || 0;
+                                const cantidad = item?.cantidad || 0;
+
                                 return (
                                     <div key={idx} className="bg-white p-2.5 rounded-xl border border-enterprise-100 flex items-center justify-between shadow-sm">
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-1.5 mb-1">
                                                 <span className="text-[7px] font-black text-brand-orange uppercase">{dist.producto.canal}</span>
                                                 <span className="text-[7px] text-enterprise-400 font-bold uppercase truncate">{dist.producto.plaza}</span>
+                                                <span className="w-1 h-1 bg-enterprise-100 rounded-full" />
+                                                <span className="text-[7px] font-black text-enterprise-950 bg-enterprise-50 px-1.5 py-0.5 rounded italic">
+                                                    {cantidad} {cantidad === 1 ? 'UNIDAD' : 'UNIDADES'}
+                                                </span>
                                             </div>
                                             <h5 className="text-[10px] font-black text-enterprise-950 uppercase truncate italic leading-none">
                                                 {dist.producto.tipo} <span className="not-italic text-enterprise-500 text-[8px] font-bold ml-1">{dist.producto.duracion}</span>

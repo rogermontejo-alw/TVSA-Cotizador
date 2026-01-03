@@ -81,26 +81,26 @@ const CotizadorView = ({
 
                             <div className="relative z-10 flex flex-col gap-3 sm:gap-4">
                                 {/* MAIN STATS ROW */}
-                                <div className="grid grid-cols-3 gap-2 sm:gap-4 items-center w-full">
+                                <div className="flex items-center justify-between gap-2 sm:gap-4 w-full">
                                     {/* AREA 1: TARGET */}
-                                    <div className="flex flex-col gap-0.5">
-                                        <div className="flex items-center gap-2">
-                                            <Target size={8} className="text-brand-orange" />
-                                            <span className="text-[6px] sm:text-[7px] font-black text-white/70 uppercase tracking-[0.3em] italic">Target</span>
+                                    <div className="flex flex-col gap-0.5 min-w-0">
+                                        <div className="flex items-center gap-1 sm:gap-2">
+                                            <Target size={8} className="text-brand-orange shrink-0" />
+                                            <span className="text-[6px] sm:text-[7px] font-black text-white/70 uppercase tracking-[0.3em] italic truncate">Target</span>
                                         </div>
-                                        <p className="text-sm sm:text-lg font-black text-white tracking-tighter ml-4 sm:ml-5">
+                                        <p className="text-[11px] sm:text-lg font-black text-white tracking-tighter ml-3 sm:ml-5 truncate">
                                             {formatMXN(Number(presupuesto) || 0)}
                                         </p>
                                     </div>
 
-                                    {/* AREA 2: PROGRESS (CENTERED) */}
-                                    <div className="flex flex-col items-center gap-1.5 px-4">
-                                        <div className="w-full flex flex-col gap-1">
+                                    {/* AREA 2: PROGRESS (CENTERED) - HIDDEN ON VERY SMALL SCREENS IF SPACE IS TIGHT, BUT USER WANTS IT */}
+                                    <div className="flex flex-1 flex-col items-center gap-1 sm:gap-1.5 px-2 sm:px-4 min-w-0">
+                                        <div className="w-full flex flex-col gap-0.5 sm:gap-1">
                                             <div className="flex items-center justify-between text-[5px] sm:text-[6px] font-black uppercase tracking-[0.2em] mb-0.5">
                                                 <span className={isExcedido ? 'text-brand-orange' : 'text-emerald-400'}>{porcentajeUtilizado.toFixed(0)}%</span>
-                                                <span className="text-white/40">Load</span>
+                                                <span className="text-white/40 hidden sm:inline">Load</span>
                                             </div>
-                                            <div className="h-0.5 sm:h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                                                 <div
                                                     className={`h-full transition-all duration-1000 ease-out ${isExcedido ? 'bg-brand-orange' : 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.3)]'}`}
                                                     style={{ width: `${Math.min(porcentajeUtilizado, 100)}%` }}
@@ -110,23 +110,23 @@ const CotizadorView = ({
                                     </div>
 
                                     {/* AREA 3: BALANCE & RESET */}
-                                    <div className="flex items-center gap-3 sm:gap-6 justify-end">
-                                        <div className="flex flex-col items-start gap-0.5">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[6px] sm:text-[7px] font-black text-white/70 uppercase tracking-[0.3em] italic">Saldo Disponible</span>
-                                                <Activity size={8} className={isExcedido ? 'text-brand-orange pulse-neon' : 'text-emerald-400'} />
+                                    <div className="flex items-center gap-2 sm:gap-6 justify-end shrink-0">
+                                        <div className="flex flex-col items-end sm:items-start gap-0.5">
+                                            <div className="flex items-center gap-1 sm:gap-2">
+                                                <span className="text-[6px] sm:text-[7px] font-black text-white/70 uppercase tracking-[0.3em] italic">Saldo</span>
+                                                <Activity size={8} className={isExcedido ? 'text-brand-orange animate-pulse' : 'text-emerald-400'} />
                                             </div>
-                                            <p className={`text-xs sm:text-2xl font-black italic tracking-tighter leading-none ${isExcedido ? 'text-brand-orange' : 'text-emerald-400'}`}>
+                                            <p className={`text-[11px] sm:text-2xl font-black italic tracking-tighter leading-none ${isExcedido ? 'text-brand-orange' : 'text-emerald-400'}`}>
                                                 {formatMXN(saldoRestante)}
                                             </p>
                                         </div>
 
                                         <button
                                             onClick={iniciarNuevaCotizacion}
-                                            className="w-8 h-8 sm:w-12 sm:h-12 bg-error rounded-xl sm:rounded-2xl flex items-center justify-center group active:scale-90 transition-all shadow-lg shadow-error/30 shrink-0"
+                                            className="w-7 h-7 sm:w-12 sm:h-12 bg-error rounded-lg sm:rounded-2xl flex items-center justify-center group active:scale-90 transition-all shadow-lg shadow-error/20"
                                             title="Reiniciar Cotización"
                                         >
-                                            <RotateCcw size={16} className="text-white group-hover:rotate-180 transition-transform duration-700" />
+                                            <RotateCcw size={14} className="text-white group-hover:rotate-180 transition-transform duration-700" />
                                         </button>
                                     </div>
                                 </div>
@@ -271,6 +271,7 @@ const CotizadorView = ({
                     masterContracts={masterContracts}
                     perfil={data.perfil}
                     setMensaje={setMensajeAdmin}
+                    setVistaActual={setVistaActual}
                 />
             )}
         </div>

@@ -175,7 +175,7 @@ const App = () => {
   };
 
   const handleEliminarCotizacion = async (id) => {
-    const success = await dbData.eliminarRegistro('cotizaciones', id);
+    const success = await dbData.eliminarRegistro('cotizaciones', 'id', id);
     if (success) {
       setMensajeAdmin({ tipo: 'exito', texto: 'Registro eliminado correctamente' });
     }
@@ -429,6 +429,7 @@ const App = () => {
           interacciones={dbData.interacciones}
           clientes={dbData.clientes}
           onClose={() => setShowBriefing(false)}
+          onUpdateInteraction={(id, data) => dbData.guardarRegistro('interacciones_cliente', { id, ...data })}
         />
       )}
 

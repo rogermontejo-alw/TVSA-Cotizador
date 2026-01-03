@@ -52,62 +52,64 @@ const SelectedProducts = ({
                             const precioUnitario = calcularPrecioUnitario(ps.id, clienteSeleccionado);
 
                             return (
-                                <div key={ps.id} className="group flex items-center gap-3 p-3 bg-white border border-enterprise-100 rounded-2xl shadow-sm hover:border-brand-orange transition-all">
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1 text-[7.5px] font-black uppercase italic">
-                                            <span className="text-brand-orange">{producto.canal}</span>
-                                            <span className="text-enterprise-400">{producto.plaza}</span>
-                                            {producto.horario && (
-                                                <>
-                                                    <span className="w-1 h-1 bg-enterprise-200 rounded-full" />
-                                                    <span className="text-brand-orange/70 font-black">{producto.horario}</span>
-                                                </>
-                                            )}
+                                <div key={ps.id} className="group p-3 bg-white border border-enterprise-100 rounded-2xl shadow-sm hover:border-brand-orange transition-all">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1 text-[7.5px] font-black uppercase italic">
+                                                <span className="text-brand-orange">{producto.canal}</span>
+                                                <span className="text-enterprise-400">{producto.plaza}</span>
+                                                {producto.horario && (
+                                                    <>
+                                                        <span className="w-1 h-1 bg-enterprise-200 rounded-full" />
+                                                        <span className="text-brand-orange/70 font-black">{producto.horario}</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                            <h4 className="text-[10px] font-black text-enterprise-950 uppercase truncate leading-none italic group-hover:text-brand-orange transition-colors">
+                                                {producto.tipo} <span className="text-enterprise-300 not-italic font-bold ml-1 text-[8px]">[{producto.duracion}]</span>
+                                            </h4>
                                         </div>
-                                        <h4 className="text-[10px] font-black text-enterprise-950 uppercase truncate leading-none italic group-hover:text-brand-orange transition-colors">
-                                            {producto.tipo} <span className="text-enterprise-300 not-italic font-bold ml-1 text-[8px]">[{producto.duracion}]</span>
-                                        </h4>
-                                    </div>
 
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex items-center bg-enterprise-50 p-1 rounded-xl border border-enterprise-100 shadow-inner">
+                                        <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-enterprise-50">
+                                            <div className="flex items-center bg-enterprise-50 p-1 rounded-xl border border-enterprise-100 shadow-inner">
+                                                <button
+                                                    onClick={() => actualizarCantidad(ps.id, ps.cantidad - 1)}
+                                                    className="w-6 h-6 flex items-center justify-center text-enterprise-950 hover:text-brand-orange transition-colors"
+                                                >
+                                                    <Minus size={10} strokeWidth={4} />
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    inputMode="numeric"
+                                                    value={ps.cantidad || 0}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                                                        actualizarCantidad(ps.id, val);
+                                                    }}
+                                                    className="w-10 bg-transparent text-center font-black text-[9px] text-enterprise-950 outline-none"
+                                                />
+                                                <button
+                                                    onClick={() => actualizarCantidad(ps.id, ps.cantidad + 1)}
+                                                    className="w-6 h-6 flex items-center justify-center text-enterprise-950 hover:text-brand-orange transition-colors"
+                                                >
+                                                    <Plus size={10} strokeWidth={4} />
+                                                </button>
+                                            </div>
+
+                                            <div className="text-right min-w-[70px]">
+                                                <span className="text-[11px] font-black text-enterprise-950 tracking-tighter block italic leading-none">
+                                                    {formatMXN(precioUnitario * ps.cantidad)}
+                                                </span>
+                                            </div>
+
                                             <button
-                                                onClick={() => actualizarCantidad(ps.id, ps.cantidad - 1)}
-                                                className="w-6 h-6 flex items-center justify-center text-enterprise-950 hover:text-brand-orange transition-colors"
+                                                onClick={() => eliminarProducto(ps.id)}
+                                                className="w-8 h-8 rounded-xl flex items-center justify-center text-enterprise-300 hover:bg-error/10 hover:text-error transition-all"
                                             >
-                                                <Minus size={10} strokeWidth={4} />
-                                            </button>
-                                            <input
-                                                type="number"
-                                                inputMode="numeric"
-                                                value={ps.cantidad || 0}
-                                                onFocus={(e) => e.target.select()}
-                                                onChange={(e) => {
-                                                    const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
-                                                    actualizarCantidad(ps.id, val);
-                                                }}
-                                                className="w-10 bg-transparent text-center font-black text-[9px] text-enterprise-950 outline-none"
-                                            />
-                                            <button
-                                                onClick={() => actualizarCantidad(ps.id, ps.cantidad + 1)}
-                                                className="w-6 h-6 flex items-center justify-center text-enterprise-950 hover:text-brand-orange transition-colors"
-                                            >
-                                                <Plus size={10} strokeWidth={4} />
+                                                <X size={14} strokeWidth={3} />
                                             </button>
                                         </div>
-
-                                        <div className="text-right min-w-[70px]">
-                                            <span className="text-[11px] font-black text-enterprise-950 tracking-tighter block italic leading-none">
-                                                {formatMXN(precioUnitario * ps.cantidad)}
-                                            </span>
-                                        </div>
-
-                                        <button
-                                            onClick={() => eliminarProducto(ps.id)}
-                                            className="w-8 h-8 rounded-xl flex items-center justify-center text-enterprise-300 hover:bg-error/10 hover:text-error transition-all"
-                                        >
-                                            <X size={14} strokeWidth={3} />
-                                        </button>
                                     </div>
                                 </div>
                             );
@@ -177,8 +179,8 @@ const SelectedProducts = ({
                 </div>
             </div>
 
-            <div className="flex items-center justify-between relative z-10 pt-4 border-t border-white/5">
-                <div className="flex gap-6">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between relative z-10 pt-4 border-t border-white/5 gap-6">
+                <div className="flex justify-between sm:justify-start gap-6">
                     <div className="flex flex-col">
                         <span className="text-[6px] font-black text-white/80 uppercase tracking-widest mb-1 italic">Activos Lineales</span>
                         <span className="text-[10px] font-black text-white/90 italic tracking-tighter">{formatMXN(subtotalTVActual)}</span>
@@ -191,8 +193,8 @@ const SelectedProducts = ({
                     )}
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 ${isOverBudget ? 'border-brand-orange/30 bg-brand-orange/5' : 'border-emerald-500/30 bg-emerald-500/5'}`}>
+                <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                    <div className={`px-2 sm:px-3 py-1.5 rounded-lg border flex items-center gap-2 ${isOverBudget ? 'border-brand-orange/30 bg-brand-orange/5' : 'border-emerald-500/30 bg-emerald-500/5'}`}>
                         <div className={`w-1.5 h-1.5 rounded-full ${isOverBudget ? 'bg-brand-orange animate-pulse' : 'bg-emerald-500'}`} />
                         <span className={`text-[7px] font-black uppercase tracking-widest ${isOverBudget ? 'text-brand-orange' : 'text-emerald-500'}`}>
                             {isOverBudget ? 'LÍMITE EXCEDIDO' : 'OPTIMIZADO'}
@@ -201,11 +203,11 @@ const SelectedProducts = ({
 
                     <button
                         onClick={generarCotizacion}
-                        className="h-11 px-8 bg-white text-enterprise-950 rounded-2xl font-black uppercase tracking-[0.2em] text-[9px] flex items-center justify-center gap-3 shadow-2xl hover:bg-brand-orange hover:text-white transition-all duration-300 group/btn active:scale-95 italic"
+                        className="flex-1 sm:flex-none h-11 px-4 sm:px-8 bg-white text-enterprise-950 rounded-2xl font-black uppercase tracking-[0.2em] text-[8px] sm:text-[9px] flex items-center justify-center gap-2 sm:gap-3 shadow-2xl hover:bg-brand-orange hover:text-white transition-all duration-300 group/btn active:scale-95 italic whitespace-nowrap"
                     >
                         <FileText size={14} strokeWidth={3} />
                         Desplegar Plan
-                        <ArrowRight size={14} strokeWidth={3} className="group-hover/btn:translate-x-1 transition-transform" />
+                        <ArrowRight size={14} strokeWidth={3} className="hidden sm:block group-hover/btn:translate-x-1 transition-transform" />
                     </button>
                 </div>
             </div>

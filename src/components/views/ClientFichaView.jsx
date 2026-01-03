@@ -373,19 +373,30 @@ const ClientFichaView = ({
                                 interacciones.map((note, idx) => (
                                     <div key={note.id || idx} className="flex gap-4 relative">
                                         {idx < interacciones.length - 1 && <div className="absolute left-4 top-10 bottom-0 w-0.5 bg-slate-100" />}
-                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm
-                                            ${note.tipo === 'Sinergia' ? 'bg-blue-100 text-blue-600' : 'bg-white text-slate-900 border border-slate-100'}`}>
-                                            {note.tipo === 'Llamada' ? <Phone size={14} /> :
-                                                note.tipo === 'Visita' ? <MapPin size={14} /> :
-                                                    note.tipo === 'Sinergia' ? <RefreshCw size={14} /> :
-                                                        <FileText size={14} />}
+                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm transition-all
+                                            ${note.tipo === 'Sinergia' ? 'bg-blue-100 text-blue-600' :
+                                                note.completado ? 'bg-emerald-50 text-emerald-500 border border-emerald-100' :
+                                                    'bg-white text-slate-900 border border-slate-100'}`}>
+                                            {note.completado ? <CheckCircle2 size={14} /> :
+                                                note.tipo === 'Llamada' ? <Phone size={14} /> :
+                                                    note.tipo === 'Visita' ? <MapPin size={14} /> :
+                                                        note.tipo === 'Sinergia' ? <RefreshCw size={14} /> :
+                                                            <FileText size={14} />}
                                         </div>
-                                        <div className="flex-1 pb-6 border-b border-gray-50">
+                                        <div className={`flex-1 pb-6 border-b border-gray-50 transition-opacity ${note.completado ? 'opacity-40' : ''}`}>
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
                                                     <span className="text-[10px] font-black text-slate-900 uppercase tracking-tighter mr-2">{note.tipo}</span>
                                                     <span className="text-[8px] font-bold text-gray-400">{new Date(note.created_at).toLocaleString()}</span>
                                                 </div>
+                                                {note.fecha_recordatorio && !note.completado && (
+                                                    <button
+                                                        onClick={() => onSaveClient('interacciones_cliente', { id: note.id, completado: true })}
+                                                        className="text-[7px] font-black text-emerald-600 hover:text-white hover:bg-emerald-500 border border-emerald-600/20 px-2 py-0.5 rounded transition-all uppercase tracking-widest"
+                                                    >
+                                                        Marcar Listo
+                                                    </button>
+                                                )}
                                             </div>
                                             <p className="text-xs font-bold text-slate-600 leading-relaxed italic">"{note.comentario}"</p>
                                         </div>

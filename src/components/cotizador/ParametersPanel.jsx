@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Calendar, DollarSign, MapPin, ChevronDown, Sparkles, Wand2 } from 'lucide-react';
+import { Calendar, DollarSign, MapPin, ChevronDown, Sparkles } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
 const ParametersPanel = ({
@@ -113,14 +113,9 @@ const ParametersPanel = ({
                                 </option>
                             ))}
                         </select>
-                        <button
-                            onClick={sugerirDistribucion}
-                            disabled={!clienteSeleccionado || !presupuesto}
-                            className="w-7 h-7 flex items-center justify-center bg-brand-orange text-white rounded-lg hover:bg-brand-magenta transition-all disabled:opacity-30 shadow-lg shadow-brand-orange/20 shrink-0"
-                            title="Sugerir Plan"
-                        >
-                            <Wand2 size={12} />
-                        </button>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-enterprise-300 pointer-events-none group-hover:text-brand-orange transition-colors">
+                            <ChevronDown size={14} />
+                        </div>
                     </div>
                 </div>
             </>

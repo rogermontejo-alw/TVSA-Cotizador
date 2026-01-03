@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     ShieldAlert, Calendar, LayoutDashboard, Rocket,
-    ArrowRight, CheckCircle2, Clock, Zap, Star
+    ArrowRight, CheckCircle2, Clock, Zap, Star, RefreshCw
 } from 'lucide-react';
 
-const BriefingModal = ({ interacciones, clientes, onClose }) => {
+const BriefingModal = ({ interacciones, clientes, onClose, onUpdateInteraction }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [updatingId, setUpdatingId] = useState(null);
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -31,7 +32,7 @@ const BriefingModal = ({ interacciones, clientes, onClose }) => {
     const todosPendientes = useMemo(() => {
         return (interacciones || [])
             .filter(i => {
-                if (!i.fecha_recordatorio) return false;
+                if (!i.fecha_recordatorio || i.completado) return false;
                 const d = new Date(i.fecha_recordatorio);
                 return d >= localHoy && d <= localFinSemana;
             })
@@ -124,9 +125,21 @@ const BriefingModal = ({ interacciones, clientes, onClose }) => {
                         <div className="space-y-2">
                             {todosPendientes.length > 0 ? todosPendientes.map(p => (
                                 <div key={p.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-white hover:shadow-md transition-all group">
-                                    <div className="w-8 h-8 bg-white rounded-lg shadow-sm border border-slate-100 flex items-center justify-center text-brand-orange group-hover:bg-brand-orange group-hover:text-white transition-all shrink-0">
-                                        <Clock size={14} />
-                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            setUpdatingId(p.id);
+                                            await onUpdateInteraction(p.id, { completado: true });
+                                            setUpdatingId(null);
+                                        }}
+                                        disabled={updatingId === p.id}
+                                        className="w-8 h-8 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-slate-300 hover:text-emerald-500 hover:border-emerald-500 transition-all shrink-0 shadow-sm group/check"
+                                    >
+                                        {updatingId === p.id ? (
+                                            <RefreshCw size={14} className="animate-spin text-brand-orange" />
+                                        ) : (
+                                            <CheckCircle2 size={14} className="group-hover/check:scale-110 transition-transform" />
+                                        )}
+                                    </button>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                             <p className="text-[9px] font-black text-slate-900 uppercase truncate">{clientes.find(c => String(c.id) === String(p.cliente_id))?.nombre_empresa || 'Cliente'}</p>

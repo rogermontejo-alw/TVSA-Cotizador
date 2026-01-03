@@ -289,7 +289,7 @@ const AdminPanel = ({
                 </div>
 
                 <div className="mt-24 text-center pb-10">
-                    <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-[0.5em] opacity-60">Capa de Administración Televisa MID • Despliegue Empresarial v2.0</p>
+                    <p className="text-[10px] font-black text-enterprise-300 uppercase tracking-[0.5em] opacity-60">Capa de Administración Televisa MID • Despliegue Empresarial v2.2.2</p>
                     <p className="text-[8px] font-bold text-enterprise-200 uppercase tracking-[0.3em] mt-2">Motor de Presupuesto de Medios de Alto Rendimiento</p>
                 </div>
             </div>

@@ -69,50 +69,73 @@ serve(async (req) => {
         .lte('fecha_inicio_pauta', ultimoDiaMes.toISOString().split('T')[0]);
 
       const totalMensual = (contratosMes || []).reduce((acc: number, c: any) => acc + (Number(c.monto_ejecucion) || 0), 0);
-      const countContratos = (contratosMes || []).length;
+      const goal = 1500000;
+      const percentGoal = Math.min((totalMensual / goal) * 100, 100);
 
+      // --- TABLA DE CIERRES LIMPIA ---
       const clientesAgrupados = (contratosMes || []).reduce((acc: Record<string, number>, c: any) => {
         const nombre = c.cotizaciones?.clientes?.nombre_empresa || 'Cliente S/N';
         acc[nombre] = (acc[nombre] || 0) + (Number(c.monto_ejecucion) || 0);
         return acc;
       }, {});
 
-      const clientesListHtml = Object.entries(clientesAgrupados)
-        .map(([nombre, monto]) => `<div style="font-size: 10px; color: #ff4d00; font-weight: 700; margin-bottom: 2px;">${nombre.toUpperCase()} ($${Number(monto).toLocaleString('es-MX', { maximumFractionDigits: 0 })})</div>`)
-        .join('');
+      const clientesTableHtml = Object.entries(clientesAgrupados).length > 0 ? `
+        <table width="100%" cellspacing="0" cellpadding="0" style="margin-top: 15px; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th align="left" style="font-size: 9px; color: #64748b; text-transform: uppercase; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">Socio Comercial</th>
+              <th align="right" style="font-size: 9px; color: #64748b; text-transform: uppercase; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">Inversión s/IVA</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Object.entries(clientesAgrupados)
+          .sort(([, a], [, b]) => (b as number) - (a as number))
+          .map(([nombre, monto]) => `
+                <tr>
+                  <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 11px; font-weight: 700; color: #0f172a;">${nombre.toUpperCase()}</td>
+                  <td align="right" style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 11px; font-weight: 800; color: #ff4d00;">$${Number(monto).toLocaleString('es-MX')}</td>
+                </tr>
+              `).join('')}
+          </tbody>
+        </table>
+      ` : '<p style="text-align: center; color: #94a3b8; font-size: 11px; padding: 20px;">No se registran cierres en el periodo actual.</p>';
 
       // --- B. AGENDA DE LA SEMANA (TAREAS) ---
-      const inicioSemana = new Date(ahora);
-      inicioSemana.setHours(0, 0, 0, 0);
-      const finSemana = new Date(ahora);
-      finSemana.setDate(ahora.getDate() + 7);
-      finSemana.setHours(23, 59, 59, 999);
+      const hoyInicio = new Date(ahora);
+      hoyInicio.setHours(0, 0, 0, 0);
+      const hoyFin = new Date(ahora);
+      hoyFin.setHours(23, 59, 59, 999);
 
-      const { data: reminders } = await supabaseClient
+      const { data: remindersAll } = await supabaseClient
         .from('interacciones_cliente')
-        .select('id, comentario, fecha_recordatorio, tipo, cliente:clientes(nombre_empresa)')
+        .select('id, comentario, fecha_recordatorio, tipo, completado, cliente:clientes(nombre_empresa)')
         .eq('usuario_id', perfil.id)
-        .gte('fecha_recordatorio', inicioSemana.toISOString())
-        .lte('fecha_recordatorio', finSemana.toISOString())
+        .eq('completado', false)
+        .gte('fecha_recordatorio', hoyInicio.toISOString())
+        .lte('fecha_recordatorio', new Date(ahora.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString())
         .order('fecha_recordatorio', { ascending: true });
 
-      const hoyStr = ahora.toISOString().split('T')[0];
-      const agendaHtml = (reminders || []).length > 0 ? (reminders as Reminder[]).map((r) => {
-        const f = new Date(r.fecha_recordatorio);
-        const isHoy = r.fecha_recordatorio.startsWith(hoyStr);
-        const dateLabel = isHoy ? "HOY" : f.toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short' });
-        const timeLabel = f.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const reminders = (remindersAll || []) as Reminder[];
+      const remindersHoy = reminders.filter(r => {
+        const d = new Date(r.fecha_recordatorio);
+        return d >= hoyInicio && d <= hoyFin;
+      });
 
+      const agendaHoyHtml = remindersHoy.length > 0 ? remindersHoy.map(r => {
+        const f = new Date(r.fecha_recordatorio);
+        const time = f.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
         return `
-          <div style="padding: 15px; margin-bottom: 10px; background: ${isHoy ? '#fff5f0' : '#f9f9f9'}; border-radius: 12px; border-left: 4px solid ${isHoy ? '#ff4d00' : '#0c0c0c'};">
-              <div style="font-size: 9px; font-weight: 900; color: ${isHoy ? '#ff4d00' : '#999'}; text-transform: uppercase;">${dateLabel} • ${timeLabel} | ${r.tipo}</div>
-              <p style="font-size: 11px; font-weight: 900; color: #0c0c0c; margin: 5px 0 0; text-transform: uppercase;">${r.cliente?.nombre_empresa}</p>
-              <p style="font-size: 10px; color: #666; margin: 3px 0 0;">${r.comentario}</p>
+          <div style="padding: 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 8px; font-weight: 900; color: #ff4d00; text-transform: uppercase;">${r.tipo} • ${time}</span>
+            </div>
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase; margin-bottom: 2px;">${r.cliente?.nombre_empresa}</div>
+            <div style="font-size: 10px; color: #64748b; font-style: italic;">"${r.comentario}"</div>
           </div>
         `;
-      }).join('') : '<p style="font-size: 11px; color: #999; text-align: center; padding: 10px;">Sin compromisos para esta semana.</p>';
+      }).join('') : '<div style="text-align: center; padding: 15px; border: 1px dashed #e2e8f0; border-radius: 12px; color: #94a3b8; font-size: 10px; font-weight: 700;">Sin pendientes para hoy</div>';
 
-      // --- C. NEXUS SENTINEL (CLIENTES ABANDONADOS > 21 DÍAS) ---
+      // --- NEXUS SENTINEL (CORRECCIÓN 20455 DÍAS) ---
       const { data: todosClientes } = await supabaseClient
         .from('clientes')
         .select('id, nombre_empresa, interacciones_cliente (created_at)')
@@ -120,62 +143,122 @@ serve(async (req) => {
 
       const abandonados = (todosClientes || [])
         .map(c => {
-          const ultima = (c.interacciones_cliente as any[])?.reduce((max, i) => {
+          const interacciones = (c.interacciones_cliente as any[]) || [];
+          if (interacciones.length === 0) return { ...c, label: 'CUENTA NUEVA / SIN GESTIÓN', priority: 1 };
+
+          const ultima = interacciones.reduce((max, i) => {
             const date = new Date(i.created_at);
             return date > max ? date : max;
           }, new Date(0));
-          const diasInactivo = Math.floor((ahora.getTime() - (ultima?.getTime() || 0)) / (1000 * 60 * 60 * 24));
-          return { ...c, diasInactivo };
+
+          if (ultima.getTime() === 0) return { ...c, label: 'SIN GESTIÓN REGISTRADA', priority: 1 };
+
+          const diasInactivo = Math.floor((ahora.getTime() - ultima.getTime()) / (1000 * 60 * 60 * 24));
+          return { ...c, diasInactivo, label: `${diasInactivo} DÍAS EN SILENCIO`, priority: diasInactivo > 30 ? 3 : 2 };
         })
-        .filter(c => c.diasInactivo > 21)
-        .sort((a, b) => b.diasInactivo - a.diasInactivo)
-        .slice(0, 5);
+        .filter(c => c.priority === 1 || (c.diasInactivo && c.diasInactivo > 21))
+        .sort((a, b) => b.priority - a.priority || (b.diasInactivo || 0) - (a.diasInactivo || 0))
+        .slice(0, 4);
 
       const abandonadosHtml = abandonados.length > 0 ? abandonados.map(c => `
-        <div style="padding: 12px; margin-bottom: 8px; background: #fff1f1; border-radius: 10px; border-left: 3px solid #dc2626;">
-          <div style="font-size: 10px; font-weight: 900; color: #dc2626; margin-bottom: 2px;">${c.nombre_empresa.toUpperCase()}</div>
-          <div style="font-size: 9px; color: #991b1b; font-weight: 700;">${c.diasInactivo} DÍAS SIN GESTIÓN</div>
+        <div style="padding: 10px; background: ${c.priority === 3 ? '#fff1f2' : '#f8fafc'}; border: 1px solid ${c.priority === 3 ? '#fecdd3' : '#e2e8f0'}; border-radius: 10px; margin-bottom: 6px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 10px; font-weight: 800; color: ${c.priority === 3 ? '#be123c' : '#334155'}; text-transform: uppercase;">${c.nombre_empresa}</span>
+            <span style="font-size: 8px; font-weight: 900; color: ${c.priority === 3 ? '#be123c' : '#64748b'};">${c.label}</span>
+          </div>
         </div>
-      `).join('') : '<p style="font-size: 10px; color: #059669; font-weight: 700; text-align: center;">✓ Cartera activa y bajo control</p>';
+      `).join('') : '<p style="text-align: center; color: #10b981; font-size: 9px; font-weight: 900; padding: 10px;">CARTERA BAJO CONTROL TOTAL ✓</p>';
 
-      // --- D. CONSTRUCCIÓN HTML ---
+      // --- D. CONSTRUCCIÓN HTML PREMIUM ---
       const frase = [
-        "El cierre no es el final, es el inicio de una relación rentable.",
-        "Tu persistencia es el diferencial entre una cotización y un contrato.",
-        "En el mundo de los medios, la oportunidad tiene fecha de expiración."
-      ][ahora.getDay() % 3];
+        "El éxito comercial no es un acto, es un hábito de seguimiento implacable.",
+        "Tu valor no reside en lo que vendes, sino en el problema que resuelves.",
+        "El ‘No’ es solo el inicio de la negociación profesional.",
+        "La disciplina de tu CRM determina la libertad de tus resultados.",
+        "No busques ventas, busca relaciones que generen pautas recurrentes."
+      ][ahora.getDay() % 5];
 
       const emailHtml = `
-      <!DOCTYPE html><html><body style="margin:0;padding:20px;background-color:#f4f4f4;font-family:Arial,sans-serif;">
-        <div style="max-width:600px;margin:0 auto;background-color:#fff;border-radius:24px;overflow:hidden;border:1px solid #eee;">
-          <div style="background-color:#0c0c0c;padding:30px;color:white;text-align:center;">
-            <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:3px;color:#ff4d00;margin-bottom:10px;">Nexus Intelligence briefing</div>
-            <h1 style="margin:0;font-size:24px;font-weight:900;text-transform:uppercase;font-style:italic;">BRIEFING <span style="color:#ff4d00;">OPERATIVO</span></h1>
-            <p style="color:rgba(255,255,255,0.4);font-size:10px;margin-top:10px;">${ahora.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-          </div>
-          <div style="padding:30px;">
-            <!-- VENTAS -->
-            <div style="background:#0c0c0c;border-radius:20px;padding:25px;margin-bottom:30px;text-align:center;">
-              <p style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:5px;">CIERRES ${nombreMes}</p>
-              <h2 style="font-size:36px;font-weight:900;color:white;margin:0;">$${totalMensual.toLocaleString('es-MX')}</h2>
-              <div style="height:3px;background:rgba(255,255,255,0.1);margin:15px 0;"><div style="width:${Math.min((totalMensual / 1500000) * 100, 100)}%;height:100%;background:#ff4d00;"></div></div>
-              ${clientesListHtml}
-            </div>
-            <!-- SENTINEL -->
-            <h3 style="font-size:11px;font-weight:900;text-transform:uppercase;color:#dc2626;border-bottom:2px solid #dc2626;padding-bottom:5px;margin-bottom:15px;">🚨 Nexus Sentinel: Cartera en Riesgo</h3>
-            ${abandonadosHtml}
-            <div style="margin-top:30px;"></div>
-            <!-- AGENDA -->
-            <h3 style="font-size:11px;font-weight:900;text-transform:uppercase;color:#0c0c0c;border-bottom:2px solid #ff4d00;padding-bottom:5px;margin-bottom:15px;">📅 Hoja de Ruta de la Semana</h3>
-            ${agendaHtml}
-            <!-- FRASE -->
-            <div style="margin-top:30px;padding:20px;background:#fff8f5;border-left:4px solid #ff4d00;border-radius:10px;font-style:italic;font-size:12px;color:#0c0c0c;font-weight:900;">
-              "${frase}"
-            </div>
-            <div style="margin-top:30px;text-align:center;"><a href="https://rogermontejo-alw.github.io/TVSA-Cotizador" style="display:inline-block;padding:15px 30px;background:#0c0c0c;color:#fff;text-decoration:none;border-radius:12px;font-size:11px;font-weight:900;text-transform:uppercase;">Ir al Sistema Nexus</a></div>
-          </div>
-        </div>
-      </body></html>`;
+      <!DOCTYPE html>
+      <html>
+      <body style="margin:0; padding:10px; background-color:#f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color:#f1f5f9;">
+          <tr>
+            <td align="center">
+              <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color:#ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                
+                <!-- HEADER CLARO -->
+                <tr>
+                  <td style="padding: 40px; background: #ffffff; border-bottom: 1px solid #f1f5f9;">
+                    <div style="font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 12px;">Nexus Intelligence Suite</div>
+                    <h1 style="margin:0; font-size: 28px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: -0.5px;">
+                      BRIEFING <span style="color: #ff4d00;">OPERATIVO</span>
+                    </h1>
+                    <div style="margin-top: 8px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">
+                      ${ahora.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- CUERPO -->
+                <tr>
+                  <td style="padding: 30px;">
+                    
+                    <!-- RESUMEN FINANCIERO -->
+                    <div style="background: #f8fafc; border-radius: 16px; padding: 24px; margin-bottom: 25px; border: 1px solid #e2e8f0;">
+                      <div style="font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Inversión Acumulada (${nombreMes})</div>
+                      <div style="font-size: 42px; font-weight: 900; color: #0f172a; margin-bottom: 15px;">$${totalMensual.toLocaleString('es-MX')}</div>
+                      
+                      <div style="height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
+                        <div style="width: ${percentGoal}%; height: 100%; background: #ff4d00;"></div>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 8px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">
+                        <span>Avance Meta</span>
+                        <span>${percentGoal.toFixed(1)}%</span>
+                      </div>
+
+                      ${clientesTableHtml}
+                    </div>
+
+                    <!-- ACCIONES DEL DÍA -->
+                    <div style="margin-bottom: 25px;">
+                      <h3 style="font-size: 11px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px solid #ff4d00; padding-bottom: 5px; margin-bottom: 15px;">
+                        📌 TAREAS Y RECORDATORIOS (HOY)
+                      </h3>
+                      ${agendaHoyHtml}
+                    </div>
+
+                    <!-- NEXUS SENTINEL -->
+                    <div style="margin-bottom: 25px;">
+                      <h3 style="font-size: 11px; font-weight: 900; color: #be123c; text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px solid #be123c; padding-bottom: 5px; margin-bottom: 15px;">
+                        🚨 NEXUS SENTINEL: RE-CONTACTO
+                      </h3>
+                      ${abandonadosHtml}
+                    </div>
+
+                    <!-- FOOTER CTA -->
+                    <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #f1f5f9;">
+                      <a href="https://tvsa-cotizador.vercel.app/" style="display: inline-block; padding: 16px 35px; background: #0f172a; color: #ffffff; text-decoration: none; border-radius: 12px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">
+                        Gestionar Mi Cartera
+                      </a>
+                    </div>
+
+                  </td>
+                </tr>
+
+                <!-- COPY -->
+                <tr>
+                  <td style="padding: 20px; background: #f8fafc; text-align: center; font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                    Televisa Univision MID • Ecosistema Nexus © 2026
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>`;
 
       // 7. ENVIAR
       const res = await fetch("https://api.resend.com/emails", {

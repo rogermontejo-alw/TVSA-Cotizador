@@ -33,17 +33,28 @@ const HistoryView = ({
     }, [historial, busqueda, filtroEstatus]);
 
     const handleUpdateStatus = async (quote, newStatus) => {
-        setIsUpdating(true);
         try {
             const payload = { id: quote.id, estatus: newStatus };
             if (newStatus === 'ganada') {
                 payload.fecha_cierre_real = formatToMeridaISO(new Date().toISOString());
             }
-            const success = await onSaveQuote('cotizaciones', payload);
-            if (success) {
+            const result = await onSaveQuote('cotizaciones', payload);
+            if (result) {
                 setMensaje({ tipo: 'exito', texto: `Estatus: ${newStatus.toUpperCase()}` });
-                setConfirmingAction(null);
+                return true;
             }
+        } catch (err) {
+            console.error(err);
+        }
+        return false;
+    };
+
+    const handleExecuteConfirm = async () => {
+        if (!confirmingAction || isUpdating) return;
+        setIsUpdating(true);
+        try {
+            await confirmingAction.onConfirm();
+            setConfirmingAction(null);
         } catch (err) {
             console.error(err);
             setConfirmingAction(null);
@@ -234,7 +245,7 @@ const HistoryView = ({
                                     Abortar
                                 </button>
                                 <button
-                                    onClick={confirmingAction.onConfirm}
+                                    onClick={handleExecuteConfirm}
                                     disabled={isUpdating}
                                     className="h-12 bg-enterprise-950 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] hover:bg-brand-orange shadow-lg shadow-enterprise-950/20 active:scale-95 transition-all disabled:opacity-50"
                                 >

@@ -128,7 +128,7 @@ const ProductGrid = ({
                             return (
                                 <div
                                     key={p.id}
-                                    className="group bg-white border border-enterprise-100 rounded-2xl p-3 flex items-center justify-between gap-3 transition-all hover:border-brand-orange hover:shadow-lg hover:shadow-brand-orange/5"
+                                    className="group bg-white border border-enterprise-100 rounded-2xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all hover:border-brand-orange hover:shadow-lg hover:shadow-brand-orange/5"
                                 >
                                     <div className="flex-1 min-w-0 flex items-center gap-3">
                                         <div className="w-9 h-9 bg-enterprise-950 rounded-xl flex items-center justify-center text-white shrink-0 group-hover:bg-brand-orange transition-colors shadow-inner">
@@ -155,7 +155,7 @@ const ProductGrid = ({
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3 shrink-0">
+                                    <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-enterprise-50">
                                         <div className="text-right">
                                             <p className="text-[11px] font-black text-enterprise-950 tracking-tighter italic block leading-none">
                                                 {formatMXN(precio)}
