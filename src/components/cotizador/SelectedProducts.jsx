@@ -33,7 +33,7 @@ const SelectedProducts = ({
                     <Layers size={14} className="text-brand-orange" strokeWidth={3} />
                     <h2 className="text-white text-[10px] font-black uppercase tracking-[0.3em] italic leading-none">Arquitectura del Plan</h2>
                 </div>
-                <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.3em] relative z-10">
+                <span className="text-[8px] font-black text-white/60 uppercase tracking-[0.3em] relative z-10">
                     {productosSeleccionados.length + (vixSeleccionado ? 1 : 0)} Consolidados
                 </span>
             </div>
@@ -159,18 +159,18 @@ const SelectedProducts = ({
                     </div>
                     <div>
                         <h3 className="text-[10px] font-black text-white uppercase tracking-[0.3em] italic leading-none">Valuación Final</h3>
-                        <p className="text-[6px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">Monitor de Disponibilidad de Despliegue</p>
+                        <p className="text-[6px] font-black text-white/60 uppercase tracking-[0.2em] mt-1">Monitor de Disponibilidad de Despliegue</p>
                     </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-8 relative z-10">
                 <div className="flex flex-col gap-1.5 pt-4 border-t border-white/5">
-                    <span className="text-[7px] font-black text-white/40 uppercase tracking-[0.3em] italic">Asignación Aprobada</span>
+                    <span className="text-[7px] font-black text-white/80 uppercase tracking-[0.3em] italic">Asignación Aprobada</span>
                     <span className="text-xl font-black tracking-tighter text-white">{formatMXN(presupuestoNum)}</span>
                 </div>
                 <div className="flex flex-col gap-1.5 pt-4 border-t border-white/5 text-right">
-                    <span className="text-[7px] font-black text-white/40 uppercase tracking-[0.3em] italic">Exposición Actual</span>
+                    <span className="text-[7px] font-black text-white/80 uppercase tracking-[0.3em] italic">Exposición Actual</span>
                     <span className={`text-xl font-black tracking-tighter ${isOverBudget ? 'text-brand-orange pulse-neon' : 'text-emerald-400'}`}>
                         {formatMXN(subtotalActual)}
                     </span>
@@ -180,12 +180,12 @@ const SelectedProducts = ({
             <div className="flex items-center justify-between relative z-10 pt-4 border-t border-white/5">
                 <div className="flex gap-6">
                     <div className="flex flex-col">
-                        <span className="text-[6px] font-black text-white/40 uppercase tracking-widest mb-1 italic">Activos Lineales</span>
+                        <span className="text-[6px] font-black text-white/80 uppercase tracking-widest mb-1 italic">Activos Lineales</span>
                         <span className="text-[10px] font-black text-white/90 italic tracking-tighter">{formatMXN(subtotalTVActual)}</span>
                     </div>
                     {subtotalVIXActual > 0 && (
                         <div className="flex flex-col">
-                            <span className="text-[6px] font-black text-brand-orange/40 uppercase tracking-widest mb-1 italic">Peso Digital</span>
+                            <span className="text-[6px] font-black text-brand-orange/80 uppercase tracking-widest mb-1 italic">Peso Digital</span>
                             <span className="text-[10px] font-black text-brand-orange/90 italic tracking-tighter">{formatMXN(subtotalVIXActual)}</span>
                         </div>
                     )}

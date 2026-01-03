@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
     User, Phone, Mail, MapPin, Building2, Briefcase,
     ChevronLeft, Edit3, Plus, FileText, CheckCircle2,
@@ -26,6 +26,13 @@ const ClientFichaView = ({
     const [confirmingQuoteStatus, setConfirmingQuoteStatus] = useState(null);
     const [isUpdating, setIsUpdating] = useState(false);
     const [editData, setEditData] = useState(cliente);
+
+    // Sincronizar editData cuando cambie el prop cliente (después de guardar)
+    useEffect(() => {
+        if (cliente) {
+            setEditData(cliente);
+        }
+    }, [cliente]);
 
     // Estado para cierre de venta desde la lista
     const [cierreData, setCierreData] = useState({
@@ -206,42 +213,58 @@ const ClientFichaView = ({
                 </div>
             </div>
 
-            {/* Pipeline */}
-            <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-gray-100 mb-6 relative overflow-hidden">
-                <div className="flex items-center justify-between gap-2 relative">
+            {/* Pipeline / Progress Bar */}
+            <div className="bg-white p-4 sm:p-8 rounded-[2rem] sm:rounded-[3rem] shadow-xl border border-gray-100 mb-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-2 relative">
                     {stages.map((s, idx) => {
                         const isCompleted = idx < currentStageIdx && cliente.etapa !== 'No Interesado';
                         const isCurrent = idx === currentStageIdx;
                         const isNoInt = cliente.etapa === 'No Interesado' && s === 'No Interesado';
+                        const isDisabled = isUpdating;
 
                         return (
                             <React.Fragment key={s}>
-                                <button
-                                    onClick={() => !isCurrent && setConfirmingStage(s)}
-                                    disabled={isUpdating}
-                                    className="flex flex-col items-center gap-2 group flex-1 relative z-10"
-                                >
-                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-[10px] font-black transition-all shadow-sm
-                                        ${isNoInt ? 'bg-orange-500 text-white shadow-orange-200' :
-                                            isCurrent ? 'bg-slate-900 text-white scale-110 shadow-slate-300' :
-                                                isCompleted ? 'bg-emerald-500 text-white shadow-emerald-200' :
-                                                    'bg-white text-slate-300 border border-slate-100'}`}>
-                                        {isCompleted ? <CheckCircle2 size={16} /> : idx + 1}
-                                    </div>
-                                    <span className={`text-[8px] font-black uppercase tracking-tighter text-center whitespace-nowrap
-                                        ${isCurrent ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>
-                                        {s}
-                                    </span>
-                                </button>
+                                <div className="flex-1 flex flex-col items-center group relative z-10 w-full sm:w-auto">
+                                    <button
+                                        onClick={() => !isCurrent && setConfirmingStage(s)}
+                                        disabled={isDisabled}
+                                        className={`flex flex-row sm:flex-col items-center gap-3 sm:gap-2 p-2 sm:p-0 rounded-2xl transition-all w-full sm:w-auto
+                                            ${!isCurrent && !isDisabled ? 'hover:bg-slate-50 cursor-pointer' : 'cursor-default'}`}
+                                    >
+                                        <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-[10px] sm:text-xs font-black transition-all shadow-sm
+                                            ${isNoInt ? 'bg-orange-500 text-white shadow-orange-200' :
+                                                isCurrent ? 'bg-slate-900 text-white scale-110 shadow-slate-300 ring-4 ring-slate-100' :
+                                                    isCompleted ? 'bg-emerald-500 text-white shadow-emerald-200' :
+                                                        'bg-white text-slate-300 border border-slate-100'}`}>
+                                            {isCompleted ? <CheckCircle2 size={16} /> : idx + 1}
+                                        </div>
+                                        <div className="flex flex-col items-start sm:items-center">
+                                            <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-tighter text-center whitespace-nowrap
+                                                ${isCurrent ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>
+                                                {s}
+                                            </span>
+                                            {isCurrent && <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest sm:hidden">Etapa Actual</span>}
+                                        </div>
+                                    </button>
+                                </div>
                                 {idx < stages.length - 1 && (
-                                    <div className={`flex-1 h-0.5 mt-4 -mx-1 relative z-0
-                                        ${idx < currentStageIdx ? 'bg-emerald-200' : 'bg-slate-100'}`}>
+                                    <div className={`hidden sm:block flex-1 h-[2px] mt-0 relative z-0
+                                        ${idx < currentStageIdx ? 'bg-emerald-500' : 'bg-slate-100'}`}>
+                                        <div className={`absolute inset-0 bg-emerald-500 transition-all duration-1000 ${idx < currentStageIdx ? 'w-full' : 'w-0'}`} />
                                     </div>
+                                )}
+                                {idx < stages.length - 1 && (
+                                    <div className={`sm:hidden w-0.5 h-4 bg-slate-100 mx-auto
+                                        ${idx < currentStageIdx ? 'bg-emerald-500' : 'bg-slate-100'}`} />
                                 )}
                             </React.Fragment>
                         );
                     })}
-                    {isUpdating && <div className="absolute inset-0 bg-white/60 flex items-center justify-center"><RefreshCw className="animate-spin" /></div>}
+                    {isUpdating && (
+                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-50 rounded-[2rem]">
+                            <RefreshCw className="animate-spin text-slate-900" size={24} />
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -488,11 +511,42 @@ const ClientFichaView = ({
             {confirmingStage && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
                     <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl text-center">
-                        <CheckCircle2 size={48} className="mx-auto text-emerald-500 mb-4" />
-                        <h3 className="text-xl font-black uppercase mb-2 tracking-tighter">¡Venta Ganada!</h3>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-8">¿Promover a CLIENTE en el CRM?</p>
+                        <div className={`w-16 h-16 rounded-3xl mx-auto mb-4 flex items-center justify-center
+                            ${confirmingStage === 'No Interesado' ? 'bg-orange-100 text-orange-600' :
+                                confirmingStage === 'Cliente' ? 'bg-emerald-100 text-emerald-600' :
+                                    'bg-blue-100 text-blue-600'}`}>
+                            {confirmingStage === 'Cliente' ? <CheckCircle2 size={32} /> :
+                                confirmingStage === 'No Interesado' ? <AlertCircle size={32} /> :
+                                    <RefreshCw size={32} />}
+                        </div>
+                        <h3 className="text-xl font-black uppercase mb-2 tracking-tighter">
+                            {confirmingStage === 'Cliente' ? '¡Venta Ganada!' :
+                                confirmingStage === 'No Interesado' ? 'Descartar Cliente' :
+                                    'Cambiar Etapa'}
+                        </h3>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-8">
+                            ¿Mover a <span className="text-slate-900">{confirmingStage.toUpperCase()}</span> en el CRM?
+                        </p>
+
+                        {confirmingStage === 'No Interesado' && (
+                            <div className="mb-6">
+                                <textarea
+                                    placeholder="Motivo del descarte..."
+                                    value={motivoDescarte}
+                                    onChange={e => setMotivoDescarte(e.target.value)}
+                                    className="w-full p-4 bg-slate-50 rounded-2xl text-xs font-bold border-none outline-none ring-2 ring-slate-100 focus:ring-orange-500/20"
+                                />
+                            </div>
+                        )}
+
                         <div className="flex flex-col gap-2">
-                            <button onClick={() => handlePromote('Cliente')} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px]">Sí, promover</button>
+                            <button
+                                onClick={() => handlePromote(confirmingStage)}
+                                className={`w-full py-4 text-white rounded-2xl font-black uppercase text-[10px] shadow-lg transition-transform active:scale-95
+                                    ${confirmingStage === 'No Interesado' ? 'bg-orange-600 shadow-orange-200' : 'bg-slate-900 shadow-slate-200'}`}
+                            >
+                                Confirmar Cambio
+                            </button>
                             <button onClick={() => setConfirmingStage(null)} className="w-full py-3 text-[10px] font-black uppercase text-slate-400">Ahora no</button>
                         </div>
                     </div>

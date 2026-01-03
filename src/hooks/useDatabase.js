@@ -151,7 +151,7 @@ export const useDatabase = (session) => {
     const guardarRegistro = async (tabla, payload, onConflict = 'id') => {
         setMensajeAdmin({ tipo: 'cargando', texto: 'Guardando datos...' });
         const cleanObject = (obj) => Object.fromEntries(
-            Object.entries(obj).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+            Object.entries(obj).filter(([_, v]) => v !== undefined)
         );
 
         try {

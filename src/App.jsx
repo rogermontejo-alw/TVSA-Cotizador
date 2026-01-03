@@ -28,7 +28,7 @@ const App = () => {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [vistaActual, setVistaActual] = useState('dashboard');
-  const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedClientId, setSelectedClientId] = useState(null);
   const [showBriefing, setShowBriefing] = useState(false);
 
   // Auth Listener
@@ -182,7 +182,7 @@ const App = () => {
   };
 
   const handleVerFichaCliente = (cliente) => {
-    setSelectedClient(cliente);
+    setSelectedClientId(cliente.id);
     setVistaActual('ficha-cliente');
   };
 
@@ -311,19 +311,20 @@ const App = () => {
             />
           </div>
         );
-      case 'ficha-cliente':
+      case 'ficha-cliente': {
+        const currentClient = clientes.find(c => String(c.id) === String(selectedClientId));
         return (
           <ClientFichaView
-            cliente={selectedClient}
-            cotizaciones={historial.filter(h => String(h.cliente_id) === String(selectedClient?.id))}
-            masterContracts={masterContracts.filter(mc => String(mc.cliente_id) === String(selectedClient?.id))}
-            interacciones={dbData.interacciones.filter(i => String(i.cliente_id) === String(selectedClient?.id))}
+            cliente={currentClient}
+            cotizaciones={historial.filter(h => String(h.cliente_id) === String(selectedClientId))}
+            masterContracts={masterContracts.filter(mc => String(mc.cliente_id) === String(selectedClientId))}
+            interacciones={dbData.interacciones.filter(i => String(i.cliente_id) === String(selectedClientId))}
             perfil={dbData.perfil}
             onBack={() => setVistaActual('crm')}
             onSaveClient={guardarRegistro}
             onNewQuote={() => {
               iniciarNuevaCotizacion();
-              cotizacionState.setClienteSeleccionado(selectedClient);
+              cotizacionState.setClienteSeleccionado(currentClient);
               setVistaActual('cotizador');
             }}
             onViewQuote={(q) => {
@@ -334,6 +335,7 @@ const App = () => {
             setMensaje={setMensajeAdmin}
           />
         );
+      }
       case 'master-contracts':
         return (
           <MasterContractsView

@@ -31,7 +31,7 @@ const ParametersPanel = ({
         return (
             <>
                 {/* 2nd Module: Regions/Plaza */}
-                <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all ${mobileStage === 'digital' ? 'hidden sm:flex' : 'flex'}`}>
+                <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all ${mobileStage === 'digital' ? 'hidden xl:flex' : 'flex'}`}>
                     <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-2">
                             <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Propuesta Regional</span>
@@ -40,7 +40,7 @@ const ParametersPanel = ({
                                 className="text-[7px] font-black text-brand-orange hover:text-white uppercase tracking-widest bg-brand-orange/10 hover:bg-brand-orange px-1.5 py-0.5 rounded transition-all"
                                 title="Reiniciar Sesión"
                             >
-                                Cancelar
+                                Reiniciar
                             </button>
                         </div>
                         <MapPin size={10} className="text-brand-orange" />
@@ -63,7 +63,7 @@ const ParametersPanel = ({
                 </div>
 
                 {/* 3rd Module: Pipeline Financials */}
-                <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all ${mobileStage === 'digital' ? 'hidden sm:flex' : 'flex'}`}>
+                <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all ${mobileStage === 'digital' ? 'hidden xl:flex' : 'flex'}`}>
                     <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between shrink-0">
                         <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Inversión y Vigencia</span>
                         <DollarSign size={10} className="text-brand-orange" />
@@ -77,10 +77,10 @@ const ParametersPanel = ({
                                 value={presupuesto}
                                 onChange={(e) => setPresupuesto(e.target.value)}
                                 placeholder="MXN..."
-                                className="w-full bg-transparent text-[10px] font-black text-enterprise-950 outline-none placeholder:text-enterprise-300 uppercase truncate"
+                                className="w-full bg-transparent text-[10px] font-black text-enterprise-950 outline-none placeholder:text-enterprise-500 uppercase truncate"
                             />
                         </div>
-                        <div className="w-[80px] px-4 flex items-center gap-2 bg-enterprise-50/30 shrink-0">
+                        <div className="w-[110px] px-4 flex items-center gap-2 bg-enterprise-50/30 shrink-0">
                             <Calendar size={12} className="text-brand-orange shrink-0" />
                             <input
                                 type="number"
@@ -88,14 +88,14 @@ const ParametersPanel = ({
                                 value={duracionDias}
                                 onChange={(e) => setDuracionDias(e.target.value)}
                                 placeholder="30"
-                                className="w-full bg-transparent text-[10px] font-black text-enterprise-950 outline-none placeholder:text-enterprise-300 text-center uppercase"
+                                className="w-full bg-transparent text-[10px] font-black text-enterprise-950 outline-none placeholder:text-enterprise-500 text-center uppercase"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* 4th Module: Digital / VIX */}
-                <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all ${mobileStage === 'context' ? 'hidden sm:flex' : 'flex'}`}>
+                <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all ${mobileStage === 'context' ? 'hidden xl:flex' : 'flex'}`}>
                     <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between shrink-0">
                         <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Despliegue Digital</span>
                         <Sparkles size={10} className="text-brand-orange" />

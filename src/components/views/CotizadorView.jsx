@@ -5,7 +5,7 @@ import ProductGrid from '../cotizador/ProductGrid';
 import SelectedProducts from '../cotizador/SelectedProducts';
 import CotizacionResult from '../cotizador/CotizacionResult';
 import { CotizadorSkeleton } from '../ui/Skeleton';
-import { TrendingUp, AlertCircle, Wallet, Activity, Target, ArrowRight } from 'lucide-react';
+import { TrendingUp, AlertCircle, Wallet, Activity, Target, ArrowRight, RotateCcw } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 
 const CotizadorView = ({
@@ -81,55 +81,62 @@ const CotizadorView = ({
 
                             <div className="relative z-10 flex flex-col gap-3 sm:gap-4">
                                 {/* MAIN STATS ROW */}
-                                <div className="flex items-center justify-between">
-                                    <div className="flex flex-col gap-0.5 sm:gap-1">
+                                <div className="grid grid-cols-3 gap-2 sm:gap-4 items-center w-full">
+                                    {/* AREA 1: TARGET */}
+                                    <div className="flex flex-col gap-0.5">
                                         <div className="flex items-center gap-2">
                                             <Target size={8} className="text-brand-orange" />
-                                            <span className="text-[6px] sm:text-[7px] font-black text-white/40 uppercase tracking-[0.3em] italic">Target</span>
+                                            <span className="text-[6px] sm:text-[7px] font-black text-white/70 uppercase tracking-[0.3em] italic">Target</span>
                                         </div>
-                                        <p className="text-sm sm:text-xl font-black text-white tracking-tighter ml-4 sm:ml-6">{formatMXN(presupuesto || 0)}</p>
+                                        <p className="text-sm sm:text-lg font-black text-white tracking-tighter ml-4 sm:ml-5">
+                                            {formatMXN(Number(presupuesto) || 0)}
+                                        </p>
                                     </div>
 
-                                    <div className="flex-1 max-w-[40%] sm:max-w-[45%] flex flex-col gap-2 sm:gap-3">
-                                        <div className="flex items-center justify-between text-[6px] sm:text-[7px] font-black uppercase tracking-[0.3em]">
-                                            <div className="flex items-center gap-1">
+                                    {/* AREA 2: PROGRESS (CENTERED) */}
+                                    <div className="flex flex-col items-center gap-1.5 px-4">
+                                        <div className="w-full flex flex-col gap-1">
+                                            <div className="flex items-center justify-between text-[5px] sm:text-[6px] font-black uppercase tracking-[0.2em] mb-0.5">
                                                 <span className={isExcedido ? 'text-brand-orange' : 'text-emerald-400'}>{porcentajeUtilizado.toFixed(0)}%</span>
+                                                <span className="text-white/40">Load</span>
                                             </div>
-                                            <span className="text-white/20 hidden sm:inline">System Load</span>
-                                        </div>
-                                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden flex items-center">
-                                            <div
-                                                className={`h-full transition-all duration-1000 ease-out relative ${isExcedido ? 'bg-brand-orange shadow-[0_0_10px_rgba(255,102,0,0.5)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]'}`}
-                                                style={{ width: `${Math.min(porcentajeUtilizado, 100)}%` }}
-                                            />
+                                            <div className="h-0.5 sm:h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full transition-all duration-1000 ease-out ${isExcedido ? 'bg-brand-orange' : 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.3)]'}`}
+                                                    style={{ width: `${Math.min(porcentajeUtilizado, 100)}%` }}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col gap-0.5 sm:gap-1 text-right">
-                                        <div className="flex items-center gap-2 justify-end">
-                                            <span className="text-[6px] sm:text-[7px] font-black text-white/40 uppercase tracking-[0.3em] italic">Actual</span>
-                                            <Activity size={8} className={isExcedido ? 'text-brand-orange' : 'text-emerald-400'} />
+                                    {/* AREA 3: BALANCE & RESET */}
+                                    <div className="flex items-center gap-3 sm:gap-6 justify-end">
+                                        <div className="flex flex-col items-start gap-0.5">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[6px] sm:text-[7px] font-black text-white/70 uppercase tracking-[0.3em] italic">Saldo Disponible</span>
+                                                <Activity size={8} className={isExcedido ? 'text-brand-orange pulse-neon' : 'text-emerald-400'} />
+                                            </div>
+                                            <p className={`text-xs sm:text-2xl font-black italic tracking-tighter leading-none ${isExcedido ? 'text-brand-orange' : 'text-emerald-400'}`}>
+                                                {formatMXN(saldoRestante)}
+                                            </p>
                                         </div>
-                                        <p className={`text-sm sm:text-lg font-black italic tracking-tight ${isExcedido ? 'text-brand-orange' : 'text-emerald-400'}`}>{formatMXN(subtotalActual)}</p>
+
+                                        <button
+                                            onClick={iniciarNuevaCotizacion}
+                                            className="w-8 h-8 sm:w-12 sm:h-12 bg-error rounded-xl sm:rounded-2xl flex items-center justify-center group active:scale-90 transition-all shadow-lg shadow-error/30 shrink-0"
+                                            title="Reiniciar Cotización"
+                                        >
+                                            <RotateCcw size={16} className="text-white group-hover:rotate-180 transition-transform duration-700" />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* FLOW INDICATOR (ONLY MOBILE) */}
-                    <div className="flex sm:hidden items-center justify-between px-2 mb-2">
-                        {['context', 'digital', 'pauta'].map((s, i) => (
-                            <div key={s} className="flex flex-col items-center gap-1 opacity-100 transition-all duration-500">
-                                <div className={`w-1.5 h-1.5 rounded-full ${etapaMovil === s ? 'bg-brand-orange scale-150 ring-4 ring-brand-orange/20' : i < ['context', 'digital', 'pauta'].indexOf(etapaMovil) ? 'bg-emerald-500' : 'bg-enterprise-200'}`} />
-                                <span className={`text-[6px] font-black uppercase tracking-widest ${etapaMovil === s ? 'text-brand-orange' : 'text-enterprise-300'}`}>{s}</span>
-                            </div>
-                        ))}
-                    </div>
 
-                    {/* STRATEGY HEADER - 2x2 ON TABLET, 1x4 ON DESKTOP */}
-                    <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2 ${etapaMovil !== 'context' && etapaMovil !== 'digital' ? 'hidden sm:grid' : ''}`}>
-                        <div className={etapaMovil === 'digital' ? 'hidden sm:block' : ''}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
+                        <div>
                             <ClientSelector
                                 clientes={clientes}
                                 clienteSeleccionado={clienteSeleccionado}
@@ -156,13 +163,13 @@ const CotizadorView = ({
                             mobileStage={etapaMovil}
                         />
 
-                        {/* Mobile Navigation Buttons */}
-                        <div className="sm:hidden mt-2">
+                        {/* Navigation Buttons (Visible on Mobile, Tablet and small Desktops) */}
+                        <div className="xl:hidden mt-2">
                             {etapaMovil === 'context' && (
                                 <button
                                     onClick={() => { setEtapaMovil('digital'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                                     disabled={!clienteSeleccionado || !presupuesto}
-                                    className="w-full py-4 bg-enterprise-950 text-white rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 disabled:opacity-30"
+                                    className="w-full py-4 bg-enterprise-950 text-white rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 disabled:opacity-30 shadow-xl"
                                 >
                                     Siguiente: Plan Digital <ArrowRight size={14} />
                                 </button>
@@ -171,7 +178,7 @@ const CotizadorView = ({
                                 <div className="flex flex-col gap-2">
                                     <button
                                         onClick={() => { setEtapaMovil('pauta'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                                        className="w-full py-4 bg-brand-orange text-white rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2"
+                                        className="w-full py-4 bg-brand-orange text-white rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-brand-orange/20"
                                     >
                                         Configurar Pauta <ArrowRight size={14} />
                                     </button>
@@ -179,20 +186,37 @@ const CotizadorView = ({
                                         onClick={() => setEtapaMovil('context')}
                                         className="w-full py-3 text-enterprise-400 font-black uppercase text-[8px] tracking-widest"
                                     >
-                                        Regresar
+                                        Regresar a Parámetros
                                     </button>
                                 </div>
                             )}
                         </div>
                     </div>
 
+                    {/* Desktop/Tablet Transition Message (Only visible on larger screens if in early stages) */}
+                    {(etapaMovil === 'context' || etapaMovil === 'digital') && (
+                        <div className="hidden xl:flex items-center justify-center py-10 bg-white/50 rounded-[3rem] border-2 border-dashed border-enterprise-100 animate-in fade-in duration-700">
+                            <div className="text-center">
+                                <p className="text-[10px] font-black text-enterprise-500 uppercase tracking-[0.4em] mb-4">Configuración de contexto lista</p>
+                                <button
+                                    onClick={() => setEtapaMovil('pauta')}
+                                    disabled={!clienteSeleccionado || !presupuesto}
+                                    className="px-10 py-4 bg-enterprise-950 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-4 hover:bg-brand-orange transition-all disabled:opacity-20 active:scale-95 shadow-2xl"
+                                >
+                                    Abrir Consola de Pauta <ArrowRight size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* CAPTURE GRIDS - SIDE BY SIDE STARTING FROM TABLET */}
-                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 mt-2 items-start text-enterprise-950 ${etapaMovil !== 'pauta' ? 'hidden sm:grid' : ''}`}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2 items-start text-enterprise-950">
                         <div className="min-w-0">
                             <ProductGrid
                                 productos={productos}
                                 productosSeleccionados={productosSeleccionados}
                                 plazaSeleccionada={plazaSeleccionada}
+                                setPlazaSeleccionada={setPlazaSeleccionada}
                                 clienteSeleccionado={clienteSeleccionado}
                                 calcularPrecioUnitario={calcularPrecioUnitario}
                                 agregarProducto={agregarProducto}

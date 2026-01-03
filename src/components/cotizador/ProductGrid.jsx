@@ -50,11 +50,11 @@ const ProductGrid = ({
                         </h2>
                         <div className="flex items-center gap-1.5 mt-1.5">
                             <Zap size={9} className="fill-brand-orange text-brand-orange" strokeWidth={3} />
-                            <span className="text-[7px] font-black text-white/50 uppercase tracking-[0.3em]">Consola de Ciclo de Vida v2.5</span>
+                            <span className="text-[7px] font-black text-white/80 uppercase tracking-[0.3em]">Consola de Ciclo de Vida v2.5</span>
                         </div>
                     </div>
                     <div className="bg-white/10 px-2 py-1 rounded-lg border border-white/10">
-                        <span className="text-[9px] font-black text-brand-orange tracking-tighter">{productosFiltrados.length} <span className="text-white/40 ml-0.5">DISP</span></span>
+                        <span className="text-[9px] font-black text-brand-orange tracking-tighter">{productosFiltrados.length} <span className="text-white/70 ml-0.5">DISP</span></span>
                     </div>
                 </div>
 
@@ -72,7 +72,7 @@ const ProductGrid = ({
                             <option value="" className="bg-enterprise-950">TODAS LAS PLAZAS</option>
                             {options.plazas.map(p => <option key={p} value={p} className="bg-enterprise-950">{p.toUpperCase()}</option>)}
                         </select>
-                        <ChevronDown size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none group-hover:text-brand-orange transition-colors" />
+                        <ChevronDown size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none group-hover:text-brand-orange transition-colors" />
                     </div>
 
                     <div className="relative group">
@@ -84,7 +84,7 @@ const ProductGrid = ({
                             <option value="" className="bg-enterprise-950">CANAL</option>
                             {options.canales.map(c => <option key={c} value={c} className="bg-enterprise-950">{c.toUpperCase()}</option>)}
                         </select>
-                        <ChevronDown size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none group-hover:text-brand-orange transition-colors" />
+                        <ChevronDown size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none group-hover:text-brand-orange transition-colors" />
                     </div>
 
                     <div className="relative group">
@@ -96,7 +96,7 @@ const ProductGrid = ({
                             <option value="" className="bg-enterprise-950">TIPO</option>
                             {options.tipos.map(t => <option key={t} value={t} className="bg-enterprise-950">{t.toUpperCase()}</option>)}
                         </select>
-                        <ChevronDown size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none group-hover:text-brand-orange transition-colors" />
+                        <ChevronDown size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none group-hover:text-brand-orange transition-colors" />
                     </div>
 
                     <div className="relative group">
@@ -108,7 +108,7 @@ const ProductGrid = ({
                             <option value="" className="bg-enterprise-950">HORARIO</option>
                             {options.horarios.map(h => <option key={h} value={h} className="bg-enterprise-950">{h.toUpperCase()}</option>)}
                         </select>
-                        <ChevronDown size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none group-hover:text-brand-orange transition-colors" />
+                        <ChevronDown size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none group-hover:text-brand-orange transition-colors" />
                     </div>
                 </div>
             </div>

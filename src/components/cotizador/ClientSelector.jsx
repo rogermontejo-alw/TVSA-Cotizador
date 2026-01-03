@@ -5,7 +5,7 @@ const ClientSelector = ({ clientes = [], clienteSeleccionado, setClienteSeleccio
 
     if (compactRow) {
         return (
-            <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all min-w-0 ${mobileStage !== 'context' ? 'hidden sm:flex' : 'flex'}`}>
+            <div className={`bg-white rounded-2xl border border-enterprise-100 shadow-premium overflow-hidden flex flex-col h-[75px] group hover:border-brand-orange transition-all min-w-0 flex`}>
                 <div className="bg-enterprise-950 px-4 py-1.5 flex items-center justify-between shrink-0">
                     <span className="text-[7.5px] font-black text-white uppercase tracking-[0.3em] italic">Identidad Comercial</span>
                     <ShieldCheck size={10} className="text-brand-orange" />
@@ -29,7 +29,7 @@ const ClientSelector = ({ clientes = [], clienteSeleccionado, setClienteSeleccio
                                 </option>
                             ))}
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-enterprise-300 pointer-events-none group-hover:text-brand-orange transition-colors">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-enterprise-500 pointer-events-none group-hover:text-brand-orange transition-colors">
                         <ChevronDown size={14} />
                     </div>
                 </div>
