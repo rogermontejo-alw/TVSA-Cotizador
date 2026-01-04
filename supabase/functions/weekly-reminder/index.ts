@@ -28,7 +28,19 @@ serve(async (req) => {
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY no configurada");
 
-    // 1. Obtener todos los perfiles
+    const d = new Date();
+    const ahora = new Date(d.toLocaleString("en-US", { timeZone: "America/Merida" }));
+    const diaSemana = ahora.getDay(); // 0: Domingo, 6: Sábado
+
+    // 1. Validar que sea Lunes a Viernes
+    if (diaSemana === 0 || diaSemana === 6) {
+      return new Response(JSON.stringify({ message: "Omitiendo envío: Fin de semana" }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+
+    // 2. Obtener todos los perfiles
     const { data: perfiles } = await supabaseClient
       .from('perfiles')
       .select('*');
@@ -46,8 +58,6 @@ serve(async (req) => {
         targetEmail = "roger_montejo@hotmail.com";
       }
 
-      const d = new Date();
-      const ahora = new Date(d.toLocaleString("en-US", { timeZone: "America/Merida" }));
       const nombreMes = ahora.toLocaleDateString('es-MX', { month: 'long' }).toUpperCase();
 
       // --- A. VENTAS DEL MES (CONTRATOS) ---
@@ -111,7 +121,7 @@ serve(async (req) => {
         .select('id, comentario, fecha_recordatorio, tipo, completado, cliente:clientes(nombre_empresa)')
         .eq('usuario_id', perfil.id)
         .eq('completado', false)
-        .gte('fecha_recordatorio', hoyInicio.toISOString())
+        // Eliminamos el gte de fecha_recordatorio para incluir vencidos
         .lte('fecha_recordatorio', new Date(ahora.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString())
         .order('fecha_recordatorio', { ascending: true });
 

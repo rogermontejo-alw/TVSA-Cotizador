@@ -1,7 +1,7 @@
 {
   "name": "cotizador-final",
   "private": true,
-  "version": "2.2.2",
+  "version": "2.2.3",
   "type": "module",
   "homepage": "https://rogermontejo-alw.github.io/TVSA-Cotizador",
   "scripts": {
@@ -13,9 +13,13 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.553.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "xlsx": "^0.18.5",
+    "xlsx-js-style": "^1.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",

@@ -34,32 +34,39 @@ const BriefingModal = ({ interacciones, clientes, onClose, onUpdateInteraction }
             .filter(i => {
                 if (!i.fecha_recordatorio || i.completado) return false;
                 const d = new Date(i.fecha_recordatorio);
-                return d >= localHoy && d <= localFinSemana;
+                // Incluir todo lo pendiente (desde el pasado hasta 7 días en el futuro)
+                return d <= localFinSemana;
             })
             .sort((a, b) => new Date(a.fecha_recordatorio) - new Date(b.fecha_recordatorio))
             .map(p => {
                 const d = new Date(p.fecha_recordatorio);
-                d.setHours(d.getHours()); // Mantener local
+                // Normalizar d para comparación de fechas sin considerar horas para etiquetas
+                const fechaSinHora = new Date(d);
+                fechaSinHora.setHours(0, 0, 0, 0);
 
                 let etiqueta = "";
                 let colorEtiqueta = "text-slate-400";
+                let esVencido = d < localHoy;
 
-                if (d < localMañana) {
+                if (esVencido) {
+                    etiqueta = "Vencido";
+                    colorEtiqueta = "text-red-500 font-black animate-pulse";
+                } else if (fechaSinHora.getTime() === localHoy.getTime()) {
                     etiqueta = "Hoy";
-                    colorEtiqueta = "text-brand-orange";
-                } else if (d < new Date(localMañana.getTime() + 24 * 60 * 60 * 1000)) {
+                    colorEtiqueta = "text-brand-orange font-bold";
+                } else if (fechaSinHora.getTime() === localMañana.getTime()) {
                     etiqueta = "Mañana";
                     colorEtiqueta = "text-blue-500";
                 } else {
                     etiqueta = d.toLocaleDateString('es-MX', { weekday: 'short' });
                 }
 
-                return { ...p, etiqueta, colorEtiqueta, fechaD: d };
+                return { ...p, etiqueta, colorEtiqueta, fechaD: d, esVencido };
             });
     }, [interacciones, localHoy, localMañana, localFinSemana]);
 
-    const pendientesHoy = todosPendientes.filter(p => p.etiqueta === "Hoy");
-    const pendientesSemana = todosPendientes.filter(p => p.etiqueta !== "Hoy");
+    const pendientesHoy = todosPendientes.filter(p => p.etiqueta === "Hoy" || p.esVencido);
+    const pendientesSemana = todosPendientes.filter(p => p.etiqueta !== "Hoy" && !p.esVencido);
 
     const frasesMotivacionales = [
         "El éxito no es el final, el fracaso no es fatal: lo que cuenta es el valor para continuar.",

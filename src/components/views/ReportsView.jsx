@@ -21,6 +21,9 @@ import {
     Info
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
+import XLSX from 'xlsx-js-style';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const MISSING_DATA_CHAR = '-';
 
@@ -623,49 +626,44 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 ['TOTAL COBRANZA', '', '', totalFacturado, '', '', '']
             ];
         } else if (id === 'prospeccion') {
-            title = "PROSPECCION_SIDE_BY_SIDE";
-            const leftHeaders = ['Concepto', 'Volumen (Cant)', 'Valor del Pipeline ($)'];
-            const rightHeaders = ['Cliente', 'Última Nota', 'Días Inactivo'];
-
-            const leftRows = [
-                ['ETAPAS DEL EMBUDO', '', ''],
-                ['Prospectos', pipelineData.resumen['Prospecto'].cant, pipelineData.resumen['Prospecto'].valor],
-                ['Contactados', pipelineData.resumen['Contactado'].cant, pipelineData.resumen['Contactado'].valor],
-                ['Interesados', pipelineData.resumen['Interesado'].cant, pipelineData.resumen['Interesado'].valor],
-                ['No Interesados', pipelineData.resumen['No Interesado'].cant, pipelineData.resumen['No Interesado'].valor],
-                ['Venta Cerrada (Clientes)', pipelineData.resumen['Cliente'].cant, pipelineData.resumen['Cliente'].valor]
-            ];
-
-            const rightRows = pipelineData.seguimientoTotal.flatMap(c => {
-                const mainRow = [c.nombre_empresa, c.ultima_interaccion?.comentario || 'Sin notas registradas', c.dias_sin_contacto === 999 ? 'N/A' : c.dias_sin_contacto];
-                const detailRows = (c.interacciones_recientes || []).slice(1).map(note => [
-                    '',
-                    `(Historial ${new Date(note.created_at).toLocaleDateString()}) ${note.comentario}`,
-                    ''
-                ]);
-                return [mainRow, ...detailRows];
-            });
-
-            const maxRows = Math.max(leftRows.length, rightRows.length);
-            const headers = [...leftHeaders, '', ...rightHeaders];
-            const rows = [];
-
-            for (let i = 0; i < maxRows; i++) {
-                const left = leftRows[i] || ['', '', ''];
-                const right = rightRows[i] || ['', '', ''];
-                rows.push([...left, '', ...right]);
-            }
-
-            return { title, headers, rows };
+            return {
+                title: "GESTIÓN DE PROSPECCIÓN Y PIPELINE",
+                isMultiSection: true,
+                sections: [
+                    {
+                        title: "ANÁLISIS DE EMBUDO (PIPELINE)",
+                        headers: ['Concepto', 'Volumen (Cant)', 'Valor del Pipeline ($)'],
+                        rows: [
+                            ['ETAPAS DEL EMBUDO', '', ''],
+                            ['Prospectos', pipelineData.resumen['Prospecto'].cant, pipelineData.resumen['Prospecto'].valor],
+                            ['Contactados', pipelineData.resumen['Contactado'].cant, pipelineData.resumen['Contactado'].valor],
+                            ['Interesados', pipelineData.resumen['Interesado'].cant, pipelineData.resumen['Interesado'].valor],
+                            ['No Interesados', pipelineData.resumen['No Interesado'].cant, pipelineData.resumen['No Interesado'].valor],
+                            ['Venta Cerrada (Clientes)', pipelineData.resumen['Cliente'].cant, pipelineData.resumen['Cliente'].valor]
+                        ]
+                    },
+                    {
+                        title: "BITÁCORA DE SEGUIMIENTO (TRACKING)",
+                        headers: ['Cliente', 'Última Nota / Historial', 'Días Inactivo'],
+                        rows: pipelineData.seguimientoTotal.flatMap(c => {
+                            const mainRow = [c.nombre_empresa, c.ultima_interaccion?.comentario || 'Sin notas registradas', c.dias_sin_contacto === 999 ? 'N/A' : c.dias_sin_contacto];
+                            const detailRows = (c.interacciones_recientes || []).slice(1).map(note => [
+                                '',
+                                `(HISTORIAL ${new Date(note.created_at).toLocaleDateString()}) ${note.comentario}`,
+                                ''
+                            ]);
+                            return [mainRow, ...detailRows];
+                        })
+                    }
+                ]
+            };
         }
 
         return { title, headers, rows };
     };
 
     const handleExportExcel = (mode = 'current') => {
-        // Definición de reportes a exportar
         let reportConfigs = [];
-
         if (mode === 'all') {
             reportConfigs = [
                 { id: 'ventas-mes', name: 'Mensual' },
@@ -684,196 +682,226 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 ];
             } else {
                 const namesMap = {
-                    'ventas-mes': 'Mensual',
-                    'ventas-canal': 'Canal',
-                    'ventas-ciudad': 'Territorial',
-                    'cobranza-periodo': 'Cobranza',
-                    'prospeccion': 'Prospección'
+                    'ventas-mes': 'Mensual', 'ventas-canal': 'Canal', 'ventas-ciudad': 'Territorial',
+                    'cobranza-periodo': 'Cobranza', 'prospeccion': 'Prospección'
                 };
                 reportConfigs = [{ id: seccionReporte, name: namesMap[seccionReporte] || 'Reporte' }];
             }
         }
 
-        const template = `
-            <?xml version="1.0"?>
-            <?mso-application progid="Excel.Sheet"?>
-            <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
-             xmlns:o="urn:schemas-microsoft-com:office:office"
-             xmlns:x="urn:schemas-microsoft-com:office:excel"
-             xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
-             xmlns:html="http://www.w3.org/TR/REC-html40">
-             <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-              <Author>Televisa MID Cotizador</Author>
-              <Created>${new Date().toISOString()}</Created>
-             </DocumentProperties>
-             <Styles>
-              <Style ss:ID="Default" ss:Name="Normal">
-               <Alignment ss:Vertical="Center"/>
-               <Borders/>
-               <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
-               <Interior/>
-               <NumberFormat/>
-               <Protection/>
-              </Style>
-              <Style ss:ID="Header">
-               <Alignment ss:Vertical="Center"/>
-               <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="12" ss:Color="#FFFFFF" ss:Bold="1"/>
-               <Interior ss:Color="#0F172A" ss:Pattern="Solid"/>
-              </Style>
-              <Style ss:ID="Title">
-               <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="14" ss:Color="#DC2626" ss:Bold="1"/>
-              </Style>
-              <Style ss:ID="Currency">
-               <NumberFormat ss:Format="&quot;$&quot;#,##0.00"/>
-              </Style>
-              <Style ss:ID="TotalCurrency">
-               <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="12" ss:Color="#FFFFFF" ss:Bold="1"/>
-               <Interior ss:Color="#0F172A" ss:Pattern="Solid"/>
-               <NumberFormat ss:Format="&quot;$&quot;#,##0.00"/>
-              </Style>
-              <Style ss:ID="SummaryHeader">
-               <Alignment ss:Vertical="Center"/>
-               <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#0F172A" ss:Bold="1"/>
-               <Interior ss:Color="#CBD5E1" ss:Pattern="Solid"/>
-               <Borders>
-                <Bottom ss:LineStyle="Continuous" ss:Weight="1"/>
-               </Borders>
-              </Style>
-              <Style ss:ID="SectionTitle">
-                <Alignment ss:Vertical="Center"/>
-                <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="12" ss:Color="#0F172A" ss:Bold="1"/>
-                <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
-              </Style>
-             </Styles>
-             {SHEETS}
-            </Workbook>`;
-
-        let sheetsXml = "";
+        const wb = XLSX.utils.book_new();
 
         reportConfigs.forEach(config => {
-            const { title, headers, rows } = getReportData(config.id, config.sub);
-            const sheetName = config.name;
+            const result = getReportData(config.id, config.sub);
+            if (!result) return;
 
-            let rowXml = "";
+            const sections = result.isMultiSection ? result.sections : [{ ...result }];
 
-            // Title and Metadata
-            if (title === "PROSPECCION_SIDE_BY_SIDE") {
-                rowXml += `<Row ss:Height="25">
-                    <Cell ss:StyleID="Title"><Data ss:Type="String">RESUMEN DE PROSPECCIÓN Y PIPELINE</Data></Cell>
-                    <Cell ss:Index="5" ss:StyleID="Title"><Data ss:Type="String">KPIs DE GESTIÓN</Data></Cell>
-                </Row>`;
-                rowXml += `<Row ss:Height="20">
-                    <Cell><Data ss:Type="String">Periodo: ${fechaInicio} al ${fechaFin}</Data></Cell>
-                    <Cell ss:Index="5"><Data ss:Type="String">BITÁCORA DE CARTERA TOTAL (Clasificación por Inactividad)</Data></Cell>
-                </Row>`;
-                rowXml += `<Row ss:Height="20">
-                    <Cell><Data ss:Type="String">Generado: ${new Date().toLocaleString()}</Data></Cell>
-                </Row>`;
-            } else {
-                rowXml += `<Row ss:Height="25"><Cell ss:StyleID="Title"><Data ss:Type="String">${title}</Data></Cell></Row>`;
-                rowXml += `<Row ss:Height="20"><Cell><Data ss:Type="String">Periodo: ${fechaInicio} al ${fechaFin}</Data></Cell></Row>`;
-                rowXml += `<Row ss:Height="20"><Cell><Data ss:Type="String">Generado: ${new Date().toLocaleString()}</Data></Cell></Row>`;
-            }
-            rowXml += `<Row ss:Height="20"></Row>`;
+            sections.forEach((section, sIdx) => {
+                const { title: sectionTitle, headers, rows } = section;
 
-            // Headers
-            rowXml += `<Row ss:Height="25">`;
-            headers.forEach((h, hIdx) => {
-                if (h === '') {
-                    rowXml += `<Cell></Cell>`;
-                } else {
-                    rowXml += `<Cell ss:StyleID="Header"><Data ss:Type="String">${h}</Data></Cell>`;
-                }
-            });
-            rowXml += `</Row>`;
+                // Definición de Estilos Corporativos
+                const headerStyle = {
+                    font: { bold: true, color: { rgb: "FFFFFF" }, sz: 10 },
+                    fill: { fgColor: { rgb: "0F172A" } },
+                    alignment: { horizontal: "center", vertical: "center", wrapText: true },
+                    border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
+                };
 
-            // Data Rows
-            rows.forEach(row => {
-                const isTotalRow = String(row[0]).startsWith('TOTAL');
-                const isSectionTitle = String(row[0]).includes('ETAPAS DEL EMBUDO') || String(row[0]).includes('RESUMEN EJECUTIVO') || String(row[0]).includes('DETALLE CRONOLÓGICO');
-                const isTableSubHeader = String(row[0]) === 'Master Contract' || (String(row[1]) === 'Concepto' && String(row[2]) === 'Folio Cotz');
-                const isGroupHeader = String(row[1]).includes('CONVENIO') || String(row[1]).includes('VENTAS DIRECTAS');
+                const titleStyle = { font: { bold: true, sz: 14, color: { rgb: "0F172A" } } };
+                const metaStyle = { font: { italic: true, sz: 9, color: { rgb: "64748B" } } };
+                const cellStyleNormal = { font: { sz: 9 }, alignment: { vertical: "center", wrapText: true } };
+                const totalStyle = {
+                    font: { bold: true, sz: 10 },
+                    fill: { fgColor: { rgb: "F1F5F9" } },
+                    alignment: { vertical: "center", wrapText: true },
+                    border: { top: { style: "medium", color: { rgb: "0F172A" } }, bottom: { style: "medium", color: { rgb: "0F172A" } } }
+                };
 
-                rowXml += `<Row ss:Height="${isSectionTitle ? '25' : '22'}">`;
-                row.forEach((cell, cellIdx) => {
-                    const header = headers[cellIdx];
-                    const isTextCol = !header?.includes('Total') && ["Orden", "Factura", "Folio", "Ref.", "Contrato", "Folio Cotz", "Master Contract", "Cuenta", "Plaza", "Orden / Contrato", "Estado", "F. Pago Real", "F. Programada", "Cliente", "Canal", "Última Nota", "Concepto"].some(tc => header?.includes(tc));
+                const moneyFormat = "$#,##0.00";
 
-                    let isNum = !isNaN(cell) && typeof cell !== 'boolean' && cell !== '' && !isTextCol;
-                    const type = isNum ? 'Number' : 'String';
+                const wsData = [];
+                wsData.push([{ v: "NEXUS INTELLIGENCE SYSTEM", s: titleStyle }]);
+                wsData.push([{ v: "TELEVISA UNIVISION - REPORTE DE GESTIÓN", s: metaStyle }]);
+                wsData.push([{ v: sectionTitle.toUpperCase(), s: { font: { bold: true, sz: 11 } } }]);
+                wsData.push([{ v: `PERIODO: ${fechaInicio} AL ${fechaFin}`, s: metaStyle }]);
+                wsData.push([{ v: `GENERADO: ${new Date().toLocaleString()}`, s: metaStyle }]);
+                wsData.push([]);
 
-                    let styleID = "";
-                    if (isSectionTitle) {
-                        styleID = ' ss:StyleID="SectionTitle"';
-                    } else if (isTableSubHeader) {
-                        styleID = ' ss:StyleID="SummaryHeader"';
-                    } else if (isTotalRow) {
-                        styleID = isNum ? ' ss:StyleID="TotalCurrency"' : ' ss:StyleID="Header"';
-                    } else if (isGroupHeader) {
-                        styleID = isNum ? ' ss:StyleID="Currency"' : ' ss:StyleID="SectionTitle"';
-                    } else if (isNum) {
-                        const noCurrencyHeaders = ['Cant', 'Días Inactivo', 'Volumen'];
-                        const shouldHaveCurrency = !noCurrencyHeaders.some(nh => header?.includes(nh));
-                        styleID = shouldHaveCurrency ? ' ss:StyleID="Currency"' : '';
-                    }
+                wsData.push(headers.map(h => ({ v: h.toUpperCase(), s: headerStyle })));
 
-                    const cleanVal = String(cell || '')
-                        .replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/"/g, '&quot;')
-                        .replace(/'/g, '&apos;');
+                rows.forEach(row => {
+                    const rowStr = (String(row[0] || '') + String(row[1] || '')).toUpperCase();
+                    const isTotalRow = ["TOTAL", "ETAPAS", "RESUMEN", "DETALLE"].some(kw => rowStr.includes(kw));
 
-                    rowXml += `<Cell${styleID}><Data ss:Type="${type}">${isNum ? cell : cleanVal}</Data></Cell>`;
+                    wsData.push(row.map((cell, idx) => {
+                        const header = (headers[idx] || '').toLowerCase();
+                        const isMoney = ["monto", "inversión", "total", "subtotal", "facturado", "cobranza", "disponible", "ejecutado", "factura", "precio", "valor"].some(kw => header.includes(kw));
+                        const isQty = ["cant", "días", "volumen", "cantidad"].some(kw => header.includes(kw));
+
+                        let cellConfig = {
+                            v: cell,
+                            s: isTotalRow ? totalStyle : cellStyleNormal
+                        };
+
+                        if (typeof cell === 'number') {
+                            if (isMoney) cellConfig.z = moneyFormat;
+                            else if (isQty) cellConfig.z = "0";
+                        }
+
+                        return cellConfig;
+                    }));
                 });
-                rowXml += `</Row>`;
+
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                ws['!cols'] = headers.map(h => {
+                    const lowH = h.toLowerCase();
+                    if (lowH.includes('cliente') || lowH.includes('concepto')) return { wch: 45 };
+                    if (lowH.includes('nota') || lowH.includes('comentario') || lowH.includes('historial')) return { wch: 70 };
+                    return { wch: 18 };
+                });
+
+                const sheetName = result.isMultiSection
+                    ? sectionTitle.substring(0, 31)
+                    : config.name.substring(0, 31);
+
+                XLSX.utils.book_append_sheet(wb, ws, sheetName);
             });
-
-            // Column Width definitions
-            let colWidthsXml = "";
-            headers.forEach((h, hIdx) => {
-                let width = 100; // Default width
-                if (title === "PROSPECCION_SIDE_BY_SIDE") {
-                    if (hIdx === 0) width = 180; // Concepto
-                    else if (hIdx === 1) width = 100; // Volumen
-                    else if (hIdx === 2) width = 120; // Valor
-                    else if (hIdx === 3) width = 30; // Separador
-                    else if (hIdx === 4) width = 180; // Cliente
-                    else if (hIdx === 5) width = 350; // Última Nota
-                    else if (hIdx === 6) width = 80; // Días Inactivo
-                } else {
-                    if (h.includes('Concepto')) width = 220;
-                    else if (h.includes('Cliente') || h.includes('Cuenta') || h.includes('Empresa')) width = 250;
-                    else if (h.includes('Canal') || h.includes('Notas')) width = 180;
-                    else if (h.includes('Total') || h.includes('Monto') || h.includes('Transacción') || h.includes('Inversión')) width = 120;
-                    else if (h.includes('Ref.')) width = 130;
-                    else if (h.includes('Fecha') || h.includes('F. ')) width = 80;
-                    else if (h.includes('Folio') || h.includes('Factura') || h.includes('Contrato')) width = 110;
-                }
-
-                colWidthsXml += `<Column ss:AutoFitWidth="0" ss:Width="${width}"/>`;
-            });
-
-            sheetsXml += `
-                <Worksheet ss:Name="${sheetName}">
-                 <Table>
-                  ${colWidthsXml}
-                  ${rowXml}
-                 </Table>
-                </Worksheet>`;
         });
 
-        const finalXml = template.replace("{SHEETS}", sheetsXml);
         const filename = mode === 'all'
-            ? `Reporte_Consolidado_${fechaInicio}_al_${fechaFin}.xls`
-            : `Reporte_${seccionReporte}_${fechaInicio}_al_${fechaFin}.xls`;
+            ? `Reporte_Consolidado_${fechaInicio}_al_${fechaFin}.xlsx`
+            : `Reporte_${seccionReporte}_${fechaInicio}_al_${fechaFin}.xlsx`;
 
-        const blob = new Blob([finalXml], { type: 'application/vnd.ms-excel' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", filename);
-        link.click();
+        XLSX.writeFile(wb, filename);
+    };
+
+    const handleExportPDF = (mode = 'current') => {
+        try {
+            const doc = new jsPDF('l', 'mm', 'a4');
+            let reportConfigs = [];
+
+            if (mode === 'all') {
+                reportConfigs = [
+                    { id: 'ventas-mes', name: 'Mensual' },
+                    { id: 'ventas-canal', name: 'Canal' },
+                    { id: 'ventas-ciudad', name: 'Territorial' },
+                    { id: 'control-cierres', sub: 'pipeline', name: 'Saldos Convenio' },
+                    { id: 'control-cierres', sub: 'ejecucion', name: 'Libro Mayor' },
+                    { id: 'cobranza-periodo', name: 'Cobranza' },
+                    { id: 'prospeccion', name: 'Prospección' }
+                ];
+            } else {
+                if (seccionReporte === 'control-cierres') {
+                    reportConfigs = [
+                        { id: 'control-cierres', sub: 'pipeline', name: 'Saldos Convenio' },
+                        { id: 'control-cierres', sub: 'ejecucion', name: 'Libro Mayor' }
+                    ];
+                } else {
+                    const namesMap = {
+                        'ventas-mes': 'Mensual', 'ventas-canal': 'Canal', 'ventas-ciudad': 'Territorial',
+                        'cobranza-periodo': 'Cobranza', 'prospeccion': 'Prospección'
+                    };
+                    reportConfigs = [{ id: seccionReporte, name: namesMap[seccionReporte] || 'Reporte' }];
+                }
+            }
+
+            reportConfigs.forEach((config, idx) => {
+                const result = getReportData(config.id, config.sub);
+                if (!result) return;
+
+                const sections = result.isMultiSection ? result.sections : [{ ...result }];
+
+                sections.forEach((section, sIdx) => {
+                    if (idx > 0 || sIdx > 0) doc.addPage();
+
+                    const { title: sectionTitle, headers, rows } = section;
+
+                    // --- HEADER PREMIUM CON MÁRGENES ---
+                    const marginX = 18;
+                    doc.setFillColor(15, 23, 42);
+                    doc.rect(0, 0, 297, 35, 'F');
+
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(22);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text("NEXUS", marginX, 18);
+                    doc.setTextColor(255, 77, 0);
+                    doc.text("INTELLIGENCE", marginX + 31, 18);
+
+                    doc.setFontSize(8);
+                    doc.setTextColor(255, 255, 255);
+                    doc.text("TELEVISA UNIVISION - REPORTE DE GESTIÓN COMERCIAL", marginX, 25);
+
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(10);
+                    doc.text(sectionTitle.toUpperCase(), 297 - marginX, 18, { align: 'right' });
+                    doc.setFontSize(7);
+                    doc.text(`PERIODO: ${fechaInicio} AL ${fechaFin}`, 297 - marginX, 25, { align: 'right' });
+                    doc.text(`GENERADO: ${new Date().toLocaleString().toUpperCase()}`, 297 - marginX, 29, { align: 'right' });
+
+                    const bodyData = rows.map(r => r.map((c, cellIdx) => {
+                        const hText = (headers[cellIdx] || '').toLowerCase();
+                        const isM = ["monto", "inversión", "total", "subtotal", "facturado", "cobranza", "disponible", "ejecutado", "factura", "precio", "valor"].some(kw => hText.includes(kw));
+
+                        if (typeof c === 'number' && isM) return formatMXN(c);
+                        return String(c || '').toUpperCase();
+                    }));
+
+                    autoTable(doc, {
+                        startY: 45,
+                        head: [headers.map(h => h.toUpperCase())],
+                        body: bodyData,
+                        theme: 'striped',
+                        headStyles: {
+                            fillColor: [15, 23, 42],
+                            textColor: [255, 255, 255],
+                            fontSize: 7.5,
+                            fontStyle: 'bold',
+                            cellPadding: 4
+                        },
+                        bodyStyles: {
+                            fontSize: 6.5,
+                            cellPadding: 3,
+                            textColor: [30, 41, 59],
+                            overflow: 'linebreak'
+                        },
+                        columnStyles: headers.reduce((acc, h, i) => {
+                            const lh = h.toLowerCase();
+                            const isN = ["monto", "inversión", "total", "disponible", "ejecutado", "saldo", "facturado", "cobranza", "valor", "volumen", "cant"].some(kw => lh.includes(kw));
+                            if (isN) acc[i] = { halign: 'right' };
+                            return acc;
+                        }, {}),
+                        didParseCell: (data) => {
+                            const cellText = (String(data.row.cells[0]?.text || '') + String(data.row.cells[1]?.text || '')).toUpperCase();
+                            const isSpecial = ["TOTAL", "ETAPAS", "DETALLE", "RESUMEN"].some(kw => cellText.includes(kw));
+                            if (isSpecial) {
+                                data.cell.styles.fontStyle = 'bold';
+                                data.cell.styles.fillColor = [241, 245, 249];
+                                data.cell.styles.fontSize = 7.5;
+                                data.cell.styles.textColor = [15, 23, 42];
+                            }
+                        },
+                        margin: { left: marginX, right: marginX, bottom: 20 }
+                    });
+
+                    const pageCount = doc.internal.getNumberOfPages();
+                    doc.setFontSize(7);
+                    doc.setTextColor(148, 163, 184);
+                    doc.text(`NEXUS ANALYTICS - DOCUMENTO CONFIDENCIAL - PÁGINA ${pageCount}`, marginX, doc.internal.pageSize.height - 10);
+                });
+            });
+
+            const filename = mode === 'all'
+                ? `Reporte_Consolidado_${fechaInicio}_al_${fechaFin}.pdf`
+                : `Reporte_${seccionReporte}_${fechaInicio}_al_${fechaFin}.pdf`;
+
+            doc.save(filename);
+        } catch (error) {
+            console.error("Error al exportar PDF:", error);
+            alert("Error al generar el PDF. Verifica que los datos estén disponibles.");
+        }
     };
 
     return (
@@ -901,28 +929,60 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => handleExportExcel('current')}
-                            className="w-12 h-12 bg-white/5 border border-white/10 text-white rounded-xl flex items-center justify-center hover:bg-white hover:text-enterprise-950 transition-all group/btn"
-                            title="Exportar Vista Actual"
-                        >
-                            <Download size={20} className="group-hover/btn:translate-y-0.5 transition-transform" />
-                        </button>
-                        <button
-                            onClick={() => handleExportExcel('all')}
-                            className="w-12 h-12 bg-white/5 border border-white/10 text-brand-orange rounded-xl flex items-center justify-center hover:bg-brand-orange hover:text-white transition-all group/btn"
-                            title="Exportar Matriz Global"
-                        >
-                            <Globe size={20} className="group-hover/btn:rotate-180 transition-transform duration-700" />
-                        </button>
-                        <button
-                            onClick={() => window.print()}
-                            className="px-8 py-3.5 bg-brand-orange text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-brand-orange/90 transition-all shadow-xl shadow-brand-orange/20 active:scale-95"
-                        >
-                            <Printer size={16} strokeWidth={2.5} />
-                            Imprimir Reporte
-                        </button>
+                    <div className="flex items-center gap-6">
+                        {/* Grupo Actual */}
+                        <div className="flex flex-col items-center gap-1.5">
+                            <span className="text-[7.5px] font-black text-white/30 uppercase tracking-[0.2em]">Actual</span>
+                            <div className="flex bg-white/5 border border-white/10 rounded-xl overflow-hidden p-1 shadow-inner">
+                                <button
+                                    onClick={() => handleExportExcel('current')}
+                                    className="w-10 h-10 text-white rounded-lg flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all group/btn"
+                                    title="Excel de Sección"
+                                >
+                                    <Download size={18} />
+                                </button>
+                                <button
+                                    onClick={() => handleExportPDF('current')}
+                                    className="w-10 h-10 text-white rounded-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all group/btn"
+                                    title="PDF de Sección"
+                                >
+                                    <FileText size={18} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Grupo Global */}
+                        <div className="flex flex-col items-center gap-1.5">
+                            <span className="text-[7.5px] font-black text-brand-orange/40 uppercase tracking-[0.2em]">Global</span>
+                            <div className="flex bg-white/5 border border-white/10 rounded-xl overflow-hidden p-1 shadow-inner">
+                                <button
+                                    onClick={() => handleExportExcel('all')}
+                                    className="w-10 h-10 text-brand-orange rounded-lg flex items-center justify-center hover:bg-brand-orange hover:text-white transition-all group/btn"
+                                    title="Excel Consolidado"
+                                >
+                                    <Globe size={18} />
+                                </button>
+                                <button
+                                    onClick={() => handleExportPDF('all')}
+                                    className="w-10 h-10 text-brand-orange rounded-lg flex items-center justify-center hover:bg-brand-orange hover:text-white transition-all group/btn"
+                                    title="PDF Consolidado"
+                                >
+                                    <TrendingUp size={18} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Grupo Impresión */}
+                        <div className="flex flex-col items-center gap-1.5">
+                            <span className="text-[7.5px] font-black text-white/30 uppercase tracking-[0.2em] opacity-0">-</span>
+                            <button
+                                onClick={() => window.print()}
+                                className="w-12 h-12 bg-brand-orange text-white rounded-xl shadow-lg shadow-brand-orange/20 flex items-center justify-center hover:bg-brand-orange/90 transition-all active:scale-95"
+                                title="Imprimir"
+                            >
+                                <Printer size={20} strokeWidth={2.5} />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
