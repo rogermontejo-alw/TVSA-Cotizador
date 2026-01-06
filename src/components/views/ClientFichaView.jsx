@@ -55,6 +55,13 @@ const ClientFichaView = ({
     const [tipoNota, setTipoNota] = useState('Seguimiento');
     const [isSavingNota, setIsSavingNota] = useState(false);
 
+    const getWhatsAppLink = (phone) => {
+        if (!phone) return '#';
+        const cleaned = phone.replace(/\D/g, '');
+        const finalPhone = cleaned.length === 10 ? `52${cleaned}` : cleaned;
+        return `https://wa.me/${finalPhone}`;
+    };
+
     const clientQuotes = useMemo(() => {
         if (!cliente?.id || !cotizaciones) return [];
         return cotizaciones.filter(q => String(q.cliente_id) === String(cliente.id));
@@ -392,7 +399,7 @@ const ClientFichaView = ({
                                             </a>
                                             {cliente.telefono && (
                                                 <a
-                                                    href={`https://wa.me/${cliente.telefono.replace(/\s+/g, '').replace('+', '')}`}
+                                                    href={getWhatsAppLink(cliente.telefono)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
