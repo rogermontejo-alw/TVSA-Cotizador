@@ -32,10 +32,8 @@ const BriefingModal = ({ interacciones, clientes, onClose, onUpdateInteraction }
     const todosPendientes = useMemo(() => {
         return (interacciones || [])
             .filter(i => {
-                if (!i.fecha_recordatorio || i.completado) return false;
-                const d = new Date(i.fecha_recordatorio);
-                // Incluir todo lo pendiente (desde el pasado hasta 7 días en el futuro)
-                return d <= localFinSemana;
+                const manualTypes = ['Seguimiento', 'Llamada', 'Visita', 'WhatsApp', 'Correo', 'Sinergia'];
+                return i.fecha_recordatorio && !i.completado && manualTypes.includes(i.tipo);
             })
             .sort((a, b) => new Date(a.fecha_recordatorio) - new Date(b.fecha_recordatorio))
             .map(p => {

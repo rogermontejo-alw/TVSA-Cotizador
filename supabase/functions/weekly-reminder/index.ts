@@ -14,7 +14,7 @@ interface Reminder {
   cliente: { nombre_empresa: string };
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -121,29 +121,30 @@ serve(async (req) => {
         .select('id, comentario, fecha_recordatorio, tipo, completado, cliente:clientes(nombre_empresa)')
         .eq('usuario_id', perfil.id)
         .eq('completado', false)
-        // Eliminamos el gte de fecha_recordatorio para incluir vencidos
-        .lte('fecha_recordatorio', new Date(ahora.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString())
+        .not('fecha_recordatorio', 'is', null)
+        .in('tipo', ['Seguimiento', 'Llamada', 'Visita', 'WhatsApp', 'Correo', 'Sinergia'])
         .order('fecha_recordatorio', { ascending: true });
 
       const reminders = (remindersAll || []) as Reminder[];
-      const remindersHoy = reminders.filter(r => {
-        const d = new Date(r.fecha_recordatorio);
-        return d >= hoyInicio && d <= hoyFin;
-      });
 
-      const agendaHoyHtml = remindersHoy.length > 0 ? remindersHoy.map(r => {
+      const agendaHoyHtml = reminders.length > 0 ? reminders.map(r => {
         const f = new Date(r.fecha_recordatorio);
+        const isOverdue = f < ahora && (ahora.toDateString() !== f.toDateString());
+        const dateStr = f.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' });
         const time = f.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+
         return `
-          <div style="padding: 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 8px;">
+          <div style="padding: 12px; background: #ffffff; border: 1px solid ${isOverdue ? '#fecdd3' : '#e2e8f0'}; border-radius: 12px; margin-bottom: 8px; ${isOverdue ? 'background: #fffbfa;' : ''}">
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-              <span style="font-size: 8px; font-weight: 900; color: #ff4d00; text-transform: uppercase;">${r.tipo} • ${time}</span>
+              <span style="font-size: 8px; font-weight: 900; color: ${isOverdue ? '#be123c' : '#ff4d00'}; text-transform: uppercase;">
+                ${isOverdue ? '⚠️ VENCIDO • ' : ''}${r.tipo} • ${dateStr} @ ${time}
+              </span>
             </div>
             <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase; margin-bottom: 2px;">${r.cliente?.nombre_empresa}</div>
             <div style="font-size: 10px; color: #64748b; font-style: italic;">"${r.comentario}"</div>
           </div>
         `;
-      }).join('') : '<div style="text-align: center; padding: 15px; border: 1px dashed #e2e8f0; border-radius: 12px; color: #94a3b8; font-size: 10px; font-weight: 700;">Sin pendientes para hoy</div>';
+      }).join('') : '<div style="text-align: center; padding: 15px; border: 1px dashed #e2e8f0; border-radius: 12px; color: #94a3b8; font-size: 10px; font-weight: 700;">Sin pendientes registrados</div>';
 
       // --- NEXUS SENTINEL (CORRECCIÓN 20455 DÍAS) ---
       const { data: todosClientes } = await supabaseClient
@@ -152,11 +153,11 @@ serve(async (req) => {
         .eq('estatus', 'activo');
 
       const abandonados = (todosClientes || [])
-        .map(c => {
-          const interacciones = (c.interacciones_cliente as any[]) || [];
+        .map((c: any) => {
+          const interacciones = (c.interacciones_cliente as { created_at: string }[]) || [];
           if (interacciones.length === 0) return { ...c, label: 'CUENTA NUEVA / SIN GESTIÓN', priority: 1 };
 
-          const ultima = interacciones.reduce((max, i) => {
+          const ultima = interacciones.reduce((max: Date, i: any) => {
             const date = new Date(i.created_at);
             return date > max ? date : max;
           }, new Date(0));
@@ -166,8 +167,8 @@ serve(async (req) => {
           const diasInactivo = Math.floor((ahora.getTime() - ultima.getTime()) / (1000 * 60 * 60 * 24));
           return { ...c, diasInactivo, label: `${diasInactivo} DÍAS EN SILENCIO`, priority: diasInactivo > 30 ? 3 : 2 };
         })
-        .filter(c => c.priority === 1 || (c.diasInactivo && c.diasInactivo > 21))
-        .sort((a, b) => b.priority - a.priority || (b.diasInactivo || 0) - (a.diasInactivo || 0))
+        .filter((c: any) => c.priority === 1 || (c.diasInactivo && c.diasInactivo > 21))
+        .sort((a: any, b: any) => b.priority - a.priority || (b.diasInactivo || 0) - (a.diasInactivo || 0))
         .slice(0, 4);
 
       const abandonadosHtml = abandonados.length > 0 ? abandonados.map(c => `
@@ -233,7 +234,7 @@ serve(async (req) => {
                     <!-- ACCIONES DEL DÍA -->
                     <div style="margin-bottom: 25px;">
                       <h3 style="font-size: 11px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px solid #ff4d00; padding-bottom: 5px; margin-bottom: 15px;">
-                        📌 TAREAS Y RECORDATORIOS (HOY)
+                        📌 PENDIENTES Y VENCIDOS
                       </h3>
                       ${agendaHoyHtml}
                     </div>
@@ -286,7 +287,7 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ message: "Completed", stats: results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-  } catch (error) {
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
   }
 })

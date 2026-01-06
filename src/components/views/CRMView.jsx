@@ -89,7 +89,7 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
     return (
         <div className="space-y-6 animate-premium-fade pb-20 px-4">
             {/* NEXUS CRM STATION HEADER */}
-            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden group">
+            <div className="bg-enterprise-950 border border-white/10 rounded-[2rem] p-4 sm:p-6 shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-brand-orange/10 via-transparent to-transparent pointer-events-none" />
                 <div className="absolute -left-10 -top-10 w-48 h-48 bg-brand-orange/5 blur-3xl rounded-full" />
 
@@ -99,14 +99,15 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
                             <Briefcase size={28} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-3">
-                                Directorio <span className="text-brand-orange">Estratégico</span> CRM
-                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex flex-wrap items-center gap-2 sm:gap-3">
+                                Directorio <span className="text-brand-orange">Estratégico</span>
+                                <span className="text-white/50">CRM</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse shrink-0" />
                             </h1>
-                            <div className="flex items-center gap-3 mt-2 text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">
-                                <span>Master Database de Cuentas</span>
-                                <span className="w-1 h-1 bg-white/20 rounded-full" />
-                                <span className="text-brand-orange/80">Entidades Registradas: {clientesFiltrados.length}</span>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[8px] sm:text-[9px] font-black text-white/40 uppercase tracking-[0.2em] sm:tracking-[0.3em]">
+                                <span className="whitespace-nowrap">Master Database de Cuentas</span>
+                                <span className="w-1 h-1 bg-white/20 rounded-full hidden sm:block" />
+                                <span className="text-brand-orange/80 whitespace-nowrap">Entidades Registradas: {clientesFiltrados.length}</span>
                             </div>
                         </div>
                     </div>
@@ -156,7 +157,7 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-enterprise-400 group-focus-within:text-brand-orange transition-colors" size={14} />
                     <input
                         type="text"
-                        placeholder="BUSCAR POR NOMBRE, CONTACTO O CORREO ELECTRÓNICO..."
+                        placeholder="BUSCAR CLIENTE O CONTACTO..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
                         className="w-full pl-10 pr-4 py-3 bg-enterprise-50 border border-enterprise-100/50 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:bg-white focus:border-brand-orange/50 transition-all placeholder:text-enterprise-300"
