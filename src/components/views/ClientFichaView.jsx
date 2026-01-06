@@ -2,10 +2,16 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
     User, Phone, Mail, MapPin, Building2, Briefcase,
     ChevronLeft, Edit3, Plus, FileText, CheckCircle2,
-    Clock, AlertCircle, Save, Trash2, ArrowRight, RefreshCw, Printer, Calendar
+    Clock, AlertCircle, Save, Trash2, ArrowRight, RefreshCw, Printer, Calendar, MessageCircle
 } from 'lucide-react';
 import { formatMXN } from '../../utils/formatters';
 import { formatToMeridaISO } from '../../utils/dateUtils';
+
+// Estilos globales internos para el selector de rueda
+const wheelStyles = `
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+`;
 
 const ClientFichaView = ({
     cliente,
@@ -43,7 +49,9 @@ const ClientFichaView = ({
     });
 
     const [nuevaNota, setNuevaNota] = useState('');
-    const [fechaRecordatorio, setFechaRecordatorio] = useState('');
+    const [remDate, setRemDate] = useState('');
+    const [remHour, setRemHour] = useState('09');
+    const [remMinute, setRemMinute] = useState('00');
     const [tipoNota, setTipoNota] = useState('Seguimiento');
     const [isSavingNota, setIsSavingNota] = useState(false);
 
@@ -161,16 +169,23 @@ const ClientFichaView = ({
         if (!nuevaNota.trim()) return;
         setIsSavingNota(true);
         try {
+            let recordatorioFinal = null;
+            if (remDate && remHour && remMinute) {
+                recordatorioFinal = `${remDate}T${remHour}:${remMinute}:00`;
+            }
+
             const success = await onSaveClient('interacciones_cliente', {
                 cliente_id: cliente.id,
                 tipo: tipoNota,
                 comentario: nuevaNota,
                 usuario_id: perfil?.id,
-                fecha_recordatorio: formatToMeridaISO(fechaRecordatorio) || null
+                fecha_recordatorio: recordatorioFinal ? formatToMeridaISO(recordatorioFinal) : null
             });
             if (success) {
                 setNuevaNota('');
-                setFechaRecordatorio('');
+                setRemDate('');
+                setRemHour('09');
+                setRemMinute('00');
                 setMensaje({ tipo: 'exito', texto: 'Nota de seguimiento guardada' });
             }
         } catch (err) {
@@ -197,8 +212,75 @@ const ClientFichaView = ({
         }
     };
 
+    // Componente interno para el selector de rueda (TimeWheel) con un diseño más refinado
+    const TimeWheel = ({ options = [], value, onChange, label }) => {
+        const scrollRef = React.useRef(null);
+        const scrollTimeout = React.useRef(null);
+        const itemHeight = 30;
+
+        useEffect(() => {
+            if (scrollRef.current) {
+                const index = options.indexOf(value);
+                if (index !== -1) {
+                    const targetScroll = index * itemHeight;
+                    if (Math.abs(scrollRef.current.scrollTop - targetScroll) > 1) {
+                        scrollRef.current.scrollTop = targetScroll;
+                    }
+                }
+            }
+        }, [value]);
+
+        const handleScroll = () => {
+            if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+            scrollTimeout.current = setTimeout(() => {
+                if (scrollRef.current) {
+                    const index = Math.round(scrollRef.current.scrollTop / itemHeight);
+                    if (options[index] && options[index] !== value) {
+                        onChange(options[index]);
+                    }
+                }
+            }, 100);
+        };
+
+        return (
+            <div className="flex flex-col items-center w-[55px] sm:w-[65px] shrink-0">
+                <span className="text-[6px] font-black text-slate-400 mb-1.5 uppercase tracking-widest leading-none">{label}</span>
+                <div className="relative h-[90px] w-full bg-slate-50/40 rounded-2xl overflow-hidden group border border-slate-100/50 shadow-inner">
+                    <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-slate-50 via-slate-50/70 to-transparent z-10 pointer-events-none" />
+                    <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-slate-50 via-slate-50/70 to-transparent z-10 pointer-events-none" />
+
+                    {/* Indicador de selección central (Lente de enfoque naranja) */}
+                    <div className="absolute top-1/2 -translate-y-1/2 left-1.5 right-1.5 h-7.5 border border-brand-orange/15 bg-brand-orange/[0.04] rounded-lg pointer-events-none z-0" />
+
+                    <div
+                        ref={scrollRef}
+                        className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide py-[30px] touch-pan-y"
+                        onScroll={handleScroll}
+                        style={{ scrollSnapType: 'y mandatory' }}
+                    >
+                        {options.map((opt) => (
+                            <div
+                                key={opt}
+                                onClick={() => {
+                                    if (scrollRef.current) {
+                                        scrollRef.current.scrollTo({ top: options.indexOf(opt) * itemHeight, behavior: 'smooth' });
+                                    }
+                                }}
+                                className={`h-[30px] flex items-center justify-center text-[10px] font-black snap-center transition-all duration-300 cursor-pointer select-none
+                                    ${value === opt ? 'text-brand-orange scale-110 drop-shadow-sm font-black' : 'text-slate-300 opacity-25 hover:opacity-100'}`}
+                            >
+                                {opt}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+            <style>{wheelStyles}</style>
             {/* Header */}
             <div className="flex items-center gap-4 mb-2">
                 <button
@@ -269,7 +351,6 @@ const ClientFichaView = ({
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* 2. DETALLES DE CONTACTO */}
                 <div className="lg:col-span-4 space-y-6">
                     <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
                         <div className="flex justify-between items-center mb-6">
@@ -286,12 +367,45 @@ const ClientFichaView = ({
                         ) : (
                             <div className="space-y-6">
                                 <div className="flex items-center gap-3"><User size={18} className="text-slate-400" /><div><p className="text-[8px] font-black text-gray-400 uppercase">Contacto</p><p className="text-xs font-bold">{cliente.nombre_contacto || 'No registrado'}</p></div></div>
-                                <div className="flex items-center gap-3"><Mail size={18} className="text-slate-400" /><div><p className="text-[8px] font-black text-gray-400 uppercase">Email</p><p className="text-xs font-bold">{cliente.email || 'No registrado'}</p></div></div>
-                                <div className="flex items-center gap-3"><Phone size={18} className="text-slate-400" /><div><p className="text-[8px] font-black text-gray-400 uppercase">Teléfono</p><p className="text-xs font-bold">{cliente.telefono || 'No registrado'}</p></div></div>
+                                <div className="flex items-center gap-3">
+                                    <Mail size={18} className="text-slate-400" />
+                                    <div>
+                                        <p className="text-[8px] font-black text-gray-400 uppercase">Email</p>
+                                        <a
+                                            href={`mailto:${cliente.email}`}
+                                            className="text-xs font-bold text-blue-600 hover:text-brand-orange transition-colors"
+                                        >
+                                            {cliente.email || 'No registrado'}
+                                        </a>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Phone size={18} className="text-slate-400" />
+                                    <div className="flex-1">
+                                        <p className="text-[8px] font-black text-gray-400 uppercase">Teléfono</p>
+                                        <div className="flex items-center justify-between">
+                                            <a
+                                                href={`tel:${cliente.telefono}`}
+                                                className="text-xs font-bold hover:text-blue-600 transition-colors"
+                                            >
+                                                {cliente.telefono || 'No registrado'}
+                                            </a>
+                                            {cliente.telefono && (
+                                                <a
+                                                    href={`https://wa.me/${cliente.telefono.replace(/\s+/g, '').replace('+', '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                                                >
+                                                    <MessageCircle size={12} /> WhatsApp
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
-
                     <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
                         <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em] mb-4">Ubicación y Datos</h4>
                         <div className="space-y-4">
@@ -301,7 +415,6 @@ const ClientFichaView = ({
                     </div>
                 </div>
 
-                {/* 3. REGISTRO DE INTERACCIÓN (CRM Timeline) */}
                 <div className="lg:col-span-8 space-y-6">
                     <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 flex flex-col min-h-[500px]">
                         <div className="flex justify-between items-center mb-8">
@@ -311,9 +424,8 @@ const ClientFichaView = ({
                             </div>
                         </div>
 
-                        {/* Input de Registro Rápido con Recordatorio */}
-                        <div className="mb-8 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                            <div className="flex flex-wrap gap-2 mb-4">
+                        <div className="mb-8 bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100">
+                            <div className="flex flex-wrap gap-2 mb-6">
                                 {['Llamada', 'Visita', 'WhatsApp', 'Sinergia', 'Correo', 'Seguimiento'].map(t => (
                                     <button
                                         key={t}
@@ -328,41 +440,67 @@ const ClientFichaView = ({
                                     </button>
                                 ))}
                             </div>
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 <textarea
                                     placeholder="¿En qué va la cuenta? Escribe una nota de seguimiento..."
                                     value={nuevaNota}
                                     onChange={e => setNuevaNota(e.target.value)}
-                                    className="w-full p-4 bg-white rounded-2xl text-xs font-bold border-none outline-none ring-2 ring-slate-100 focus:ring-slate-900/10 min-h-[80px] transition-all"
+                                    className="w-full p-5 bg-white rounded-[2rem] text-xs font-bold border-none outline-none ring-2 ring-slate-100 focus:ring-slate-900/10 min-h-[80px] transition-all"
                                 />
 
-                                <div className="flex flex-col md:flex-row items-center gap-4">
-                                    <div className="flex-1 w-full relative group">
-                                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-orange" size={16} />
-                                        <input
-                                            type="datetime-local"
-                                            value={fechaRecordatorio}
-                                            onChange={e => setFechaRecordatorio(e.target.value)}
-                                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-100 rounded-xl text-[9px] font-black uppercase outline-none focus:ring-2 focus:ring-slate-900/5 shadow-sm"
-                                        />
-                                        <div className="absolute -top-1.5 left-10 px-1 bg-slate-50 text-[7px] font-black text-slate-400 uppercase tracking-widest">
-                                            Fecha Próximo Contacto (Alertar)
+                                <div className="flex flex-col md:flex-row items-stretch gap-4">
+                                    <div className="flex-1 w-full flex flex-col sm:flex-row gap-4 lg:gap-6 md:max-w-[650px]">
+                                        {/* Bloque Fecha */}
+                                        <div className="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm flex items-center gap-4 relative group hover:border-brand-orange/30 transition-colors w-full sm:max-w-[240px]">
+                                            <div className="absolute -top-2 left-6 px-3 bg-white text-[6.5px] font-black text-slate-400 uppercase tracking-[0.2em] border border-slate-100 rounded-full py-0.5">
+                                                Fecha Recordatorio
+                                            </div>
+                                            <Calendar className="text-brand-orange shrink-0" size={18} />
+                                            <input
+                                                type="date"
+                                                value={remDate}
+                                                onChange={e => setRemDate(e.target.value)}
+                                                className="flex-1 bg-transparent border-none outline-none text-[11px] font-black uppercase tracking-tighter cursor-pointer"
+                                            />
+                                        </div>
+
+                                        {/* Bloque Tiempo */}
+                                        <div className="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm flex items-center gap-4 relative group hover:border-brand-orange/30 transition-colors w-full sm:max-w-[320px]">
+                                            <div className="absolute -top-2 left-6 px-3 bg-white text-[6.5px] font-black text-slate-400 uppercase tracking-[0.2em] border border-slate-100 rounded-full py-0.5">
+                                                Tiempo Programado
+                                            </div>
+                                            <Clock className="text-brand-orange shrink-0" size={18} />
+
+                                            <div className="flex-1 flex items-center justify-center gap-2 sm:gap-4">
+                                                <TimeWheel
+                                                    label="Hora"
+                                                    options={Array.from({ length: 24 }).map((_, i) => i.toString().padStart(2, '0'))}
+                                                    value={remHour}
+                                                    onChange={setRemHour}
+                                                />
+                                                <span className="mt-5 font-black text-slate-200 text-lg leading-none">:</span>
+                                                <TimeWheel
+                                                    label="Minutos"
+                                                    options={['00', '15', '30', '45']}
+                                                    value={remMinute}
+                                                    onChange={setRemMinute}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
                                     <button
                                         disabled={!nuevaNota.trim() || isSavingNota}
                                         onClick={handleSaveNota}
-                                        className="w-full md:w-auto px-8 py-3 bg-slate-900 text-white rounded-xl shadow-lg hover:bg-brand-orange transition-all disabled:opacity-30 active:scale-95 flex items-center justify-center gap-3 font-black uppercase text-[10px]"
+                                        className="w-full md:w-[120px] px-6 bg-slate-900 text-white rounded-[2rem] shadow-xl hover:bg-brand-orange transition-all disabled:opacity-30 active:scale-95 flex flex-col items-center justify-center gap-2 font-black uppercase text-[9px] shrink-0"
                                     >
-                                        {isSavingNota ? <RefreshCw className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
-                                        Guardar Gestión
+                                        {isSavingNota ? <RefreshCw className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
+                                        <span>Guardar</span>
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Timeline List */}
                         <div className="flex-1 space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                             {(interacciones || []).length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center opacity-20">
@@ -407,7 +545,6 @@ const ClientFichaView = ({
                     </div>
                 </div>
 
-                {/* 4. HISTÓRICO DE COTIZACIONES */}
                 <div className="lg:col-span-12">
                     <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
                         <div className="flex justify-between items-center mb-10">
@@ -468,12 +605,6 @@ const ClientFichaView = ({
                                     </div>
                                 </div>
                             ))}
-                            {clientQuotes.length === 0 && (
-                                <div className="col-span-full py-20 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-                                    <FileText className="mx-auto text-slate-300 mb-3" size={40} />
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">No hay historial de cotizaciones</p>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -484,7 +615,6 @@ const ClientFichaView = ({
                 <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
                     <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl">
                         <h3 className="text-center text-lg font-black uppercase mb-4 tracking-tighter">¿Marcar como {confirmingQuoteStatus.status.toUpperCase()}?</h3>
-
                         {confirmingQuoteStatus.status === 'ganada' && (
                             <div className="space-y-4 mb-6">
                                 <div className="space-y-1">
@@ -510,7 +640,6 @@ const ClientFichaView = ({
                                 </div>
                             </div>
                         )}
-
                         <div className="flex flex-col gap-2">
                             <button onClick={() => handleUpdateQuoteStatus(confirmingQuoteStatus.quote, confirmingQuoteStatus.status)} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px]">Confirmar</button>
                             <button onClick={() => setConfirmingQuoteStatus(null)} className="w-full py-3 text-[10px] font-black uppercase text-slate-400">Cancelar</button>
@@ -538,7 +667,6 @@ const ClientFichaView = ({
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-8">
                             ¿Mover a <span className="text-slate-900">{confirmingStage.toUpperCase()}</span> en el CRM?
                         </p>
-
                         {confirmingStage === 'No Interesado' && (
                             <div className="mb-6">
                                 <textarea
@@ -549,7 +677,6 @@ const ClientFichaView = ({
                                 />
                             </div>
                         )}
-
                         <div className="flex flex-col gap-2">
                             <button
                                 onClick={() => handlePromote(confirmingStage)}
