@@ -293,6 +293,7 @@ const App = () => {
         return (
           <CRMView
             clientes={clientes}
+            interacciones={dbData.interacciones}
             onSelectClient={handleVerFichaCliente}
             onAddNewClient={() => setVistaActual('client-registration')}
           />

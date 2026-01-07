@@ -360,50 +360,71 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
 
     // 4. REPORTE: Prospección y CRM
     const pipelineData = useMemo(() => {
-        const resumen = {
-            'Prospecto': { cant: 0, valor: 0 },
-            'Contactado': { cant: 0, valor: 0 },
-            'Interesado': { cant: 0, valor: 0 },
-            'No Interesado': { cant: 0, valor: 0 },
-            'Cliente': { cant: 0, valor: 0 }
+        const counts = {
+            'Prospecto': 0,
+            'Contactado': 0,
+            'Interesado': 0,
+            'No Interesado': 0,
+            'Cliente': 0
         };
 
         (clientes || []).forEach(c => {
-            if (resumen[c.etapa] !== undefined) {
-                resumen[c.etapa].cant++;
-
-                let valorC = 0;
-                if (c.etapa === 'Cliente') {
-                    // Para clientes con venta cerrada, usamos contratos de ejecución
-                    valorC = (contratosEjecucion || [])
-                        .filter(ce => {
-                            const q = (cotizaciones || []).find(quote => String(quote.id) === String(ce.cotizacion_id));
-                            return (q && String(q.cliente_id) === String(c.id)) || String(ce.master_contracts?.cliente_id) === String(c.id);
-                        })
-                        .reduce((acc, ce) => acc + (parseFloat(ce.monto_ejecucion) || 0), 0);
-                } else {
-                    // Para etapas iniciales, usamos cotizaciones enviadas
-                    valorC = (cotizaciones || [])
-                        .filter(q => String(q.cliente_id) === String(c.id) && q.estatus === 'enviada')
-                        .reduce((acc, q) => acc + (q.subtotalGeneral || q.total / 1.16 || 0), 0);
-                }
-                resumen[c.etapa].valor += valorC;
+            if (counts[c.etapa] !== undefined) {
+                counts[c.etapa]++;
             }
         });
+
+        const totalUniversum = (clientes || []).length || 0;
+
+        const resumen = {
+            'Prospecto': {
+                cant: totalUniversum,
+                pct: totalUniversum > 0 ? 100 : 0
+            },
+            'Contactado': {
+                cant: totalUniversum - counts['Prospecto'],
+                pct: totalUniversum > 0 ? ((totalUniversum - counts['Prospecto']) / totalUniversum) * 100 : 0
+            },
+            'Interesado': {
+                cant: counts['Interesado'] + counts['Cliente'],
+                pct: totalUniversum > 0 ? ((counts['Interesado'] + counts['Cliente']) / totalUniversum) * 100 : 0
+            },
+            'No Interesado': {
+                cant: counts['No Interesado'],
+                pct: totalUniversum > 0 ? (counts['No Interesado'] / totalUniversum) * 100 : 0
+            },
+            'Cliente': {
+                cant: counts['Cliente'],
+                pct: totalUniversum > 0 ? (counts['Cliente'] / totalUniversum) * 100 : 0
+            }
+        };
 
         const enviadas = (cotizaciones || []).filter(q => q.estatus === 'enviada');
 
         const seguimientoTotal = (clientes || [])
             .map(c => {
+                // Todas las interacciones, incluyendo automáticas (Cotización, Contrato)
                 const lasInteracciones = (interacciones || []).filter(i => String(i.cliente_id) === String(c.id));
                 const ahora = getMeridaNow();
                 const ultima = lasInteracciones[0];
-                const diffDays = ultima ? Math.floor((ahora - new Date(ultima.created_at)) / (1000 * 60 * 60 * 24)) : 999;
+
+                // Cálculo de días de inactividad
+                let diffDays = ultima ? Math.floor((ahora - new Date(ultima.created_at)) / (1000 * 60 * 60 * 24)) : 999;
+
+                // REGLA DE GRACIA: Si la cuenta tiene menos de 7 días de creada, no puede estar en abandono
+                const fechaCreacion = new Date(c.created_at || ahora);
+                const edadCuentaDias = Math.floor((ahora - fechaCreacion) / (1000 * 60 * 60 * 24));
+
+                if (edadCuentaDias < 7 && diffDays > edadCuentaDias) {
+                    diffDays = 0; // Se considera activo por ser nuevo
+                }
+
                 return {
                     ...c,
                     interacciones_recientes: lasInteracciones.slice(0, 4),
                     ultima_interaccion: ultima,
                     dias_sin_contacto: diffDays,
+                    edad_cuenta_dias: edadCuentaDias,
                     historico_completo: lasInteracciones
                 };
             }).sort((a, b) => b.dias_sin_contacto - a.dias_sin_contacto);
@@ -632,14 +653,14 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                 sections: [
                     {
                         title: "ANÁLISIS DE EMBUDO (PIPELINE)",
-                        headers: ['Concepto', 'Volumen (Cant)', 'Valor del Pipeline ($)'],
+                        headers: ['Concepto', 'Volumen (Cant)', '% Impacto'],
                         rows: [
                             ['ETAPAS DEL EMBUDO', '', ''],
-                            ['Prospectos', pipelineData.resumen['Prospecto'].cant, pipelineData.resumen['Prospecto'].valor],
-                            ['Contactados', pipelineData.resumen['Contactado'].cant, pipelineData.resumen['Contactado'].valor],
-                            ['Interesados', pipelineData.resumen['Interesado'].cant, pipelineData.resumen['Interesado'].valor],
-                            ['No Interesados', pipelineData.resumen['No Interesado'].cant, pipelineData.resumen['No Interesado'].valor],
-                            ['Venta Cerrada (Clientes)', pipelineData.resumen['Cliente'].cant, pipelineData.resumen['Cliente'].valor]
+                            ['Prospectos (Universo)', pipelineData.resumen['Prospecto'].cant, '100%'],
+                            ['Contactados (Alcance)', pipelineData.resumen['Contactado'].cant, `${pipelineData.resumen['Contactado'].pct.toFixed(1)}%`],
+                            ['Interesados (Calificado)', pipelineData.resumen['Interesado'].cant, `${pipelineData.resumen['Interesado'].pct.toFixed(1)}%`],
+                            ['No Interesados (Rechazo)', pipelineData.resumen['No Interesado'].cant, `${pipelineData.resumen['No Interesado'].pct.toFixed(1)}%`],
+                            ['Venta Cerrada (Conversión)', pipelineData.resumen['Cliente'].cant, `${pipelineData.resumen['Cliente'].pct.toFixed(1)}%`]
                         ]
                     },
                     {
@@ -1063,24 +1084,81 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                             <TrendingUp className="text-brand-orange" size={30} />
                         </div>
 
-                        <div className="px-8 py-6">
-                            {/* Grid Dual: Cantidad vs Valor */}
-                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-10">
-                                {Object.entries(pipelineData.resumen).map(([etapa, data]) => (
-                                    <div key={etapa} className="bg-slate-50 p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center hover:bg-white hover:shadow-xl transition-all group overflow-hidden relative">
-                                        <div className="relative z-10">
-                                            <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-2 italic group-hover:text-brand-orange transition-colors">{etapa}</p>
-                                            <div className="flex flex-col gap-1">
-                                                <h4 className="text-3xl font-black text-slate-900 leading-none">{data.cant}</h4>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase">Cuentas</p>
+                        <div className="px-8 py-10 bg-slate-50/50">
+                            {/* Horizontal Funnel Flow */}
+                            <div className="flex flex-col gap-8 mb-12">
+                                <div className="flex flex-wrap lg:flex-nowrap items-center gap-0">
+                                    {[
+                                        { key: 'Prospecto', label: 'Universo', icon: '🎯', bgColor: 'bg-slate-50', borderColor: 'border-slate-200' },
+                                        { key: 'Contactado', label: 'Alcance', icon: '📞', bgColor: 'bg-blue-50/80', borderColor: 'border-blue-200' },
+                                        { key: 'Interesado', label: 'Cualificación', icon: '⭐', bgColor: 'bg-amber-50/80', borderColor: 'border-amber-200' },
+                                        { key: 'Cliente', label: 'Conversión', icon: '💰', bgColor: 'bg-gradient-to-br from-brand-orange to-orange-600', borderColor: 'border-transparent' }
+                                    ].map((stage, idx, arr) => {
+                                        const data = pipelineData.resumen[stage.key];
+                                        const isLast = idx === arr.length - 1;
+                                        return (
+                                            <div key={stage.key} className="flex-1 min-w-[200px] group relative">
+                                                <div className={`
+                                                    relative h-32 flex flex-col items-center justify-center transition-all duration-500
+                                                    ${idx === 0 ? 'rounded-l-[2rem]' : ''}
+                                                    ${isLast ? `rounded-r-[2rem] ${stage.bgColor}` : `${stage.bgColor} border-y ${stage.borderColor}`}
+                                                    ${!isLast ? 'border-r-0' : ''}
+                                                    hover:z-10 hover:shadow-2xl hover:-translate-y-1
+                                                `}>
+                                                    {/* Arrow effect for non-last items */}
+                                                    {!isLast && (
+                                                        <div className="absolute top-0 -right-4 h-full w-4 z-20 overflow-hidden pointer-events-none">
+                                                            <div className={`h-full w-full ${stage.bgColor} border-y border-r ${stage.borderColor} rotate-45 transform origin-left scale-[1.5]`} />
+                                                        </div>
+                                                    )}
+
+                                                    <div className="relative z-30 text-center px-4">
+                                                        <span className="text-lg mb-1 block">{stage.icon}</span>
+                                                        <p className={`text-[8px] font-black uppercase tracking-[0.2em] mb-1 ${isLast ? 'text-white/70' : 'text-slate-400'}`}>
+                                                            {stage.key}
+                                                        </p>
+                                                        <h4 className={`text-3xl font-black leading-none mb-1 ${isLast ? 'text-white' : 'text-slate-900'}`}>
+                                                            {data.cant}
+                                                        </h4>
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <span className={`text-[10px] font-black ${isLast ? 'text-white' : 'text-brand-orange'}`}>
+                                                                {data.pct.toFixed(1)}%
+                                                            </span>
+                                                            <div className={`w-10 h-1 rounded-full overflow-hidden ${isLast ? 'bg-white/20' : 'bg-slate-100'}`}>
+                                                                <div
+                                                                    className={`h-full ${isLast ? 'bg-white' : 'bg-brand-orange'}`}
+                                                                    style={{ width: `${data.pct}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* Labels below */}
+                                                <div className="mt-3 text-center">
+                                                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest leading-tight">{stage.label}</p>
+                                                </div>
                                             </div>
-                                            <div className="mt-4 pt-4 border-t border-slate-200">
-                                                <p className="text-[11px] font-black text-brand-orange">{formatMXN(data.valor, 0)}</p>
-                                                <p className="text-[7px] font-black text-slate-300 uppercase tracking-tighter">Valor Transito</p>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Churn / Exit Metric */}
+                                <div className="flex justify-center">
+                                    <div className="bg-white border rotate-1 border-red-100 p-4 rounded-2xl shadow-sm flex items-center gap-4 group hover:-rotate-1 transition-all">
+                                        <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-500 font-bold group-hover:bg-red-500 group-hover:text-white transition-colors">
+                                            <XCircle size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Tasa de Deserción (No Interesados)</p>
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-xl font-black text-slate-900">{pipelineData.resumen['No Interesado'].cant}</span>
+                                                <span className="text-[10px] font-bold text-red-500 uppercase">
+                                                    ({pipelineData.resumen['No Interesado'].pct.toFixed(1)}% del Total)
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -1184,9 +1262,16 @@ const ReportsView = ({ clientes = [], cotizaciones = [], cobranza = [], masterCo
                                                         </td>
                                                         <td className="px-6 py-4 text-right">
                                                             <span className={`px-2 py-1 rounded-lg text-[8px] font-black
-                                                                ${c.dias_sin_contacto === 999 ? 'bg-red-50 text-red-400' :
-                                                                    c.dias_sin_contacto > 7 ? 'bg-red-100 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                                                                {c.dias_sin_contacto === 999 ? 'ABANDONO' : c.dias_sin_contacto === 1 ? '1 DÍA' : `${c.dias_sin_contacto} DÍAS`}
+                                                                ${c.edad_cuenta_dias < 7 && c.dias_sin_contacto === 0 ? 'bg-blue-50 text-blue-600' :
+                                                                    c.dias_sin_contacto === 999 || c.dias_sin_contacto > 21 ? 'bg-red-50 text-red-600' :
+                                                                        c.dias_sin_contacto > 15 ? 'bg-orange-50 text-orange-600' :
+                                                                            c.dias_sin_contacto > 7 ? 'bg-amber-50 text-amber-600' :
+                                                                                'bg-emerald-50 text-emerald-600'}`}>
+                                                                {c.edad_cuenta_dias < 7 && c.dias_sin_contacto === 0 ? 'NUEVO' :
+                                                                    c.dias_sin_contacto === 999 ? 'ABANDONO' :
+                                                                        c.dias_sin_contacto > 21 ? 'CRÍTICO' :
+                                                                            c.dias_sin_contacto === 1 ? '1 DÍA' :
+                                                                                `${c.dias_sin_contacto} DÍAS`}
                                                             </span>
                                                         </td>
                                                     </tr>

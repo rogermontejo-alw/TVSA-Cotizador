@@ -155,19 +155,45 @@ serve(async (req: Request) => {
       const abandonados = (todosClientes || [])
         .map((c: any) => {
           const interacciones = (c.interacciones_cliente as { created_at: string }[]) || [];
-          if (interacciones.length === 0) return { ...c, label: 'CUENTA NUEVA / SIN GESTIÓN', priority: 1 };
+          const fechaCreacion = new Date(c.created_at || ahora);
+          const edadCuentaDias = Math.floor((ahora.getTime() - fechaCreacion.getTime()) / (1000 * 60 * 60 * 24));
+
+          if (interacciones.length === 0) {
+            if (edadCuentaDias < 7) return { ...c, label: 'NUEVA CUENTA • ACTIVA', priority: 0 };
+            return { ...c, label: 'SIN GESTIÓN REGISTRADA', priority: 1 };
+          }
 
           const ultima = interacciones.reduce((max: Date, i: any) => {
             const date = new Date(i.created_at);
             return date > max ? date : max;
           }, new Date(0));
 
-          if (ultima.getTime() === 0) return { ...c, label: 'SIN GESTIÓN REGISTRADA', priority: 1 };
-
           const diasInactivo = Math.floor((ahora.getTime() - ultima.getTime()) / (1000 * 60 * 60 * 24));
-          return { ...c, diasInactivo, label: `${diasInactivo} DÍAS EN SILENCIO`, priority: diasInactivo > 30 ? 3 : 2 };
+
+          // Nueva lógica de prioridades
+          let priority = 0;
+          let label = '';
+
+          if (edadCuentaDias < 7 && diasInactivo > edadCuentaDias) {
+            label = 'NUEVA CUENTA • ACTIVA';
+            priority = 0;
+          } else if (diasInactivo > 21) {
+            label = `${diasInactivo} DÍAS: ABANDONO`;
+            priority = 3;
+          } else if (diasInactivo > 15) {
+            label = `${diasInactivo} DÍAS: RIESGO`;
+            priority = 2;
+          } else if (diasInactivo > 7) {
+            label = `${diasInactivo} DÍAS: SEGUIMIENTO`;
+            priority = 1;
+          } else {
+            label = 'ACTIVO';
+            priority = 0;
+          }
+
+          return { ...c, diasInactivo, label, priority };
         })
-        .filter((c: any) => c.priority === 1 || (c.diasInactivo && c.diasInactivo > 21))
+        .filter((c: any) => c.priority >= 2) // Solo mostrar Riesgo y Abandono en el email
         .sort((a: any, b: any) => b.priority - a.priority || (b.diasInactivo || 0) - (a.diasInactivo || 0))
         .slice(0, 4);
 

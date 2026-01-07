@@ -2,14 +2,42 @@ import React, { useState } from 'react';
 import { Search, Users, Briefcase, Plus, ChevronRight, MapPin, Building2, User, FileText, Download } from 'lucide-react';
 import * as XLSX from 'xlsx-js-style';
 
-const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
+const CRMView = ({ clientes, interacciones = [], onSelectClient, onAddNewClient }) => {
     const [busqueda, setBusqueda] = useState('');
     const [filtroEtapa, setFiltroEtapa] = useState('Todas');
     const [viewMode, setViewMode] = useState('cards'); // 'cards' o 'table'
 
     const etapas = ['Todas', 'Prospecto', 'Contactado', 'Interesado', 'No Interesado', 'Cliente'];
 
-    const clientesFiltrados = (clientes || []).filter(c => {
+    const getMeridaNow = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/Merida" }));
+
+    const clientesEnriquecidos = React.useMemo(() => {
+        const ahora = getMeridaNow();
+        return (clientes || []).map(c => {
+            const lasInteracciones = (interacciones || []).filter(i => String(i.cliente_id) === String(c.id));
+            const ultima = lasInteracciones[0];
+
+            // Cálculo de días
+            let diffDays = ultima ? Math.floor((ahora - new Date(ultima.created_at)) / (1000 * 60 * 60 * 24)) : 999;
+
+            // REGLA DE GRACIA: 7 días
+            const fechaCreacion = new Date(c.created_at || ahora);
+            const edadCuentaDias = Math.floor((ahora - fechaCreacion) / (1000 * 60 * 60 * 24));
+
+            if (edadCuentaDias < 7 && diffDays > edadCuentaDias) {
+                diffDays = 0;
+            }
+
+            return {
+                ...c,
+                dias_sin_contacto: diffDays,
+                edad_cuenta_dias: edadCuentaDias,
+                ultima_interaccion: ultima
+            };
+        });
+    }, [clientes, interacciones]);
+
+    const clientesFiltrados = clientesEnriquecidos.filter(c => {
         const matchBusqueda = (c.nombre_empresa || '').toLowerCase().includes(busqueda.toLowerCase()) ||
             (c.nombre_contacto || '').toLowerCase().includes(busqueda.toLowerCase()) ||
             (c.email || '').toLowerCase().includes(busqueda.toLowerCase());
@@ -43,7 +71,7 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
             const metaStyle = { font: { italic: true, sz: 9, color: { rgb: "64748B" } } };
             const cellStyle = { font: { sz: 9 }, alignment: { vertical: "center", wrapText: true } };
 
-            const headers = ["EMPRESA / RAZÓN SOCIAL", "CONTACTO", "EMAIL", "TELÉFONO", "PLAZA", "SEGMENTO", "ETAPA CRM"];
+            const headers = ["EMPRESA / RAZÓN SOCIAL", "CONTACTO", "EMAIL", "TELÉFONO", "PLAZA", "SEGMENTO", "ETAPA CRM", "ÚLTIMO CONTACTO", "DÍAS INACTIVO"];
             const wsData = [
                 [{ v: "NEXUS CRM - DIRECTORIO MAESTRO", s: titleStyle }],
                 [{ v: "TELEVISA UNIVISION INTERACTIVE", s: metaStyle }],
@@ -54,6 +82,10 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
             ];
 
             clientesFiltrados.forEach(c => {
+                const diasLabel = c.edad_cuenta_dias < 7 && c.dias_sin_contacto === 0 ? 'NUEVO' :
+                    c.dias_sin_contacto === 999 ? 'ABANDONO' :
+                        `${c.dias_sin_contacto} DÍAS`;
+
                 wsData.push([
                     { v: c.nombre_empresa?.toUpperCase() || '', s: cellStyle },
                     { v: c.nombre_contacto || '', s: cellStyle },
@@ -61,7 +93,9 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
                     { v: c.telefono || '', s: cellStyle },
                     { v: c.plaza || '', s: cellStyle },
                     { v: c.segmento || '', s: cellStyle },
-                    { v: c.etapa?.toUpperCase() || '', s: { ...cellStyle, font: { ...cellStyle.font, bold: true } } }
+                    { v: c.etapa?.toUpperCase() || '', s: { ...cellStyle, font: { ...cellStyle.font, bold: true } } },
+                    { v: c.ultima_interaccion?.tipo?.toUpperCase() || 'SIN REGISTRO', s: cellStyle },
+                    { v: diasLabel, s: { ...cellStyle, font: { ...cellStyle.font, bold: true } } }
                 ]);
             });
 
@@ -75,7 +109,9 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
                 { wch: 20 }, // Tel
                 { wch: 15 }, // Plaza
                 { wch: 15 }, // Segmento
-                { wch: 20 }  // Etapa
+                { wch: 20 }, // Etapa
+                { wch: 20 }, // Ultimo Contacto
+                { wch: 15 }  // Inactividad
             ];
 
             XLSX.utils.book_append_sheet(wb, ws, "Directorio Clientes");
@@ -226,9 +262,24 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
                                             {cliente.plaza || 'Mérida'}
                                         </div>
 
-                                        <div className="col-span-6 lg:col-span-3 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.15em] text-slate-500">
-                                            <Building2 size={12} className="text-gray-300" />
-                                            {cliente.segmento || 'General'}
+                                        <div className="col-span-6 lg:col-span-3 flex flex-col gap-1">
+                                            <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.15em] text-slate-500">
+                                                <Building2 size={12} className="text-gray-300" />
+                                                {cliente.segmento || 'General'}
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase
+                                                    ${cliente.edad_cuenta_dias < 7 && cliente.dias_sin_contacto === 0 ? 'bg-blue-50 text-blue-600' :
+                                                        cliente.dias_sin_contacto === 999 || cliente.dias_sin_contacto > 21 ? 'bg-red-50 text-red-600' :
+                                                            cliente.dias_sin_contacto > 15 ? 'bg-orange-50 text-orange-600' :
+                                                                cliente.dias_sin_contacto > 7 ? 'bg-amber-50 text-amber-600' :
+                                                                    'bg-emerald-50 text-emerald-600'}`}>
+                                                    {cliente.edad_cuenta_dias < 7 && cliente.dias_sin_contacto === 0 ? 'Nuevo Partner' :
+                                                        cliente.dias_sin_contacto === 999 ? 'Sin Actividad' :
+                                                            cliente.dias_sin_contacto > 21 ? 'Abandono Crítico' :
+                                                                `Actividad: Hace ${cliente.dias_sin_contacto}d`}
+                                                </span>
+                                            </div>
                                         </div>
 
                                         <div className="col-span-6 lg:col-span-1 flex justify-end">
@@ -251,7 +302,7 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
                                     <th className="px-6 py-4 text-[8px] font-black uppercase tracking-[0.3em] italic opacity-50">Empresa / Razón Social</th>
                                     <th className="px-6 py-4 text-[8px] font-black uppercase tracking-[0.3em] italic opacity-50">Contacto Principal</th>
                                     <th className="px-6 py-4 text-[8px] font-black uppercase tracking-[0.3em] italic opacity-50 px-4">Correo Electrónico</th>
-                                    <th className="px-6 py-4 text-[8px] font-black uppercase tracking-[0.3em] italic opacity-50">Teléfono</th>
+                                    <th className="px-6 py-4 text-[8px] font-black uppercase tracking-[0.3em] italic opacity-50">Inactividad</th>
                                     <th className="px-6 py-4 text-[8px] font-black uppercase tracking-[0.3em] italic opacity-50 text-center">Plaza</th>
                                     <th className="px-6 py-4 text-[8px] font-black uppercase tracking-[0.3em] italic opacity-50 text-center">Estatus CRM</th>
                                     <th className="px-6 py-4"></th>
@@ -283,7 +334,16 @@ const CRMView = ({ clientes, onSelectClient, onAddNewClient }) => {
                                                 <p className="text-[10px] font-medium text-blue-600 lowercase">{cliente.email || 'sin correo'}</p>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <p className="text-[10px] font-black text-enterprise-700 tracking-tighter">{cliente.telefono || '-'}</p>
+                                                <span className={`px-2 py-1 rounded-lg text-[8px] font-black
+                                                    ${cliente.edad_cuenta_dias < 7 && cliente.dias_sin_contacto === 0 ? 'bg-blue-50 text-blue-600' :
+                                                        cliente.dias_sin_contacto === 999 || cliente.dias_sin_contacto > 21 ? 'bg-red-50 text-red-600' :
+                                                            cliente.dias_sin_contacto > 15 ? 'bg-orange-50 text-orange-600' :
+                                                                cliente.dias_sin_contacto > 7 ? 'bg-amber-50 text-amber-600' :
+                                                                    'bg-emerald-50 text-emerald-600'}`}>
+                                                    {cliente.edad_cuenta_dias < 7 && cliente.dias_sin_contacto === 0 ? 'NUEVO' :
+                                                        cliente.dias_sin_contacto === 999 ? 'ABANDONO' :
+                                                            `${cliente.dias_sin_contacto} DÍAS`}
+                                                </span>
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <span className="text-[9px] font-black text-white bg-enterprise-950 px-2.5 py-1 rounded-lg uppercase italic">{cliente.plaza}</span>
